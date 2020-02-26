@@ -7,7 +7,7 @@ import (
 
 func TestAdd(t *testing.T) {
 	inputString := "Hello, World!"
-	inputReader := bytes.NewReader([]byte(inputString))
+	inputReader := bytes.NewBufferString(inputString)
 	want := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
 	output, err := Add(inputReader)
 	if err != nil {

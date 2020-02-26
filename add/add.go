@@ -21,6 +21,8 @@ func Add(reader io.Reader) (string, error) {
 		if read_err == io.EOF {
 			return hashToString(h), nil
 		}
+		// prefer propagating the Read error,
+		// as it came first
 		if read_err != nil {
 			return "", read_err
 		}
