@@ -12,22 +12,23 @@ func hashToString(h hash.Hash) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// Add adds the contents of reader to the cache.
 func Add(reader io.Reader) (string, error) {
 	h := sha1.New()
 	b := make([]byte, 1*datasize.KB)
 	for {
-		n_read, read_err := reader.Read(b)
-		_, write_err := h.Write(b[:n_read])
-		if read_err == io.EOF {
+		n, readErr := reader.Read(b)
+		_, writeErr := h.Write(b[:n])
+		if readErr == io.EOF {
 			return hashToString(h), nil
 		}
 		// prefer propagating the Read error,
 		// as it came first
-		if read_err != nil {
-			return "", read_err
+		if readErr != nil {
+			return "", readErr
 		}
-		if write_err != nil {
-			return "", write_err
+		if writeErr != nil {
+			return "", writeErr
 		}
 	}
 }
