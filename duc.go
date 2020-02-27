@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/kevlar1818/duc/add"
+	"github.com/kevlar1818/duc/commit"
 	"log"
 	"os"
 )
@@ -14,7 +14,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		hash, err := add.Add(file)
+		hash, err := commit.Commit(file, nil)
 		if err != nil {
 			log.Fatal(err)
 		}

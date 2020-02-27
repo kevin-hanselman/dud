@@ -7,6 +7,9 @@ test: fmt
 	golint ./...
 	go test ./...
 
+bench: test
+	go test ./... -bench .
+
 fmt:
 	go fmt ./...
 
