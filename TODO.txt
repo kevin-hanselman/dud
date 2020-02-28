@@ -1,0 +1,31 @@
+Ducfile struct
+
+commands:
+    add <targets> (rename to draw distinction from git? e.g. track)
+        creates Ducfile showing targets to be added
+        (doesn't compute checksums! field is left empty)
+    commit <Ducfile>
+        reads Ducfile
+        for each target:
+            checksum target
+            move target to cache
+            checkout target
+        updates Ducfile (including hash for Ducfile itself)
+    checkout [Ducfile]
+        reads Ducfile
+        for each target:
+            looks up target hash
+            checkout target from cache
+    status [Ducfile]
+        reads Ducfile
+        for each target:
+            return status of target:
+                in workspace?
+                in cache?
+                different or the same?
+    run <Ducfile> (aka repro)
+        ...
+        delete targets
+            (if a target is persisted, only unprotect)
+        ...
+        (doesn't compute checksums! fields are left empty)
