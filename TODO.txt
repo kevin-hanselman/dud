@@ -1,7 +1,7 @@
 Ducfile struct
 
 commands:
-    add <targets> (rename to draw distinction from git? e.g. track)
+    track <targets>
         creates Ducfile showing targets to be added
         (doesn't compute checksums! field is left empty)
     commit <Ducfile>
