@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"github.com/c2h5oh/datasize"
 	"github.com/kevlar1818/duc/stage"
+	"github.com/google/go-cmp/cmp"
+	"io/ioutil"
 	"math/rand"
-	"reflect"
+	"os"
+	"path"
 	"testing"
 )
 
@@ -26,37 +29,55 @@ func TestChecksumAndCopy(t *testing.T) {
 	}
 }
 
-func TestCommit(t *testing.T) {
+func TestCommitIntegration(t *testing.T) {
 
-	cacheDir := "/cache"
+	if testing.Short() {
+		t.Skip()
+	}
+
+	cacheDir, err := ioutil.TempDir("", "duc_cache")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(cacheDir)
+
+	workDir, err := ioutil.TempDir("", "duc_wspace")
+	if err != nil {
+		t.Error(err)
+	}
+	defer os.RemoveAll(workDir)
+
+	filePath := path.Join(workDir, "foo.txt")
+	if err = ioutil.WriteFile(filePath, []byte("Hello, World!"), 0644); err != nil {
+		t.Error(err)
+	}
 
 	s := stage.Stage{
-		Checksum: nil,
+		Checksum: "",
 		Outputs: []stage.Artifact{
 			stage.Artifact{
-				Checksum: nil,
-				Path:     "foo.txt",
+				Checksum: "",
+				Path:     filePath,
 			},
 		},
 	}
 
 	expected := stage.Stage{
-		Checksum: nil, // TODO
+		Checksum: "", // TODO
 		Outputs: []stage.Artifact{
 			stage.Artifact{
-				Checksum: nil, // TODO
-				Path:     "foo.txt",
+				Checksum: "0a0a9f2a6772942557ab5355d76af442f8f65e01",
+				Path:     filePath,
 			},
 		},
 	}
 
-	// TODO: how to generalize cache location? add config to Commit()?
 	if err := Commit(&s, cacheDir); err != nil {
 		t.Error(err)
 	}
 
-	if !reflect.DeepEqual(s, expected) {
-		t.Errorf("Commit(stage) = %#v, want %#v", s, expected)
+	if diff := cmp.Diff(expected, s); diff != "" {
+		t.Errorf("Commit(stage) -want +got:\n%s", diff)
 	}
 }
 

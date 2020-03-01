@@ -21,12 +21,12 @@ func Track(paths ...string) (s stage.Stage, err error) {
 			return
 		}
 		outputs[i] = stage.Artifact{
-			Checksum: nil,
+			Checksum: "",
 			Path:     path,
 		}
 	}
 	s = stage.Stage{
-		Checksum: nil,
+		Checksum: "",
 		Outputs:  outputs,
 	}
 	return

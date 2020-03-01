@@ -3,6 +3,7 @@ package track
 import (
 	"github.com/kevlar1818/duc/stage"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -15,10 +16,10 @@ func TestTrackOnePath(t *testing.T) {
 	defer func() { fileExists = fileExistsOrig }()
 	path := "foobar.txt"
 	expected := stage.Stage{
-		Checksum: nil,
+		Checksum: "",
 		Outputs: []stage.Artifact{
 			stage.Artifact{
-				Checksum: nil,
+				Checksum: "",
 				Path:     path,
 			},
 		},
@@ -43,14 +44,14 @@ func TestTrackMultiplePaths(t *testing.T) {
 	defer func() { fileExists = fileExistsOrig }()
 	paths := []string{"foo.txt", "bar.bin"}
 	expected := stage.Stage{
-		Checksum: nil,
+		Checksum: "",
 		Outputs: []stage.Artifact{
 			stage.Artifact{
-				Checksum: nil,
+				Checksum: "",
 				Path:     "foo.txt",
 			},
 			stage.Artifact{
-				Checksum: nil,
+				Checksum: "",
 				Path:     "bar.bin",
 			},
 		},
@@ -78,20 +79,25 @@ func TestTrackIntegration(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for _, path := range paths {
-		ioutil.TempFile(dir, path)
+	defer os.RemoveAll(dir)
+	for i, path := range paths {
+		f, err := ioutil.TempFile(dir, path)
+		if err != nil {
+			t.Error(err)
+		}
+		paths[i] = f.Name()
 	}
 
 	expected := stage.Stage{
-		Checksum: nil,
+		Checksum: "",
 		Outputs: []stage.Artifact{
 			stage.Artifact{
-				Checksum: nil,
-				Path:     "duc/foo.txt",
+				Checksum: "",
+				Path:     paths[0],
 			},
 			stage.Artifact{
-				Checksum: nil,
-				Path:     "duc/bar.bin",
+				Checksum: "",
+				Path:     paths[1],
 			},
 		},
 	}

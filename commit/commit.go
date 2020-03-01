@@ -8,10 +8,23 @@ import (
 	"github.com/kevlar1818/duc/stage"
 	"hash"
 	"io"
+	"os"
 )
 
-// Commit checksums all outputs of a stage and adds them to the DUC cache.
+// Commit calculates the checksums of all outputs of a stage and adds the outputs to the DUC cache.
 func Commit(s *stage.Stage, cacheDir string) error {
+	for i, output := range s.Outputs {
+		f, err := os.Open(output.Path)
+		defer f.Close()
+		if err != nil {
+			return err
+		}
+		checksum, err := checksumAndCopy(f, nil)
+		if err != nil {
+			return err
+		}
+		s.Outputs[i].Checksum = checksum
+	}
 	return nil
 }
 
