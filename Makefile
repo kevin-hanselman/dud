@@ -1,20 +1,35 @@
-.PHONY: build test bench cover fmt clean
+.PHONY: build docker_build test test-integration bench cover fmt clean shell
 
-build: test
+DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
+
+build:
 	go build
+
+docker_build:
+	docker build -t go_dev .
 
 test: fmt
 	golint ./...
-	go test ./...
+	go test -short ./...
+
+test-integration: docker_build test
+	$(DOCKER) go test -run Integration ./...
 
 bench: test
 	go test ./... -bench .
 
-cover: cover.out
-	go tool cover -html=cover.out
+unit-test-cov: unit-test-cov.out
+	go tool cover -html=unit-test-cov.out
 
-cover.out:
-	go test ./... -coverprofile=cover.out
+# TODO: DRY this out
+int-test-cov: int-test-cov.out
+	go tool cover -html=int-test-cov.out
+
+unit-test-cov.out:
+	go test -short ./... -coverprofile=unit-test-cov.out
+
+int-test-cov.out: docker_build
+	$(DOCKER) go test -run Integration ./... -coverprofile=int-test-cov.out
 
 fmt:
 	go fmt ./...

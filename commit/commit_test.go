@@ -3,7 +3,9 @@ package commit
 import (
 	"bytes"
 	"github.com/c2h5oh/datasize"
+	"github.com/kevlar1818/duc/stage"
 	"math/rand"
+	"reflect"
 	"testing"
 )
 
@@ -26,6 +28,36 @@ func TestChecksumAndCopy(t *testing.T) {
 
 func TestCommit(t *testing.T) {
 
+	cacheDir := "/cache"
+
+	s := stage.Stage{
+		Checksum: nil,
+		Outputs: []stage.Artifact{
+			stage.Artifact{
+				Checksum: nil,
+				Path:     "foo.txt",
+			},
+		},
+	}
+
+	expected := stage.Stage{
+		Checksum: nil, // TODO
+		Outputs: []stage.Artifact{
+			stage.Artifact{
+				Checksum: nil, // TODO
+				Path:     "foo.txt",
+			},
+		},
+	}
+
+	// TODO: how to generalize cache location? add config to Commit()?
+	if err := Commit(&s, cacheDir); err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(s, expected) {
+		t.Errorf("Commit(stage) = %#v, want %#v", s, expected)
+	}
 }
 
 func benchmarkChecksumAndCopy(inputSize datasize.ByteSize, b *testing.B) {

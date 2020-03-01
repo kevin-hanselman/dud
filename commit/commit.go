@@ -5,9 +5,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/c2h5oh/datasize"
+	"github.com/kevlar1818/duc/stage"
 	"hash"
 	"io"
 )
+
+// Commit checksums all outputs of a stage and adds them to the DUC cache.
+func Commit(s *stage.Stage, cacheDir string) error {
+	return nil
+}
 
 func hashToString(h hash.Hash) string {
 	return hex.EncodeToString(h.Sum(nil))
