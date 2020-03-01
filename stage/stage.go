@@ -8,8 +8,9 @@ import (
 // A Stage holds all information required to reproduce data. It is the primary
 // artifact of DUC.
 type Stage struct {
-	Checksum string
-	Outputs  []Artifact
+	Checksum   string
+	WorkingDir string
+	Outputs    []Artifact
 }
 
 // An Artifact is a file that is a result of reproducing a stage.

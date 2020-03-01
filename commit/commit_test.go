@@ -3,8 +3,9 @@ package commit
 import (
 	"bytes"
 	"github.com/c2h5oh/datasize"
-	"github.com/kevlar1818/duc/stage"
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevlar1818/duc/stage"
+	"github.com/kevlar1818/duc/testutil"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -35,16 +36,11 @@ func TestCommitIntegration(t *testing.T) {
 		t.Skip()
 	}
 
-	cacheDir, err := ioutil.TempDir("", "duc_cache")
+	cacheDir, workDir, err := testutil.CreateTempDirs()
 	if err != nil {
 		t.Error(err)
 	}
 	defer os.RemoveAll(cacheDir)
-
-	workDir, err := ioutil.TempDir("", "duc_wspace")
-	if err != nil {
-		t.Error(err)
-	}
 	defer os.RemoveAll(workDir)
 
 	filePath := path.Join(workDir, "foo.txt")
@@ -53,21 +49,23 @@ func TestCommitIntegration(t *testing.T) {
 	}
 
 	s := stage.Stage{
-		Checksum: "",
+		Checksum:   "",
+		WorkingDir: workDir,
 		Outputs: []stage.Artifact{
 			stage.Artifact{
 				Checksum: "",
-				Path:     filePath,
+				Path:     "foo.txt",
 			},
 		},
 	}
 
 	expected := stage.Stage{
-		Checksum: "", // TODO
+		Checksum:   "", // TODO
+		WorkingDir: workDir,
 		Outputs: []stage.Artifact{
 			stage.Artifact{
 				Checksum: "0a0a9f2a6772942557ab5355d76af442f8f65e01",
-				Path:     filePath,
+				Path:     "foo.txt",
 			},
 		},
 	}
@@ -81,21 +79,24 @@ func TestCommitIntegration(t *testing.T) {
 	}
 }
 
-func benchmarkChecksumAndCopy(inputSize datasize.ByteSize, b *testing.B) {
+func BenchmarkChecksum(b *testing.B) {
+	b.Run("1KB", func(b *testing.B) { benchmarkChecksum(1*datasize.KB, b) })
+	b.Run("1MB", func(b *testing.B) { benchmarkChecksum(1*datasize.MB, b) })
+	b.Run("1GB", func(b *testing.B) { benchmarkChecksum(1*datasize.GB, b) })
+}
+
+func benchmarkChecksum(inputSize datasize.ByteSize, b *testing.B) {
 	b.StopTimer()
 	b.ResetTimer()
 	input := make([]byte, inputSize)
 	rand.Read(input)
+	reader := bytes.NewReader(input)
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
-		_, err := checksumAndCopy(bytes.NewReader(input), nil)
+		_, err := checksumAndCopy(reader, nil)
 		b.StopTimer()
 		if err != nil {
 			b.Error(err)
 		}
 	}
 }
-
-func BenchmarkCommit1KB(b *testing.B) { benchmarkChecksumAndCopy(1*datasize.KB, b) }
-func BenchmarkCommit1MB(b *testing.B) { benchmarkChecksumAndCopy(1*datasize.MB, b) }
-func BenchmarkCommit1GB(b *testing.B) { benchmarkChecksumAndCopy(1*datasize.GB, b) }

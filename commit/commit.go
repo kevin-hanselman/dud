@@ -9,12 +9,13 @@ import (
 	"hash"
 	"io"
 	"os"
+	"path"
 )
 
 // Commit calculates the checksums of all outputs of a stage and adds the outputs to the DUC cache.
 func Commit(s *stage.Stage, cacheDir string) error {
 	for i, output := range s.Outputs {
-		f, err := os.Open(output.Path)
+		f, err := os.Open(path.Join(s.WorkingDir, output.Path))
 		defer f.Close()
 		if err != nil {
 			return err
