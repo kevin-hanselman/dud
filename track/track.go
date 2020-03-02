@@ -26,8 +26,7 @@ func Track(paths ...string) (s stage.Stage, err error) {
 		}
 	}
 	s = stage.Stage{
-		Checksum: "",
-		Outputs:  outputs,
+		Outputs: outputs,
 	}
 	return
 }

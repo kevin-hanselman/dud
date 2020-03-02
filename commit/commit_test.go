@@ -49,7 +49,6 @@ func TestCommitIntegration(t *testing.T) {
 	}
 
 	s := stage.Stage{
-		Checksum:   "",
 		WorkingDir: workDir,
 		Outputs: []stage.Artifact{
 			stage.Artifact{
@@ -60,7 +59,6 @@ func TestCommitIntegration(t *testing.T) {
 	}
 
 	expected := stage.Stage{
-		Checksum:   "", // TODO
 		WorkingDir: workDir,
 		Outputs: []stage.Artifact{
 			stage.Artifact{
@@ -70,6 +68,7 @@ func TestCommitIntegration(t *testing.T) {
 		},
 	}
 
+	// TODO configure cache link type
 	if err := Commit(&s, cacheDir); err != nil {
 		t.Error(err)
 	}
@@ -77,6 +76,8 @@ func TestCommitIntegration(t *testing.T) {
 	if diff := cmp.Diff(expected, s); diff != "" {
 		t.Errorf("Commit(stage) -want +got:\n%s", diff)
 	}
+
+	// TODO check that the files got moved, and that workspace has links
 }
 
 func BenchmarkChecksum(b *testing.B) {
