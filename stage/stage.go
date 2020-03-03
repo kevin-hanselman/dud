@@ -39,3 +39,9 @@ func (s *Stage) SetChecksum() error {
 	s.Checksum = ChecksumFromHash(h)
 	return nil
 }
+
+// A Cache is a local directory where DUC stores all of its committed artifacts.
+type Cache struct {
+	BaseDir      string
+	CheckoutFunc func(src, dst string) error
+}

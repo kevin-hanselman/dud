@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/c2h5oh/datasize"
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
 	"github.com/kevlar1818/duc/testutil"
 	"io/ioutil"
@@ -43,10 +44,12 @@ func TestCommitIntegration(t *testing.T) {
 	defer os.RemoveAll(cacheDir)
 	defer os.RemoveAll(workDir)
 
-	filePath := path.Join(workDir, "foo.txt")
-	if err = ioutil.WriteFile(filePath, []byte("Hello, World!"), 0644); err != nil {
+	fileWorkspacePath := path.Join(workDir, "foo.txt")
+	if err = ioutil.WriteFile(fileWorkspacePath, []byte("Hello, World!"), 0644); err != nil {
 		t.Error(err)
 	}
+	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
+	fileCachePath := path.Join(cacheDir, fileChecksum[:2], fileChecksum[2:])
 
 	s := stage.Stage{
 		WorkingDir: workDir,
@@ -62,13 +65,13 @@ func TestCommitIntegration(t *testing.T) {
 		WorkingDir: workDir,
 		Outputs: []stage.Artifact{
 			stage.Artifact{
-				Checksum: "0a0a9f2a6772942557ab5355d76af442f8f65e01",
+				Checksum: fileChecksum,
 				Path:     "foo.txt",
 			},
 		},
 	}
 
-	// TODO configure cache link type
+	// TODO configure cache checkout method (e.g. hard link, symlink)
 	if err := Commit(&s, cacheDir); err != nil {
 		t.Error(err)
 	}
@@ -77,7 +80,21 @@ func TestCommitIntegration(t *testing.T) {
 		t.Errorf("Commit(stage) -want +got:\n%s", diff)
 	}
 
-	// TODO check that the files got moved, and that workspace has links
+	// TODO check that the files are present in the cache
+	exists, err := fsutil.Exists(fileWorkspacePath)
+	if err != nil {
+		t.Error(err)
+	}
+	if !exists {
+		t.Errorf("File %#v should exist", fileWorkspacePath)
+	}
+	exists, err = fsutil.Exists(fileCachePath)
+	if err != nil {
+		t.Error(err)
+	}
+	if !exists {
+		t.Errorf("File %#v should exist", fileCachePath)
+	}
 }
 
 func BenchmarkChecksum(b *testing.B) {
