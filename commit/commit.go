@@ -8,20 +8,36 @@ import (
 	"github.com/kevlar1818/duc/stage"
 	"hash"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 )
 
 // Commit calculates the checksums of all outputs of a stage and adds the outputs to the DUC cache.
+// TODO: This function should have 100% coverage
 func Commit(s *stage.Stage, cacheDir string) error {
 	for i, output := range s.Outputs {
-		f, err := os.Open(path.Join(s.WorkingDir, output.Path))
-		defer f.Close()
+		srcFile, err := os.Open(path.Join(s.WorkingDir, output.Path))
+		defer srcFile.Close()
 		if err != nil {
 			return err
 		}
-		checksum, err := checksumAndCopy(f, nil)
+		dstFile, err := ioutil.TempFile(cacheDir, "")
+		defer dstFile.Close()
 		if err != nil {
+			return err
+		}
+
+		checksum, err := checksumAndCopy(srcFile, dstFile)
+		if err != nil {
+			return err
+		}
+
+		dstDir := path.Join(cacheDir, checksum[:2])
+		if err = os.MkdirAll(dstDir, 0755); err != nil {
+			return err
+		}
+		if err = os.Rename(dstFile.Name(), path.Join(dstDir, checksum[2:])); err != nil {
 			return err
 		}
 		s.Outputs[i].Checksum = checksum

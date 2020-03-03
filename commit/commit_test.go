@@ -80,7 +80,6 @@ func TestCommitIntegration(t *testing.T) {
 		t.Errorf("Commit(stage) -want +got:\n%s", diff)
 	}
 
-	// TODO check that the files are present in the cache
 	exists, err := fsutil.Exists(fileWorkspacePath)
 	if err != nil {
 		t.Error(err)

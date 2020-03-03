@@ -1,23 +1,19 @@
 package track
 
 import (
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
-	"os"
 )
 
-var fileExists = func(path string) error {
-	_, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		return err
-	}
-	return nil
-}
+var fileExists func(string) (bool, error) = fsutil.Exists
 
 // Track creates a stage for tracking the given paths.
 func Track(paths ...string) (s stage.Stage, err error) {
 	outputs := make([]stage.Artifact, len(paths))
 	for i, path := range paths {
-		if err = fileExists(path); err != nil {
+		var exists bool
+		exists, err = fileExists(path)
+		if (!exists) || err != nil {
 			return
 		}
 		outputs[i] = stage.Artifact{

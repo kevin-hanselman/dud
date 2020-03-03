@@ -10,8 +10,8 @@ import (
 
 func TestTrackOnePath(t *testing.T) {
 	fileExistsOrig := fileExists
-	fileExists = func(path string) error {
-		return nil
+	fileExists = func(path string) (bool, error) {
+		return true, nil
 	}
 	defer func() { fileExists = fileExistsOrig }()
 	path := "foobar.txt"
@@ -37,8 +37,8 @@ func TestTrackOnePath(t *testing.T) {
 
 func TestTrackMultiplePaths(t *testing.T) {
 	fileExistsOrig := fileExists
-	fileExists = func(path string) error {
-		return nil
+	fileExists = func(path string) (bool, error) {
+		return true, nil
 	}
 	defer func() { fileExists = fileExistsOrig }()
 	paths := []string{"foo.txt", "bar.bin"}
