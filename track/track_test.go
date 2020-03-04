@@ -17,7 +17,7 @@ func TestTrackOnePath(t *testing.T) {
 	path := "foobar.txt"
 	expected := stage.Stage{
 		Outputs: []stage.Artifact{
-			stage.Artifact{
+			{
 				Checksum: "",
 				Path:     path,
 			},
@@ -44,11 +44,11 @@ func TestTrackMultiplePaths(t *testing.T) {
 	paths := []string{"foo.txt", "bar.bin"}
 	expected := stage.Stage{
 		Outputs: []stage.Artifact{
-			stage.Artifact{
+			{
 				Checksum: "",
 				Path:     "foo.txt",
 			},
-			stage.Artifact{
+			{
 				Checksum: "",
 				Path:     "bar.bin",
 			},
@@ -88,11 +88,11 @@ func TestTrackIntegration(t *testing.T) {
 
 	expected := stage.Stage{
 		Outputs: []stage.Artifact{
-			stage.Artifact{
+			{
 				Checksum: "",
 				Path:     paths[0],
 			},
-			stage.Artifact{
+			{
 				Checksum: "",
 				Path:     paths[1],
 			},

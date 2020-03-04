@@ -32,7 +32,7 @@ all-test-cov.out:
 	go test ./... -coverprofile=$@
 
 fmt:
-	go fmt ./...
+	gofmt -s -w .
 
 clean:
 	rm -f *.out

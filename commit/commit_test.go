@@ -57,7 +57,7 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 	s := stage.Stage{
 		WorkingDir: workDir,
 		Outputs: []stage.Artifact{
-			stage.Artifact{
+			{
 				Checksum: "",
 				Path:     "foo.txt",
 			},
@@ -67,7 +67,7 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 	expected := stage.Stage{
 		WorkingDir: workDir,
 		Outputs: []stage.Artifact{
-			stage.Artifact{
+			{
 				Checksum: fileChecksum,
 				Path:     "foo.txt",
 			},

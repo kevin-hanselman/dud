@@ -10,7 +10,7 @@ func TestSetChecksum(t *testing.T) {
 		Checksum:   "",
 		WorkingDir: "foo",
 		Outputs: []Artifact{
-			Artifact{
+			{
 				Checksum: "abc",
 				Path:     "bar.txt",
 			},
