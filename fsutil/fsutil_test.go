@@ -1,6 +1,7 @@
 package fsutil
 
 import (
+	"os"
 	"testing"
 )
 
@@ -24,5 +25,64 @@ func testExists(path string, shouldExist bool, t *testing.T) {
 	}
 	if exists != shouldExist {
 		t.Errorf("Exists(%#v) = %v", path, exists)
+	}
+}
+
+func TestSameFileAndContentsIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+	if err := os.Symlink("fsutil.go", "fsutil.go.symlink"); err != nil {
+		t.Fatal("Failed to create symlink")
+	}
+	defer os.Remove("fsutil.go.symlink")
+	if err := os.Link("fsutil.go", "fsutil.go.hardlink"); err != nil {
+		t.Fatal("Failed to create hardlink")
+	}
+	defer os.Remove("fsutil.go.hardlink")
+
+	tests := map[[2]string]bool{
+		[2]string{"fsutil_test.go", "fsutil_test.go"}: true,
+		[2]string{"fsutil.go", "fsutil_test.go"}:      false,
+		[2]string{"fsutil_test.go", "fsutil.go"}:      false,
+		[2]string{"fsutil.go", "fsutil.go.symlink"}:   true,
+		[2]string{"fsutil.go", "fsutil.go.hardlink"}:  true,
+	}
+	// TODO: SameContents will probably FAIL if file B is just a longer version of file A.
+	// Write a unit test SameContents (using io.Readers) to catch this
+
+	for paths, shouldBeSame := range tests {
+		t.Run(
+			paths[0]+", "+paths[1],
+			func(t *testing.T) {
+				testSameFile(paths[0], paths[1], shouldBeSame, t)
+			},
+		)
+		t.Run(
+			paths[0]+", "+paths[1],
+			func(t *testing.T) {
+				testSameContents(paths[0], paths[1], shouldBeSame, t)
+			},
+		)
+	}
+}
+
+func testSameFile(pathA, pathB string, shouldBeSame bool, t *testing.T) {
+	same, err := SameFile(pathA, pathB)
+	if err != nil {
+		t.Errorf("SameFile(%#v, %#v) raised error: %v", pathA, pathB, err)
+	}
+	if same != shouldBeSame {
+		t.Errorf("SameFile(%#v, %#v) = %v", pathA, pathB, same)
+	}
+}
+
+func testSameContents(pathA, pathB string, shouldBeSame bool, t *testing.T) {
+	same, err := SameContents(pathA, pathB)
+	if err != nil {
+		t.Errorf("SameFile(%#v, %#v) raised error: %v", pathA, pathB, err)
+	}
+	if same != shouldBeSame {
+		t.Errorf("SameFile(%#v, %#v) = %v", pathA, pathB, same)
 	}
 }

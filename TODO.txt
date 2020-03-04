@@ -1,4 +1,8 @@
-Ducfile struct
+rclone for remotes?
+support multiple hash functions?
+consider dropping datasize dependency and using simple example here:
+    https://github.com/golang/go/wiki/Iota
+test for proper cleanup of partially-written files in all cases
 
 commands:
     track <targets>

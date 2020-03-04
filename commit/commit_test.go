@@ -32,7 +32,10 @@ func TestChecksumAndCopy(t *testing.T) {
 }
 
 func TestCommitIntegration(t *testing.T) {
+	t.Run("Copy", func(t *testing.T) { testCommitIntegration(CopyStrategy, t) })
+}
 
+func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -71,8 +74,7 @@ func TestCommitIntegration(t *testing.T) {
 		},
 	}
 
-	// TODO configure cache checkout method (e.g. hard link, symlink)
-	if err := Commit(&s, cacheDir); err != nil {
+	if err := Commit(&s, cacheDir, strategy); err != nil {
 		t.Error(err)
 	}
 
@@ -93,6 +95,12 @@ func TestCommitIntegration(t *testing.T) {
 	}
 	if !exists {
 		t.Errorf("File %#v should exist", fileCachePath)
+	}
+	if strategy == CopyStrategy {
+		// TODO check that files are distinct, with the same contents
+	}
+	if strategy == LinkStrategy {
+		// TODO check that workspace file is a link to cache file
 	}
 }
 
