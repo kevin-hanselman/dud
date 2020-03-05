@@ -48,8 +48,6 @@ func TestSameFileAndContentsIntegration(t *testing.T) {
 		{"fsutil.go", "fsutil.go.symlink"}:   true,
 		{"fsutil.go", "fsutil.go.hardlink"}:  true,
 	}
-	// TODO: SameContents will probably FAIL if file B is just a longer version of file A.
-	// Write a unit test SameContents (using io.Readers) to catch this
 
 	for paths, shouldBeSame := range tests {
 		t.Run(

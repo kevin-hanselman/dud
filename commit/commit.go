@@ -39,6 +39,7 @@ func Commit(s *stage.Stage, cacheDir string, strategy CheckoutStrategy) error {
 		if err != nil {
 			return errors.Wrapf(err, "creating tempfile in %#v failed", cacheDir)
 		}
+		// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
 		checksum, err := checksumAndCopy(srcFile, dstFile)
 		if err != nil {
 			return errors.Wrapf(err, "checksum of %#v failed", srcPath)
@@ -47,10 +48,19 @@ func Commit(s *stage.Stage, cacheDir string, strategy CheckoutStrategy) error {
 		if err = os.MkdirAll(dstDir, 0755); err != nil {
 			return errors.Wrapf(err, "mkdirs %#v failed", dstDir)
 		}
-		if err = os.Rename(dstFile.Name(), path.Join(dstDir, checksum[2:])); err != nil {
+		cachePath := path.Join(dstDir, checksum[2:])
+		if err = os.Rename(dstFile.Name(), cachePath); err != nil {
 			return errors.Wrapf(err, "mv %#v failed", dstFile)
 		}
 		s.Outputs[i].Checksum = checksum
+		if strategy == LinkStrategy {
+			if err := os.Remove(srcPath); err != nil {
+				return errors.Wrapf(err, "rm %#v failed", srcPath)
+			}
+			if err = os.Symlink(cachePath, srcPath); err != nil {
+				return errors.Wrapf(err, "link %#v -> %#v failed", cachePath, srcPath)
+			}
+		}
 	}
 	return nil
 }

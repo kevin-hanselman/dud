@@ -33,6 +33,7 @@ func TestChecksumAndCopy(t *testing.T) {
 
 func TestCommitIntegration(t *testing.T) {
 	t.Run("Copy", func(t *testing.T) { testCommitIntegration(CopyStrategy, t) })
+	t.Run("Copy", func(t *testing.T) { testCommitIntegration(LinkStrategy, t) })
 }
 
 func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
@@ -75,7 +76,7 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 	}
 
 	if err := Commit(&s, cacheDir, strategy); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	if diff := cmp.Diff(expected, s); diff != "" {
@@ -87,20 +88,66 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 		t.Error(err)
 	}
 	if !exists {
-		t.Errorf("File %#v should exist", fileWorkspacePath)
+		t.Errorf("file %#v should exist", fileWorkspacePath)
 	}
 	exists, err = fsutil.Exists(fileCachePath)
 	if err != nil {
 		t.Error(err)
 	}
 	if !exists {
-		t.Errorf("File %#v should exist", fileCachePath)
+		t.Errorf("file %#v should exist", fileCachePath)
 	}
-	if strategy == CopyStrategy {
-		// TODO check that files are distinct, with the same contents
-	}
-	if strategy == LinkStrategy {
-		// TODO check that workspace file is a link to cache file
+	// TODO: check cache files are read-only
+	switch strategy {
+	case CopyStrategy:
+		// check that files are distinct, but have the same contents
+		sameFile, err := fsutil.SameFile(fileWorkspacePath, fileCachePath)
+		if err != nil {
+			t.Error(err)
+		}
+		if sameFile {
+			t.Errorf(
+				"files %#v and %#v should not be the same",
+				fileWorkspacePath,
+				fileCachePath,
+			)
+		}
+		sameContents, err := fsutil.SameContents(fileWorkspacePath, fileCachePath)
+		if err != nil {
+			t.Error(err)
+		}
+		if !sameContents {
+			t.Errorf(
+				"files %#v and %#v should have the same contents",
+				fileWorkspacePath,
+				fileCachePath,
+			)
+		}
+	case LinkStrategy:
+		// check that workspace file is a link to cache file
+		sameFile, err := fsutil.SameFile(fileWorkspacePath, fileCachePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !sameFile {
+			t.Fatalf(
+				"files %#v and %#v should be the same file",
+				fileWorkspacePath,
+				fileCachePath,
+			)
+		}
+		linkDst, err := os.Readlink(fileWorkspacePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if linkDst != fileCachePath {
+			t.Fatalf(
+				"file %#v links to %#v, want %#v",
+				fileWorkspacePath,
+				linkDst,
+				fileCachePath,
+			)
+		}
 	}
 }
 

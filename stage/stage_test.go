@@ -17,20 +17,28 @@ func TestSetChecksum(t *testing.T) {
 		},
 	}
 
-	expected := s
-	expected.Checksum = "ab6bf37cc6943336aa2ebcdfac102984c74f1e1f"
-
 	s.SetChecksum()
 
-	if diff := cmp.Diff(expected, s); diff != "" {
-		t.Errorf("stage.SetChecksum() -want +got:\n%s", diff)
+	if s.Checksum == "" {
+		t.Fatal("stage.SetChecksum() didn't change (empty) checksum")
 	}
+
+	expected := s
 
 	s.Checksum = "this should not affect the checksum"
 
 	s.SetChecksum()
 
 	if diff := cmp.Diff(expected, s); diff != "" {
-		t.Errorf("stage.SetChecksum() -want +got:\n%s", diff)
+		t.Fatalf("stage.SetChecksum() -want +got:\n%s", diff)
+	}
+
+	origChecksum := s.Checksum
+	s.WorkingDir = "this should affect the checksum"
+
+	s.SetChecksum()
+
+	if s.Checksum == origChecksum {
+		t.Fatal("changing stage.WorkingDir should have affected checksum")
 	}
 }

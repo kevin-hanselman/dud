@@ -49,13 +49,13 @@ func SameContents(pathA, pathB string) (bool, error) {
 	bytesA := make([]byte, 8*datasize.MB)
 	bytesB := make([]byte, 8*datasize.MB)
 	for {
-		nBytesReadA, readErr := fileA.Read(bytesA)
-		if readErr != nil && readErr != io.EOF {
-			return false, errors.Wrapf(readErr, "read %#v failed", pathA)
+		nBytesReadA, errA := fileA.Read(bytesA)
+		if errA != nil && errA != io.EOF {
+			return false, errors.Wrapf(errA, "read %#v failed", pathA)
 		}
-		nBytesReadB, readErr := fileB.Read(bytesB)
-		if readErr != nil && readErr != io.EOF {
-			return false, errors.Wrapf(readErr, "read %#v failed", pathB)
+		nBytesReadB, errB := fileB.Read(bytesB)
+		if errB != nil && errB != io.EOF {
+			return false, errors.Wrapf(errB, "read %#v failed", pathB)
 		}
 		if nBytesReadA != nBytesReadB {
 			return false, nil
@@ -63,8 +63,11 @@ func SameContents(pathA, pathB string) (bool, error) {
 		if !bytes.Equal(bytesA, bytesB) {
 			return false, nil
 		}
-		if readErr == io.EOF {
-			return true, nil
+		if errA == io.EOF {
+			if errB == io.EOF {
+				return true, nil
+			}
+			return false, nil
 		}
 	}
 }
