@@ -1,4 +1,4 @@
-.PHONY: build docker_build test test-int %-test-cov bench cover fmt clean shell
+.PHONY: build docker_build test test-int %-test-cov bench cover fmt clean tidy
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 
@@ -37,3 +37,6 @@ fmt:
 clean:
 	rm -f *.out
 	go clean ./...
+
+tidy:
+	go mod tidy -v
