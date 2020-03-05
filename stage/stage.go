@@ -19,6 +19,7 @@ type Stage struct {
 
 // SetChecksum calculates the checksum of a Stage (sans Checksum field)
 // then sets the Checksum field accordingly.
+// TODO: make private (and call inside Commit)?
 func (s *Stage) SetChecksum() error {
 	s.Checksum = ""
 

@@ -6,7 +6,7 @@ import (
 	"github.com/kevlar1818/duc/stage"
 )
 
-var fileExists func(string) (bool, error) = fsutil.Exists
+var fileExists = fsutil.Exists
 
 // Track creates a stage for tracking the given paths.
 func Track(paths ...string) (s stage.Stage, err error) {

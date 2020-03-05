@@ -1,4 +1,4 @@
-.PHONY: build docker_build test test-int %-test-cov bench cover fmt clean tidy
+.PHONY: build docker_build test test-int %-test-cov bench cover fmt clean tidy loc
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 
@@ -40,3 +40,7 @@ clean:
 
 tidy:
 	go mod tidy -v
+
+loc:
+	tokei --sort lines
+	tokei --sort lines --exclude "*_test.go"
