@@ -2,6 +2,8 @@ package stage
 
 import (
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/testutil"
 	"io/ioutil"
@@ -14,7 +16,7 @@ func TestSetChecksum(t *testing.T) {
 	s := Stage{
 		Checksum:   "",
 		WorkingDir: "foo",
-		Outputs: []Artifact{
+		Outputs: []artifact.Artifact{
 			{
 				Checksum: "abc",
 				Path:     "bar.txt",
@@ -49,11 +51,11 @@ func TestSetChecksum(t *testing.T) {
 }
 
 func TestCommitIntegration(t *testing.T) {
-	t.Run("Copy", func(t *testing.T) { testCommitIntegration(CopyStrategy, t) })
-	t.Run("Copy", func(t *testing.T) { testCommitIntegration(LinkStrategy, t) })
+	t.Run("Copy", func(t *testing.T) { testCommitIntegration(cache.CopyStrategy, t) })
+	t.Run("Copy", func(t *testing.T) { testCommitIntegration(cache.LinkStrategy, t) })
 }
 
-func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
+func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -74,7 +76,7 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 
 	s := Stage{
 		WorkingDir: workDir,
-		Outputs: []Artifact{
+		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
 				Path:     "foo.txt",
@@ -84,7 +86,7 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 
 	expected := Stage{
 		WorkingDir: workDir,
-		Outputs: []Artifact{
+		Outputs: []artifact.Artifact{
 			{
 				Checksum: fileChecksum,
 				Path:     "foo.txt",
@@ -116,7 +118,7 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 	}
 	// TODO: check cache files are read-only
 	switch strategy {
-	case CopyStrategy:
+	case cache.CopyStrategy:
 		// check that files are distinct, but have the same contents
 		sameFile, err := fsutil.SameFile(fileWorkspacePath, fileCachePath)
 		if err != nil {
@@ -140,7 +142,7 @@ func testCommitIntegration(strategy CheckoutStrategy, t *testing.T) {
 				fileCachePath,
 			)
 		}
-	case LinkStrategy:
+	case cache.LinkStrategy:
 		// check that workspace file is a link to cache file
 		sameFile, err := fsutil.SameFile(fileWorkspacePath, fileCachePath)
 		if err != nil {

@@ -1,6 +1,7 @@
 package track
 
 import (
+	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/stage"
 	"io/ioutil"
 	"os"
@@ -16,7 +17,7 @@ func TestTrackOnePath(t *testing.T) {
 	defer func() { fileExists = fileExistsOrig }()
 	path := "foobar.txt"
 	expected := stage.Stage{
-		Outputs: []stage.Artifact{
+		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
 				Path:     path,
@@ -24,14 +25,14 @@ func TestTrackOnePath(t *testing.T) {
 		},
 	}
 
-	stage, err := Track(path)
+	stageObj, err := Track(path)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	if !reflect.DeepEqual(stage, expected) {
-		t.Errorf("Track(%s) = %#v, want %#v", path, stage, expected)
+	if !reflect.DeepEqual(stageObj, expected) {
+		t.Errorf("Track(%s) = %#v, want %#v", path, stageObj, expected)
 	}
 }
 
@@ -43,7 +44,7 @@ func TestTrackMultiplePaths(t *testing.T) {
 	defer func() { fileExists = fileExistsOrig }()
 	paths := []string{"foo.txt", "bar.bin"}
 	expected := stage.Stage{
-		Outputs: []stage.Artifact{
+		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
 				Path:     "foo.txt",
@@ -55,14 +56,14 @@ func TestTrackMultiplePaths(t *testing.T) {
 		},
 	}
 
-	stage, err := Track(paths...)
+	stageObj, err := Track(paths...)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	if !reflect.DeepEqual(stage, expected) {
-		t.Errorf("Track(%s) = %#v, want %#v", paths, stage, expected)
+	if !reflect.DeepEqual(stageObj, expected) {
+		t.Errorf("Track(%s) = %#v, want %#v", paths, stageObj, expected)
 	}
 }
 
@@ -87,7 +88,7 @@ func TestTrackIntegration(t *testing.T) {
 	}
 
 	expected := stage.Stage{
-		Outputs: []stage.Artifact{
+		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
 				Path:     paths[0],
