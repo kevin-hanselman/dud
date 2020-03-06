@@ -41,6 +41,9 @@ func (a *Artifact) Commit(workingDir, cacheDir string, strategy cache.CheckoutSt
 	if err = os.Rename(dstFile.Name(), cachePath); err != nil {
 		return errors.Wrapf(err, "mv %#v failed", dstFile)
 	}
+	if err := os.Chmod(cachePath, 0400); err != nil {
+		return errors.Wrapf(err, "chmod %#v failed", cachePath)
+	}
 	a.Checksum = checksum
 	if strategy == cache.LinkStrategy {
 		if err := os.Remove(srcPath); err != nil {

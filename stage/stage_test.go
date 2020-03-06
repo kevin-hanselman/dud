@@ -109,14 +109,13 @@ func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 	if !exists {
 		t.Errorf("file %#v should exist", fileWorkspacePath)
 	}
-	exists, err = fsutil.Exists(fileCachePath)
+	cachedFileInfo, err := os.Stat(fileCachePath)
 	if err != nil {
 		t.Error(err)
 	}
-	if !exists {
-		t.Errorf("file %#v should exist", fileCachePath)
+	if cachedFileInfo.Mode() != 0400 {
+		t.Errorf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0400)
 	}
-	// TODO: check cache files are read-only
 	switch strategy {
 	case cache.CopyStrategy:
 		// check that files are distinct, but have the same contents
