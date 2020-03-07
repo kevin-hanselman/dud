@@ -1,8 +1,9 @@
-package artifact
+package cache
 
 import (
-	"github.com/kevlar1818/duc/cache"
+	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"io/ioutil"
 	"os"
@@ -14,11 +15,11 @@ func TestCheckoutIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	t.Run("Copy", func(t *testing.T) { testCheckoutIntegration(cache.CopyStrategy, t) })
-	t.Run("Link", func(t *testing.T) { testCheckoutIntegration(cache.LinkStrategy, t) })
+	t.Run("Copy", func(t *testing.T) { testCheckoutIntegration(strategy.CopyStrategy, t) })
+	t.Run("Link", func(t *testing.T) { testCheckoutIntegration(strategy.LinkStrategy, t) })
 }
 
-func testCheckoutIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
+func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -29,6 +30,7 @@ func testCheckoutIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 	}
 	defer os.RemoveAll(cacheDir)
 	defer os.RemoveAll(workDir)
+	cache := LocalCache{dir: cacheDir}
 
 	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
 	fileCacheDir := path.Join(cacheDir, fileChecksum[:2])
@@ -41,30 +43,31 @@ func testCheckoutIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 		t.Fatal(err)
 	}
 
-	art := Artifact{Checksum: fileChecksum, Path: "foo.txt"}
+	art := artifact.Artifact{Checksum: fileChecksum, Path: "foo.txt"}
 
-	if err := art.Checkout(workDir, cacheDir, strategy); err != nil {
+	if err := cache.Checkout(workDir, &art, strat); err != nil {
 		t.Fatal(err)
 	}
 
-	assertCheckoutExpectations(strategy, fileWorkspacePath, fileCachePath, t)
+	assertCheckoutExpectations(strat, fileWorkspacePath, fileCachePath, t)
 }
 
 func TestCommitIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	t.Run("Copy", func(t *testing.T) { testCommitIntegration(cache.CopyStrategy, t) })
-	t.Run("Link", func(t *testing.T) { testCommitIntegration(cache.LinkStrategy, t) })
+	t.Run("Copy", func(t *testing.T) { testCommitIntegration(strategy.CopyStrategy, t) })
+	t.Run("Link", func(t *testing.T) { testCommitIntegration(strategy.LinkStrategy, t) })
 }
 
-func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
+func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	cacheDir, workDir, err := testutil.CreateTempDirs()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(cacheDir)
 	defer os.RemoveAll(workDir)
+	cache := LocalCache{dir: cacheDir}
 
 	fileWorkspacePath := path.Join(workDir, "foo.txt")
 	if err = ioutil.WriteFile(fileWorkspacePath, []byte("Hello, World!"), 0644); err != nil {
@@ -73,12 +76,12 @@ func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
 	fileCachePath := path.Join(cacheDir, fileChecksum[:2], fileChecksum[2:])
 
-	art := Artifact{
+	art := artifact.Artifact{
 		Checksum: "",
 		Path:     "foo.txt",
 	}
 
-	if err := art.Commit(workDir, cacheDir, strategy); err != nil {
+	if err := cache.Commit(workDir, &art, strat); err != nil {
 		t.Fatal(err)
 	}
 
@@ -101,12 +104,12 @@ func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0444)
 	}
 
-	assertCheckoutExpectations(strategy, fileWorkspacePath, fileCachePath, t)
+	assertCheckoutExpectations(strat, fileWorkspacePath, fileCachePath, t)
 }
 
-func assertCheckoutExpectations(strategy cache.CheckoutStrategy, fileWorkspacePath, fileCachePath string, t *testing.T) {
-	switch strategy {
-	case cache.CopyStrategy:
+func assertCheckoutExpectations(strat strategy.CheckoutStrategy, fileWorkspacePath, fileCachePath string, t *testing.T) {
+	switch strat {
+	case strategy.CopyStrategy:
 		// check that files are distinct, but have the same contents
 		sameFile, err := fsutil.SameFile(fileWorkspacePath, fileCachePath)
 		if err != nil {
@@ -130,7 +133,7 @@ func assertCheckoutExpectations(strategy cache.CheckoutStrategy, fileWorkspacePa
 				fileCachePath,
 			)
 		}
-	case cache.LinkStrategy:
+	case strategy.LinkStrategy:
 		// check that workspace file is a link to cache file
 		sameFile, err := fsutil.SameFile(fileWorkspacePath, fileCachePath)
 		if err != nil {

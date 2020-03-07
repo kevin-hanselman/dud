@@ -4,8 +4,9 @@ import (
 	"crypto/sha1"
 	"encoding/gob"
 	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/cache"
+	cachePkg "github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
 )
 
@@ -33,9 +34,9 @@ func (s *Stage) SetChecksum() error {
 }
 
 // Commit commits all Outputs of the Stage.
-func (s *Stage) Commit(cacheDir string, strategy cache.CheckoutStrategy) error {
+func (s *Stage) Commit(cache cachePkg.Cache, strategy strategy.CheckoutStrategy) error {
 	for i := range s.Outputs {
-		if err := s.Outputs[i].Commit(s.WorkingDir, cacheDir, strategy); err != nil {
+		if err := cache.Commit(s.WorkingDir, &s.Outputs[i], strategy); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage commit failed")
 		}
@@ -45,9 +46,9 @@ func (s *Stage) Commit(cacheDir string, strategy cache.CheckoutStrategy) error {
 
 // Checkout checks out all Outputs of the Stage.
 // TODO: will eventually checkout all inputs as well
-func (s *Stage) Checkout(cacheDir string, strategy cache.CheckoutStrategy) error {
+func (s *Stage) Checkout(cache cachePkg.Cache, strategy strategy.CheckoutStrategy) error {
 	for i := range s.Outputs {
-		if err := s.Outputs[i].Checkout(s.WorkingDir, cacheDir, strategy); err != nil {
+		if err := cache.Checkout(s.WorkingDir, &s.Outputs[i], strategy); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage checkout failed")
 		}
