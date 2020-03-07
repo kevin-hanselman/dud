@@ -62,14 +62,14 @@ func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 
 	cacheDir, workDir, err := testutil.CreateTempDirs()
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	defer os.RemoveAll(cacheDir)
 	defer os.RemoveAll(workDir)
 
 	fileWorkspacePath := path.Join(workDir, "foo.txt")
 	if err = ioutil.WriteFile(fileWorkspacePath, []byte("Hello, World!"), 0644); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
 	fileCachePath := path.Join(cacheDir, fileChecksum[:2], fileChecksum[2:])
@@ -99,32 +99,32 @@ func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 	}
 
 	if diff := cmp.Diff(expected, s); diff != "" {
-		t.Errorf("Commit(stage) -want +got:\n%s", diff)
+		t.Fatalf("Commit(stage) -want +got:\n%s", diff)
 	}
 
 	exists, err := fsutil.Exists(fileWorkspacePath)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if !exists {
-		t.Errorf("file %#v should exist", fileWorkspacePath)
+		t.Fatalf("file %#v should exist", fileWorkspacePath)
 	}
 	cachedFileInfo, err := os.Stat(fileCachePath)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	if cachedFileInfo.Mode() != 0400 {
-		t.Errorf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0400)
+	if cachedFileInfo.Mode() != 0444 {
+		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0444)
 	}
 	switch strategy {
 	case cache.CopyStrategy:
 		// check that files are distinct, but have the same contents
 		sameFile, err := fsutil.SameFile(fileWorkspacePath, fileCachePath)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 		if sameFile {
-			t.Errorf(
+			t.Fatalf(
 				"files %#v and %#v should not be the same",
 				fileWorkspacePath,
 				fileCachePath,
@@ -132,10 +132,10 @@ func testCommitIntegration(strategy cache.CheckoutStrategy, t *testing.T) {
 		}
 		sameContents, err := fsutil.SameContents(fileWorkspacePath, fileCachePath)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 		if !sameContents {
-			t.Errorf(
+			t.Fatalf(
 				"files %#v and %#v should have the same contents",
 				fileWorkspacePath,
 				fileCachePath,

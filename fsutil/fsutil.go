@@ -82,13 +82,9 @@ func HashToHexString(h hash.Hash) string {
 }
 
 // ChecksumAndCopy copies the contents of reader to writer and returns the hash of the
-// bytes as a hex string.
-//
-// os.Rename will be faster than copying if we aren't crossing filesystems. The
-// caller of this function should account for this and pass nil as writer to
-// prevent copying data.
-// TODO: This function should have 100% coverage
+// bytes as a hex string. Passing nil as writer skips writing and simply checksums reader.
 func ChecksumAndCopy(reader io.Reader, writer io.Writer) (string, error) {
+	// TODO: This function should have 100% coverage
 	h := sha1.New()
 	b := make([]byte, 8*datasize.MB)
 	for {

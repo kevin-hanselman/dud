@@ -32,12 +32,24 @@ func (s *Stage) SetChecksum() error {
 	return nil
 }
 
-// Commit calls artifact.Commit on all Outputs of the Stage
+// Commit commits all Outputs of the Stage.
 func (s *Stage) Commit(cacheDir string, strategy cache.CheckoutStrategy) error {
 	for i := range s.Outputs {
 		if err := s.Outputs[i].Commit(s.WorkingDir, cacheDir, strategy); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage commit failed")
+		}
+	}
+	return nil
+}
+
+// Checkout checks out all Outputs of the Stage.
+// TODO: will eventually checkout all inputs as well
+func (s *Stage) Checkout(cacheDir string, strategy cache.CheckoutStrategy) error {
+	for i := range s.Outputs {
+		if err := s.Outputs[i].Checkout(s.WorkingDir, cacheDir, strategy); err != nil {
+			// TODO: unwind anything?
+			return errors.Wrap(err, "stage checkout failed")
 		}
 	}
 	return nil
