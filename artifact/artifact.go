@@ -68,6 +68,7 @@ func (a *Artifact) Commit(workingDir, cacheDir string, strategy cache.CheckoutSt
 // Checkout finds the artifact in the cache and adds a copy of/link to said
 // artifact in the working directory.
 func (a *Artifact) Checkout(workingDir, cacheDir string, strategy cache.CheckoutStrategy) error {
+	// TODO: check for empty a.Checksum
 	dstPath := path.Join(workingDir, a.Path)
 	srcPath := path.Join(cacheDir, a.Checksum[:2], a.Checksum[2:])
 	switch strategy {
