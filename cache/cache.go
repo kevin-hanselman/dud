@@ -22,7 +22,7 @@ type LocalCache struct {
 	dir string
 }
 
-// Commit calculates the checksum the artifact file, moves it to the cache, then checks it out.
+// Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
 func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	srcPath := path.Join(workingDir, art.Path)
 	srcFile, err := os.Open(srcPath)
