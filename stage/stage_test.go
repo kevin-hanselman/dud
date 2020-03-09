@@ -22,6 +22,11 @@ func (c *mockCache) Checkout(workingDir string, art *artifact.Artifact, strat st
 	return args.Error(0)
 }
 
+func (c *mockCache) CachePathForArtifact(art artifact.Artifact) (string, error) {
+	args := c.Called(art)
+	return args.String(0), args.Error(1)
+}
+
 func TestSetChecksum(t *testing.T) {
 	s := Stage{
 		Checksum:   "",

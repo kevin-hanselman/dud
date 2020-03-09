@@ -1,4 +1,4 @@
-.PHONY: build docker_build test test-int %-test-cov bench cover fmt clean tidy loc
+.PHONY: build docker_build test test-int %-test-cov bench cover fmt clean tidy loc depgraph
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 
@@ -44,3 +44,8 @@ tidy:
 loc:
 	tokei --sort lines
 	tokei --sort lines --exclude "*_test.go"
+
+depgraph:
+	godepgraph -nostdlib $(wildcard **/*.go) | dot -Tpng -o deps.png
+	feh deps.png
+	rm deps.png

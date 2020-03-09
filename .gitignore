@@ -1,5 +1,6 @@
 .tags
 duc
+*.png
 
 # Binaries for programs and plugins
 *.exe

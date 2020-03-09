@@ -15,11 +15,21 @@ import (
 type Cache interface {
 	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
+	CachePathForArtifact(art artifact.Artifact) (string, error)
 }
 
 // A LocalCache is a concrete Cache that uses the local filesystem.
 type LocalCache struct {
-	dir string
+	Dir string
+}
+
+// CachePathForArtifact returns the expected location of the given artifact in the cache.
+// If the artifact has an invalid (e.g. empty) checksum value, this function returns an error.
+func (cache *LocalCache) CachePathForArtifact(art artifact.Artifact) (string, error) {
+	if len(art.Checksum) < 3 {
+		return "", fmt.Errorf("invalid checksum: %#v", art.Checksum)
+	}
+	return path.Join(cache.Dir, art.Checksum[:2], art.Checksum[2:]), nil
 }
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
@@ -30,10 +40,10 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 	if err != nil {
 		return errors.Wrapf(err, "opening %#v failed", srcPath)
 	}
-	dstFile, err := ioutil.TempFile(cache.dir, "")
+	dstFile, err := ioutil.TempFile(cache.Dir, "")
 	defer dstFile.Close()
 	if err != nil {
-		return errors.Wrapf(err, "creating tempfile in %#v failed", cache.dir)
+		return errors.Wrapf(err, "creating tempfile in %#v failed", cache.Dir)
 	}
 	// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
 	// OR, if we're using CopyStrategy
@@ -41,7 +51,7 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 	if err != nil {
 		return errors.Wrapf(err, "checksum of %#v failed", srcPath)
 	}
-	dstDir := path.Join(cache.dir, checksum[:2])
+	dstDir := path.Join(cache.Dir, checksum[:2])
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
 		return errors.Wrapf(err, "mkdirs %#v failed", dstDir)
 	}
@@ -69,7 +79,7 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	// TODO: check for empty a.Checksum
 	dstPath := path.Join(workingDir, art.Path)
-	srcPath := path.Join(cache.dir, art.Checksum[:2], art.Checksum[2:])
+	srcPath := path.Join(cache.Dir, art.Checksum[:2], art.Checksum[2:])
 	switch strat {
 	case strategy.CopyStrategy:
 		srcFile, err := os.Open(srcPath)

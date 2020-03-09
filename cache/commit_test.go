@@ -20,27 +20,27 @@ func TestCommitIntegration(t *testing.T) {
 }
 
 func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
-	cacheDir, workDir, err := testutil.CreateTempDirs()
+	dirs, err := testutil.CreateTempDirs()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(cacheDir)
-	defer os.RemoveAll(workDir)
-	cache := LocalCache{dir: cacheDir}
+	defer os.RemoveAll(dirs.CacheDir)
+	defer os.RemoveAll(dirs.WorkDir)
+	cache := LocalCache{Dir: dirs.CacheDir}
 
-	fileWorkspacePath := path.Join(workDir, "foo.txt")
+	fileWorkspacePath := path.Join(dirs.WorkDir, "foo.txt")
 	if err = ioutil.WriteFile(fileWorkspacePath, []byte("Hello, World!"), 0644); err != nil {
 		t.Fatal(err)
 	}
 	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
-	fileCachePath := path.Join(cacheDir, fileChecksum[:2], fileChecksum[2:])
+	fileCachePath := path.Join(dirs.CacheDir, fileChecksum[:2], fileChecksum[2:])
 
 	art := artifact.Artifact{
 		Checksum: "",
 		Path:     "foo.txt",
 	}
 
-	if err := cache.Commit(workDir, &art, strat); err != nil {
+	if err := cache.Commit(dirs.WorkDir, &art, strat); err != nil {
 		t.Fatal(err)
 	}
 

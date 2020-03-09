@@ -19,18 +19,18 @@ func TestCheckoutIntegration(t *testing.T) {
 }
 
 func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
-	cacheDir, workDir, err := testutil.CreateTempDirs()
+	dirs, err := testutil.CreateTempDirs()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(cacheDir)
-	defer os.RemoveAll(workDir)
-	cache := LocalCache{dir: cacheDir}
+	defer os.RemoveAll(dirs.CacheDir)
+	defer os.RemoveAll(dirs.WorkDir)
+	cache := LocalCache{Dir: dirs.CacheDir}
 
 	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
-	fileCacheDir := path.Join(cacheDir, fileChecksum[:2])
+	fileCacheDir := path.Join(dirs.CacheDir, fileChecksum[:2])
 	fileCachePath := path.Join(fileCacheDir, fileChecksum[2:])
-	fileWorkspacePath := path.Join(workDir, "foo.txt")
+	fileWorkspacePath := path.Join(dirs.WorkDir, "foo.txt")
 	if err := os.Mkdir(fileCacheDir, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 
 	art := artifact.Artifact{Checksum: fileChecksum, Path: "foo.txt"}
 
-	if err := cache.Checkout(workDir, &art, strat); err != nil {
+	if err := cache.Checkout(dirs.WorkDir, &art, strat); err != nil {
 		t.Fatal(err)
 	}
 
