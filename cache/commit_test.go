@@ -48,7 +48,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 		t.Fatalf("artifact.Commit checksum = %#v, expected %#v", art.Checksum, fileChecksum)
 	}
 
-	exists, err := fsutil.Exists(fileWorkspacePath)
+	exists, err := fsutil.Exists(fileWorkspacePath, false)
 	if err != nil {
 		t.Fatal(err)
 	}

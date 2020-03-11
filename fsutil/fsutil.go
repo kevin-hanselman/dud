@@ -12,9 +12,17 @@ import (
 	"os"
 )
 
-// Exists returns true if a file or directory exists, otherwise false.
-func Exists(path string) (bool, error) {
-	_, err := os.Stat(path)
+// Exists returns true if path is an existing file or directory, otherwise it
+// returns false. If followLinks is true, then Exists will attempt to follow
+// links to their target and report said target's existence. If followLinks is
+// false, Exist will operate on the link itself.
+func Exists(path string, followLinks bool) (bool, error) {
+	var err error
+	if followLinks {
+		_, err = os.Stat(path)
+	} else {
+		_, err = os.Lstat(path)
+	}
 	if err == nil {
 		return true, nil
 	}

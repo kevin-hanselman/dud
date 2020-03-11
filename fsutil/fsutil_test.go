@@ -2,6 +2,7 @@ package fsutil
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/c2h5oh/datasize"
 	"math/rand"
 	"os"
@@ -17,12 +18,50 @@ func TestExists(t *testing.T) {
 		".":                true,
 	}
 	for path, shouldExist := range tests {
-		t.Run(path, func(t *testing.T) { testExists(path, shouldExist, t) })
+		// Since none of these files are symlinks, followLinks should be irrelevant.
+		for _, followLinks := range [2]bool{true, false} {
+			t.Run(
+				fmt.Sprintf("%s_followLinks=%v", path, followLinks),
+				func(t *testing.T) { testExists(path, followLinks, shouldExist, t) },
+			)
+		}
 	}
 }
 
-func testExists(path string, shouldExist bool, t *testing.T) {
-	exists, err := Exists(path)
+func TestExistsIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+	if err := os.Symlink("fsutil.go", "fsutil.go.symlink"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("fsutil.go.symlink")
+	if err := os.Symlink("foo.txt", "bar.txt"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("bar.txt")
+
+	tests := map[string]bool{
+		"./fsutil.go.symlink": true,
+		"./bar.txt":           false,
+	}
+	for path, shouldExist := range tests {
+		for _, followLinks := range [2]bool{true, false} {
+			// Override test mapping if we're inspecting the links themselves,
+			// as we created both of them above.
+			if !followLinks {
+				shouldExist = true
+			}
+			t.Run(
+				fmt.Sprintf("%s_followLinks=%v", path, followLinks),
+				func(t *testing.T) { testExists(path, followLinks, shouldExist, t) },
+			)
+		}
+	}
+}
+
+func testExists(path string, followLinks, shouldExist bool, t *testing.T) {
+	exists, err := Exists(path, followLinks)
 	if err != nil {
 		t.Errorf("Exists(%#v) raised error: %v", path, err)
 	}
@@ -36,11 +75,11 @@ func TestSameFileAndContentsIntegration(t *testing.T) {
 		t.Skip()
 	}
 	if err := os.Symlink("fsutil.go", "fsutil.go.symlink"); err != nil {
-		t.Fatal("Failed to create symlink")
+		t.Fatal(err)
 	}
 	defer os.Remove("fsutil.go.symlink")
 	if err := os.Link("fsutil.go", "fsutil.go.hardlink"); err != nil {
-		t.Fatal("Failed to create hardlink")
+		t.Fatal(err)
 	}
 	defer os.Remove("fsutil.go.hardlink")
 
@@ -54,13 +93,13 @@ func TestSameFileAndContentsIntegration(t *testing.T) {
 
 	for paths, shouldBeSame := range tests {
 		t.Run(
-			paths[0]+", "+paths[1],
+			paths[0]+"=="+paths[1],
 			func(t *testing.T) {
 				testSameFile(paths[0], paths[1], shouldBeSame, t)
 			},
 		)
 		t.Run(
-			paths[0]+", "+paths[1],
+			paths[0]+"=="+paths[1],
 			func(t *testing.T) {
 				testSameContents(paths[0], paths[1], shouldBeSame, t)
 			},

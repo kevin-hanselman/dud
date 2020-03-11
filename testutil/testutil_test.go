@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"fmt"
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"os"
@@ -18,10 +19,10 @@ func TestCreateTempDirsIntegration(t *testing.T) {
 	}
 	defer os.RemoveAll(dirs.WorkDir)
 	defer os.RemoveAll(dirs.CacheDir)
-	if exists, _ := fsutil.Exists(dirs.WorkDir); !exists {
+	if exists, _ := fsutil.Exists(dirs.WorkDir, false); !exists {
 		t.Errorf("directory %#v doesn't exist", dirs.WorkDir)
 	}
-	if exists, _ := fsutil.Exists(dirs.CacheDir); !exists {
+	if exists, _ := fsutil.Exists(dirs.CacheDir, false); !exists {
 		t.Errorf("directory %#v doesn't exist", dirs.CacheDir)
 	}
 }
@@ -30,24 +31,13 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	t.Run("In cache, not in wspace", func(t *testing.T) {
-		testCreateArtifactTestCaseIntegration(true, IsAbsent, t)
-	})
-	t.Run("In cache, file in wspace", func(t *testing.T) {
-		testCreateArtifactTestCaseIntegration(true, IsRegularFile, t)
-	})
-	t.Run("In cache, link in wspace", func(t *testing.T) {
-		testCreateArtifactTestCaseIntegration(true, IsLink, t)
-	})
-	t.Run("Not in cache, not in wspace", func(t *testing.T) {
-		testCreateArtifactTestCaseIntegration(false, IsAbsent, t)
-	})
-	t.Run("Not in cache, file in wspace", func(t *testing.T) {
-		testCreateArtifactTestCaseIntegration(false, IsRegularFile, t)
-	})
-	t.Run("Not in cache, link in wspace", func(t *testing.T) {
-		testCreateArtifactTestCaseIntegration(false, IsRegularFile, t)
-	})
+	for _, inCache := range []bool{true, false} {
+		for _, wspaceStatus := range []ArtifactWorkspaceStatus{IsAbsent, IsRegularFile, IsLink} {
+			t.Run(fmt.Sprintf("%#v_%T", inCache, wspaceStatus), func(t *testing.T) {
+				testCreateArtifactTestCaseIntegration(inCache, wspaceStatus, t)
+			})
+		}
+	}
 }
 
 func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWorkspaceStatus, t *testing.T) {
@@ -63,7 +53,7 @@ func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWo
 	cachePath, err := ch.CachePathForArtifact(art)
 
 	// TODO perform similar (the same?) tests as in cache_test.assertCheckoutExpectations
-	exists, err := fsutil.Exists(workPath)
+	exists, err := fsutil.Exists(workPath, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +62,7 @@ func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWo
 		t.Errorf("Exists(%#v) = %#v", workPath, exists)
 	}
 
-	exists, err = fsutil.Exists(cachePath)
+	exists, err = fsutil.Exists(cachePath, false)
 	if err != nil {
 		t.Fatal(err)
 	}

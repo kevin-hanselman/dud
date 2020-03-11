@@ -11,7 +11,7 @@ import (
 
 func TestTrackOnePath(t *testing.T) {
 	fileExistsOrig := fileExists
-	fileExists = func(path string) (bool, error) {
+	fileExists = func(path string, followLinks bool) (bool, error) {
 		return true, nil
 	}
 	defer func() { fileExists = fileExistsOrig }()
@@ -38,7 +38,7 @@ func TestTrackOnePath(t *testing.T) {
 
 func TestTrackMultiplePaths(t *testing.T) {
 	fileExistsOrig := fileExists
-	fileExists = func(path string) (bool, error) {
+	fileExists = func(path string, followLinks bool) (bool, error) {
 		return true, nil
 	}
 	defer func() { fileExists = fileExistsOrig }()

@@ -56,10 +56,11 @@ func CreateArtifactTestCase(inCache bool, wspaceStatus ArtifactWorkspaceStatus) 
 		Path:     "hello.txt",
 	}
 
-	if inCache {
-		fileCacheDir := path.Join(dirs.CacheDir, art.Checksum[:2])
-		fileCachePath := path.Join(fileCacheDir, art.Checksum[2:])
+	fileCacheDir := path.Join(dirs.CacheDir, art.Checksum[:2])
+	fileCachePath := path.Join(fileCacheDir, art.Checksum[2:])
+	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
 
+	if inCache {
 		if err = os.Mkdir(fileCacheDir, 0755); err != nil {
 			return
 		}
@@ -68,13 +69,15 @@ func CreateArtifactTestCase(inCache bool, wspaceStatus ArtifactWorkspaceStatus) 
 		}
 	}
 
-	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
 	switch wspaceStatus {
 	case IsRegularFile:
 		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0644); err != nil {
 			return
 		}
-	case IsLink: // TODO
+	case IsLink:
+		if err = os.Symlink(fileCachePath, fileWorkspacePath); err != nil {
+			return
+		}
 	}
 	return
 }
