@@ -52,14 +52,13 @@ func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWo
 	ch := cache.LocalCache{Dir: dirs.CacheDir}
 	cachePath, err := ch.CachePathForArtifact(art)
 
-	// TODO perform similar (the same?) tests as in cache_test.assertCheckoutExpectations
 	exists, err := fsutil.Exists(workPath, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 	shouldExist := wspaceStatus != IsAbsent
 	if exists != shouldExist {
-		t.Errorf("Exists(%#v) = %#v", workPath, exists)
+		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
 	}
 
 	exists, err = fsutil.Exists(cachePath, false)
@@ -67,6 +66,27 @@ func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWo
 		t.Fatal(err)
 	}
 	if exists != inCache {
-		t.Errorf("Exists(%#v) = %#v", cachePath, exists)
+		t.Fatalf("Exists(%#v) = %#v", cachePath, exists)
+	}
+
+	switch wspaceStatus {
+	case IsLink:
+		linkDst, err := os.Readlink(workPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if linkDst != cachePath {
+			t.Errorf("%#v links to %#v, want %#v", workPath, linkDst, cachePath)
+		}
+	case IsRegularFile:
+		if inCache {
+			same, err := fsutil.SameContents(workPath, cachePath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !same {
+				t.Errorf("SameContents(%#v, %#v) = false", workPath, cachePath)
+			}
+		}
 	}
 }

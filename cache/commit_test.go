@@ -1,11 +1,9 @@
 package cache
 
 import (
-	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -20,7 +18,7 @@ func TestCommitIntegration(t *testing.T) {
 }
 
 func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
-	dirs, err := testutil.CreateTempDirs()
+	dirs, art, err := testutil.CreateArtifactTestCase(false, testutil.IsRegularFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,24 +26,18 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	defer os.RemoveAll(dirs.WorkDir)
 	cache := LocalCache{Dir: dirs.CacheDir}
 
-	fileWorkspacePath := path.Join(dirs.WorkDir, "foo.txt")
-	if err = ioutil.WriteFile(fileWorkspacePath, []byte("Hello, World!"), 0644); err != nil {
+	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
+	fileCachePath, err := cache.CachePathForArtifact(art)
+	if err != nil {
 		t.Fatal(err)
-	}
-	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
-	fileCachePath := path.Join(dirs.CacheDir, fileChecksum[:2], fileChecksum[2:])
-
-	art := artifact.Artifact{
-		Checksum: "",
-		Path:     "foo.txt",
 	}
 
 	if err := cache.Commit(dirs.WorkDir, &art, strat); err != nil {
 		t.Fatal(err)
 	}
 
-	if art.Checksum != fileChecksum {
-		t.Fatalf("artifact.Commit checksum = %#v, expected %#v", art.Checksum, fileChecksum)
+	if art.Checksum != art.Checksum {
+		t.Fatalf("artifact.Commit checksum = %#v, expected %#v", art.Checksum, art.Checksum)
 	}
 
 	exists, err := fsutil.Exists(fileWorkspacePath, false)

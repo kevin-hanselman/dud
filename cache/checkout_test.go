@@ -1,10 +1,8 @@
 package cache
 
 import (
-	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -19,7 +17,7 @@ func TestCheckoutIntegration(t *testing.T) {
 }
 
 func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
-	dirs, err := testutil.CreateTempDirs()
+	dirs, art, err := testutil.CreateArtifactTestCase(true, testutil.IsAbsent)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -27,18 +25,11 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	defer os.RemoveAll(dirs.WorkDir)
 	cache := LocalCache{Dir: dirs.CacheDir}
 
-	fileChecksum := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
-	fileCacheDir := path.Join(dirs.CacheDir, fileChecksum[:2])
-	fileCachePath := path.Join(fileCacheDir, fileChecksum[2:])
-	fileWorkspacePath := path.Join(dirs.WorkDir, "foo.txt")
-	if err := os.Mkdir(fileCacheDir, 0755); err != nil {
+	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
+	fileCachePath, err := cache.CachePathForArtifact(art)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err = ioutil.WriteFile(fileCachePath, []byte("Hello, World!"), 0444); err != nil {
-		t.Fatal(err)
-	}
-
-	art := artifact.Artifact{Checksum: fileChecksum, Path: "foo.txt"}
 
 	if err := cache.Checkout(dirs.WorkDir, &art, strat); err != nil {
 		t.Fatal(err)
