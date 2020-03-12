@@ -5,23 +5,40 @@ consider dropping datasize dependency and using simple example here:
 test for proper cleanup of partially-written files in all cases
 file locking during duc operation
 
+things:
+    Stage: the data structure holding tracked file/command metadata == Ducfile
+    Index: all Stages known the DUC in a repo
+    Commit List: all Stages that are... staged for the next commit
+                 always a subset of Index
+
 commands:
     track <targets>
         creates Ducfile showing targets to be added
         (doesn't compute checksums! field is left empty)
-    commit <Ducfile>
-        reads Ducfile
+    add <Ducfile> (combine with track somehow?)
+        if stage not in index, add to index
+        if stage not on commit list, add to commit list
+    restore/rm? <Ducfile>
+        remove from one or more of these locations:
+            index
+            commit list
+            cache
+            (use separate commands? map closely w/ git?)
+    commit [Ducfile]
+        if no Ducfile(s) passed, use commit list
         for each target:
             checksum target
             move target to cache
             checkout target
         updates Ducfile (including hash for Ducfile itself)
     checkout [Ducfile]
-        reads Ducfile
+        if no Ducfile(s) passed, use index
         for each target:
             looks up target hash
             checkout target from cache
+            if checkout would clobber existing workspace file, refuse unless --forced
     status [Ducfile]
+        if no Ducfile(s) passed, use index
         reads Ducfile
         for each target:
             return status of target:
