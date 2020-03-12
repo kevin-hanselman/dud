@@ -16,9 +16,10 @@ type Cache interface {
 	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	CachePathForArtifact(art artifact.Artifact) (string, error)
+	Status(workingDir string, art artifact.Artifact, strat strategy.CheckoutStrategy) (string, error)
 }
 
-// A LocalCache is a concrete Cache that uses the local filesystem.
+// A LocalCache is a concrete Cache that uses a directory on a local filesystem.
 type LocalCache struct {
 	Dir string
 }
@@ -79,7 +80,10 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	// TODO: check for empty a.Checksum
 	dstPath := path.Join(workingDir, art.Path)
-	srcPath := path.Join(cache.Dir, art.Checksum[:2], art.Checksum[2:])
+	srcPath, err := cache.CachePathForArtifact(*art)
+	if err != nil {
+		return err
+	}
 	switch strat {
 	case strategy.CopyStrategy:
 		srcFile, err := os.Open(srcPath)
@@ -100,10 +104,16 @@ func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, str
 			return fmt.Errorf("checkout %#v: found checksum %#v, expected %#v", dstPath, checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
-		// TODO: hardlink when possible
+		// TODO: hardlink when possible?
 		if err := os.Symlink(srcPath, dstPath); err != nil {
 			return errors.Wrapf(err, "link %#v -> %#v failed", srcPath, dstPath)
 		}
 	}
 	return nil
+}
+
+// Status reports the status of an Artifact in the Cache.
+func (cache *LocalCache) Status(workingDir string, art artifact.Artifact, strat strategy.CheckoutStrategy) (string, error) {
+	// TODO
+	return "up to date", nil
 }

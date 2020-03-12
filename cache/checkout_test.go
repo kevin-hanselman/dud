@@ -17,7 +17,9 @@ func TestCheckoutIntegration(t *testing.T) {
 }
 
 func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
-	dirs, art, err := testutil.CreateArtifactTestCase(true, testutil.IsAbsent)
+	dirs, art, err := testutil.CreateArtifactTestCase(
+		testutil.TestCaseArgs{InCache: true, WorkspaceFile: testutil.IsAbsent},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

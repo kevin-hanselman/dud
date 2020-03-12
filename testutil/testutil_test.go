@@ -31,17 +31,15 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	for _, inCache := range []bool{true, false} {
-		for _, wspaceStatus := range []ArtifactWorkspaceStatus{IsAbsent, IsRegularFile, IsLink} {
-			t.Run(fmt.Sprintf("%#v_%T", inCache, wspaceStatus), func(t *testing.T) {
-				testCreateArtifactTestCaseIntegration(inCache, wspaceStatus, t)
-			})
-		}
+	for _, args := range AllTestCases() {
+		t.Run(fmt.Sprintf("%#v", args), func(t *testing.T) {
+			testCreateArtifactTestCaseIntegration(args, t)
+		})
 	}
 }
 
-func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWorkspaceStatus, t *testing.T) {
-	dirs, art, err := CreateArtifactTestCase(inCache, wspaceStatus)
+func testCreateArtifactTestCaseIntegration(args TestCaseArgs, t *testing.T) {
+	dirs, art, err := CreateArtifactTestCase(args)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +54,7 @@ func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWo
 	if err != nil {
 		t.Fatal(err)
 	}
-	shouldExist := wspaceStatus != IsAbsent
+	shouldExist := args.WorkspaceFile != IsAbsent
 	if exists != shouldExist {
 		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
 	}
@@ -65,11 +63,11 @@ func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWo
 	if err != nil {
 		t.Fatal(err)
 	}
-	if exists != inCache {
+	if exists != args.InCache {
 		t.Fatalf("Exists(%#v) = %#v", cachePath, exists)
 	}
 
-	switch wspaceStatus {
+	switch args.WorkspaceFile {
 	case IsLink:
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {
@@ -79,7 +77,7 @@ func testCreateArtifactTestCaseIntegration(inCache bool, wspaceStatus ArtifactWo
 			t.Errorf("%#v links to %#v, want %#v", workPath, linkDst, cachePath)
 		}
 	case IsRegularFile:
-		if inCache {
+		if args.InCache {
 			same, err := fsutil.SameContents(workPath, cachePath)
 			if err != nil {
 				t.Fatal(err)

@@ -27,6 +27,10 @@ func (c *mockCache) CachePathForArtifact(art artifact.Artifact) (string, error) 
 	return args.String(0), args.Error(1)
 }
 
+func (c *mockCache) Status(workingDir string, art artifact.Artifact, strat strategy.CheckoutStrategy) (string, error) {
+	return "up to date", nil
+}
+
 func TestSetChecksum(t *testing.T) {
 	s := Stage{
 		Checksum:   "",
