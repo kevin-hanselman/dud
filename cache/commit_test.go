@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
@@ -19,7 +20,7 @@ func TestCommitIntegration(t *testing.T) {
 
 func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(
-		testutil.TestCaseArgs{InCache: false, WorkspaceFile: testutil.IsRegularFile},
+		artifact.Status{InCache: false, FileStatus: artifact.IsRegularFile},
 	)
 	if err != nil {
 		t.Fatal(err)

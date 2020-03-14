@@ -16,7 +16,7 @@ type Cache interface {
 	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	CachePathForArtifact(art artifact.Artifact) (string, error)
-	Status(workingDir string, art artifact.Artifact, strat strategy.CheckoutStrategy) (string, error)
+	Status(workingDir string, art artifact.Artifact) (artifact.Status, error)
 }
 
 // A LocalCache is a concrete Cache that uses a directory on a local filesystem.
@@ -113,7 +113,7 @@ func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, str
 }
 
 // Status reports the status of an Artifact in the Cache.
-func (cache *LocalCache) Status(workingDir string, art artifact.Artifact, strat strategy.CheckoutStrategy) (string, error) {
+func (cache *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
 	// TODO
-	return "up to date", nil
+	return artifact.Status{}, nil
 }

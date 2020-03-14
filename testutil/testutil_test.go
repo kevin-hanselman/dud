@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"fmt"
+	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"os"
@@ -38,8 +39,8 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 	}
 }
 
-func testCreateArtifactTestCaseIntegration(args TestCaseArgs, t *testing.T) {
-	dirs, art, err := CreateArtifactTestCase(args)
+func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T) {
+	dirs, art, err := CreateArtifactTestCase(status)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +55,7 @@ func testCreateArtifactTestCaseIntegration(args TestCaseArgs, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	shouldExist := args.WorkspaceFile != IsAbsent
+	shouldExist := status.FileStatus != artifact.IsAbsent
 	if exists != shouldExist {
 		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
 	}
@@ -63,12 +64,12 @@ func testCreateArtifactTestCaseIntegration(args TestCaseArgs, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if exists != args.InCache {
+	if exists != status.InCache {
 		t.Fatalf("Exists(%#v) = %#v", cachePath, exists)
 	}
 
-	switch args.WorkspaceFile {
-	case IsLink:
+	switch status.FileStatus {
+	case artifact.IsLink:
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {
 			t.Fatal(err)
@@ -76,8 +77,8 @@ func testCreateArtifactTestCaseIntegration(args TestCaseArgs, t *testing.T) {
 		if linkDst != cachePath {
 			t.Errorf("%#v links to %#v, want %#v", workPath, linkDst, cachePath)
 		}
-	case IsRegularFile:
-		if args.InCache {
+	case artifact.IsRegularFile:
+		if status.InCache {
 			same, err := fsutil.SameContents(workPath, cachePath)
 			if err != nil {
 				t.Fatal(err)

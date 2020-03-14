@@ -7,33 +7,10 @@ import (
 	"path"
 )
 
-// WorkspaceFileStatus enumerates the states of an Artifact as it pertains to the workspace
-type WorkspaceFileStatus int
-
-const (
-	// IsAbsent means that the artifact is absent from the workspace
-	IsAbsent WorkspaceFileStatus = iota
-	// IsRegularFile means that the artifact is present as a regular file in the workspace
-	// TODO expand this to ContentsMatch, ContentsDiffer
-	IsRegularFile
-	// IsLink means that the artifact is present as a link in the workspace
-	IsLink
-)
-
 // TempDirs holds a pair of cache and workspace directory paths for integration testing.
 type TempDirs struct {
 	CacheDir string
 	WorkDir  string
-}
-
-// TestCaseArgs holds the arguments passed to CreateArtifactTestCase.
-type TestCaseArgs struct {
-	InCache       bool
-	WorkspaceFile WorkspaceFileStatus
-	// TODO: Consider adding a ChecksumEmpty/ChecksumMatches/ChecksumDiffers enum.
-	// While changing/removing the checksum from the test case Artifact is easy,
-	// we'd like to programatically explore all test case possibilities (via
-	// the AllTestCases function).
 }
 
 // CreateTempDirs creates a DUC cache and workspace in the OS temp FS.
@@ -51,10 +28,10 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 }
 
 // AllTestCases returns a slice of all possible combinations TestCaseArgs values.
-func AllTestCases() (allArgs []TestCaseArgs) {
+func AllTestCases() (allArgs []artifact.Status) {
 	for _, inCache := range []bool{true, false} {
-		for _, fileStatus := range []WorkspaceFileStatus{IsAbsent, IsRegularFile, IsLink} {
-			allArgs = append(allArgs, TestCaseArgs{InCache: inCache, WorkspaceFile: fileStatus})
+		for _, fileStatus := range []artifact.FileStatus{artifact.IsAbsent, artifact.IsRegularFile, artifact.IsLink} {
+			allArgs = append(allArgs, artifact.Status{InCache: inCache, FileStatus: fileStatus})
 		}
 	}
 	return allArgs
@@ -63,7 +40,7 @@ func AllTestCases() (allArgs []TestCaseArgs) {
 // CreateArtifactTestCase sets up an integration test environment with a single
 // artifact according the arguments provided. The bool argument specifies whether the
 // artifact is present in the cache.
-func CreateArtifactTestCase(args TestCaseArgs) (dirs TempDirs, art artifact.Artifact, err error) {
+func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact.Artifact, err error) {
 	dirs, err = CreateTempDirs()
 	if err != nil {
 		return
@@ -80,7 +57,7 @@ func CreateArtifactTestCase(args TestCaseArgs) (dirs TempDirs, art artifact.Arti
 	fileCachePath := path.Join(fileCacheDir, art.Checksum[2:])
 	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
 
-	if args.InCache {
+	if status.InCache {
 		if err = os.Mkdir(fileCacheDir, 0755); err != nil {
 			return
 		}
@@ -89,12 +66,12 @@ func CreateArtifactTestCase(args TestCaseArgs) (dirs TempDirs, art artifact.Arti
 		}
 	}
 
-	switch args.WorkspaceFile {
-	case IsRegularFile:
+	switch status.FileStatus {
+	case artifact.IsRegularFile:
 		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0644); err != nil {
 			return
 		}
-	case IsLink:
+	case artifact.IsLink:
 		if err = os.Symlink(fileCachePath, fileWorkspacePath); err != nil {
 			return
 		}

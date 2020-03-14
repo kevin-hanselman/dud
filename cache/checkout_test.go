@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"os"
@@ -18,7 +19,7 @@ func TestCheckoutIntegration(t *testing.T) {
 
 func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(
-		testutil.TestCaseArgs{InCache: true, WorkspaceFile: testutil.IsAbsent},
+		artifact.Status{InCache: true, FileStatus: artifact.IsAbsent},
 	)
 	if err != nil {
 		t.Fatal(err)
