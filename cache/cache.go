@@ -78,7 +78,6 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 // Checkout finds the artifact in the cache and adds a copy of/link to said
 // artifact in the working directory.
 func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-	// TODO: check for empty a.Checksum
 	dstPath := path.Join(workingDir, art.Path)
 	srcPath, err := cache.CachePathForArtifact(*art)
 	if err != nil {
@@ -114,6 +113,35 @@ func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, str
 
 // Status reports the status of an Artifact in the Cache.
 func (cache *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
-	// TODO
-	return artifact.Status{}, nil
+	var status artifact.Status
+	workPath := path.Join(workingDir, art.Path)
+	cachePath, err := cache.CachePathForArtifact(art)
+	if err != nil {
+		// TODO: don't necessarily throw error, report invalid (or missing?) checksum
+		return status, err
+	}
+	exists, err := fsutil.Exists(cachePath, false)
+	if err != nil {
+		return status, err
+	}
+	status.InCache = exists
+
+	exists, err = fsutil.Exists(workPath, false)
+	if err != nil {
+		return status, err
+	}
+
+	if exists {
+		// TODO: check file contents, and for incorrect link location
+		linkDst, _ := os.Readlink(workPath)
+		if linkDst == cachePath {
+			status.FileStatus = artifact.IsLink
+		} else {
+			status.FileStatus = artifact.IsRegularFile
+		}
+	} else {
+		status.FileStatus = artifact.IsAbsent
+	}
+
+	return status, nil
 }
