@@ -30,8 +30,13 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 // AllTestCases returns a slice of all possible combinations TestCaseArgs values.
 func AllTestCases() (allArgs []artifact.Status) {
 	for _, inCache := range []bool{true, false} {
-		for _, fileStatus := range []artifact.FileStatus{artifact.IsAbsent, artifact.IsRegularFile, artifact.IsLink} {
-			allArgs = append(allArgs, artifact.Status{InCache: inCache, FileStatus: fileStatus})
+		for _, wspaceStatus := range []artifact.WorkspaceStatus{artifact.Absent, artifact.RegularFile, artifact.Link} {
+			allArgs = append(
+				allArgs,
+				artifact.Status{
+					ChecksumInCache: inCache, WorkspaceStatus: wspaceStatus,
+				},
+			)
 		}
 	}
 	return allArgs
@@ -57,7 +62,7 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 	fileCachePath := path.Join(fileCacheDir, art.Checksum[2:])
 	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
 
-	if status.InCache {
+	if status.ChecksumInCache {
 		if err = os.Mkdir(fileCacheDir, 0755); err != nil {
 			return
 		}
@@ -65,13 +70,14 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 			return
 		}
 	}
+	// TODO: if !status.ContentsInCache && !WorkspaceStatus != Absent, change workspace file contents
 
-	switch status.FileStatus {
-	case artifact.IsRegularFile:
+	switch status.WorkspaceStatus {
+	case artifact.RegularFile:
 		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0644); err != nil {
 			return
 		}
-	case artifact.IsLink:
+	case artifact.Link:
 		if err = os.Symlink(fileCachePath, fileWorkspacePath); err != nil {
 			return
 		}

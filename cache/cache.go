@@ -124,7 +124,7 @@ func (cache *LocalCache) Status(workingDir string, art artifact.Artifact) (artif
 	if err != nil {
 		return status, err
 	}
-	status.InCache = exists
+	status.ChecksumInCache = exists
 
 	exists, err = fsutil.Exists(workPath, false)
 	if err != nil {
@@ -135,12 +135,12 @@ func (cache *LocalCache) Status(workingDir string, art artifact.Artifact) (artif
 		// TODO: check file contents, and for incorrect link location
 		linkDst, _ := os.Readlink(workPath)
 		if linkDst == cachePath {
-			status.FileStatus = artifact.IsLink
+			status.WorkspaceStatus = artifact.Link
 		} else {
-			status.FileStatus = artifact.IsRegularFile
+			status.WorkspaceStatus = artifact.RegularFile
 		}
 	} else {
-		status.FileStatus = artifact.IsAbsent
+		status.WorkspaceStatus = artifact.Absent
 	}
 
 	return status, nil

@@ -20,7 +20,7 @@ func TestCommitIntegration(t *testing.T) {
 
 func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(
-		artifact.Status{InCache: false, FileStatus: artifact.IsRegularFile},
+		artifact.Status{ChecksumInCache: false, WorkspaceStatus: artifact.RegularFile},
 	)
 	if err != nil {
 		t.Fatal(err)

@@ -55,7 +55,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	shouldExist := status.FileStatus != artifact.IsAbsent
+	shouldExist := status.WorkspaceStatus != artifact.Absent
 	if exists != shouldExist {
 		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
 	}
@@ -64,12 +64,12 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if exists != status.InCache {
+	if exists != status.ChecksumInCache {
 		t.Fatalf("Exists(%#v) = %#v", cachePath, exists)
 	}
 
-	switch status.FileStatus {
-	case artifact.IsLink:
+	switch status.WorkspaceStatus {
+	case artifact.Link:
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {
 			t.Fatal(err)
@@ -77,8 +77,8 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		if linkDst != cachePath {
 			t.Errorf("%#v links to %#v, want %#v", workPath, linkDst, cachePath)
 		}
-	case artifact.IsRegularFile:
-		if status.InCache {
+	case artifact.RegularFile:
+		if status.ChecksumInCache {
 			same, err := fsutil.SameContents(workPath, cachePath)
 			if err != nil {
 				t.Fatal(err)
