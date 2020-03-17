@@ -29,14 +29,21 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 
 // AllTestCases returns a slice of all possible combinations TestCaseArgs values.
 func AllTestCases() (allArgs []artifact.Status) {
-	for _, inCache := range []bool{true, false} {
-		for _, wspaceStatus := range []artifact.WorkspaceStatus{artifact.Absent, artifact.RegularFile, artifact.Link} {
-			allArgs = append(
-				allArgs,
-				artifact.Status{
-					ChecksumInCache: inCache, WorkspaceStatus: wspaceStatus,
-				},
-			)
+	for _, wspaceStatus := range []artifact.WorkspaceStatus{artifact.Absent, artifact.RegularFile, artifact.Link} {
+		for _, checksumInCache := range []bool{true, false} {
+			for _, contentsMatch := range []bool{true, false} {
+				for _, hasChecksum := range []bool{true, false} {
+					allArgs = append(
+						allArgs,
+						artifact.Status{
+							ContentsMatch:   contentsMatch,
+							HasChecksum:     hasChecksum,
+							ChecksumInCache: checksumInCache,
+							WorkspaceStatus: wspaceStatus,
+						},
+					)
+				}
+			}
 		}
 	}
 	return allArgs

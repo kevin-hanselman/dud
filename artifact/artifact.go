@@ -9,7 +9,7 @@ type Artifact struct {
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.
 type Status struct {
 	WorkspaceStatus WorkspaceStatus
-	// HasChecksum is true if the Artifact has a valid checksum, false otherwise.
+	// HasChecksum is true if the Artifact has a valid Checksum member, false otherwise.
 	HasChecksum bool
 	// ChecksumInCache is true if a cache entry exists for the given checksum, false otherwise.
 	ChecksumInCache bool

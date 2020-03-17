@@ -47,6 +47,11 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 	defer os.RemoveAll(dirs.WorkDir)
 	defer os.RemoveAll(dirs.CacheDir)
 
+	checksumEmpty := art.Checksum == ""
+	if checksumEmpty == status.HasChecksum {
+		t.Errorf("artifact checksum %v", art.Checksum)
+	}
+
 	workPath := path.Join(dirs.WorkDir, art.Path)
 	ch := cache.LocalCache{Dir: dirs.CacheDir}
 	cachePath, err := ch.CachePathForArtifact(art)
@@ -74,8 +79,9 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if linkDst != cachePath {
-			t.Errorf("%#v links to %#v, want %#v", workPath, linkDst, cachePath)
+		correctLink := linkDst == cachePath
+		if correctLink != status.ContentsMatch {
+			t.Errorf("%v links to %v", workPath, linkDst)
 		}
 	case artifact.RegularFile:
 		if status.ChecksumInCache {
@@ -83,8 +89,8 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if !same {
-				t.Errorf("SameContents(%#v, %#v) = false", workPath, cachePath)
+			if same != status.ContentsMatch {
+				t.Errorf("SameContents(%v, %v) = %v", workPath, cachePath, same)
 			}
 		}
 	}
