@@ -1,13 +1,13 @@
-State Description               Workspace   Checksum in file    Checksum in cache   File correct (contents match or link correct)
+State Description               Workspace   Checksum in artifact    Checksum in cache   File correct (contents match or link correct)
 
-R/W, up to date                 file        yes                 yes                 yes
-modified                        file        yes                 yes                 no
-uncommitted changes             file        yes                 no
+R/W, up to date                 file        yes                     yes                 yes
+modified                        file        yes                     yes                 no
+uncommitted changes             file        yes                     no
 missing checksum                file        no
-RO, up to date                  link        yes                 yes                 yes
-warning: invalid link           link        yes                 yes                 no
-warning: broken link            link        yes                 no
+RO, up to date                  link        yes                     yes                 yes
+warning: invalid link           link        yes                     yes                 no
+warning: broken link            link        yes                     no
 warning: link with no checksum  link        no
-missing from workspace          absent      yes                 yes
-warning: unknown artifact       absent      yes                 no
+missing from workspace          absent      yes                     yes
+warning: unknown artifact       absent      yes                     no
 warning: unknown artifact       absent      no

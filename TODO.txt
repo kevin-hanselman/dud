@@ -1,23 +1,29 @@
-rclone for remotes?
-support multiple hash functions?
-consider dropping datasize dependency and using simple example here:
-    https://github.com/golang/go/wiki/Iota
-test for proper cleanup of partially-written files in all cases
-file locking during duc operation
-
 things:
-    Stage: the data structure holding tracked file/command metadata == Ducfile
-    Index: all Stages known the DUC in a repo
+    Cache: the content-addressed data store for all files tracked by DUC
+    Artifact: a file or directory tracked by DUC (i.e. the inputs and outputs of a Stage)
+    Stage: the data structure holding tracked file/command metadata (== Ducfile)
+    Index: all Stages known to DUC in a repo
+
+    (TBD)
     Commit List: all Stages that are... staged for the next commit
                  always a subset of Index
+
+
+notes:
+    DUC only computes checksums on commit. This allows most other operations to be fast.
+
+    Ducfiles are meant to be human-readable and manually-edited. You create
+    a new stage by writing a Ducfile. 'duc run' is mostly equivalent to
+    'repro' in DVC. There is no equivalent to 'dvc run' in DUC.
 
 commands:
     track <targets>
         creates Ducfile showing targets to be added
-        (doesn't compute checksums! field is left empty)
+        (Note: doesn't compute checksums! fields are left empty)
     add <Ducfile> (combine with track somehow?)
         if stage not in index, add to index
         if stage not on commit list, add to commit list
+        (Note: doesn't compute checksums! fields are left empty)
     restore/rm? <Ducfile>
         remove from one or more of these locations:
             index
@@ -26,28 +32,33 @@ commands:
             (use separate commands? map closely w/ git?)
     commit [Ducfile]
         if no Ducfile(s) passed, use commit list
-        for each target:
-            checksum target
-            move target to cache
-            checkout target
-        updates Ducfile (including hash for Ducfile itself)
+        for each Stage:
+            for each output Artifact:
+                checksum target
+                update checksum value in Stage
+                move target to cache
+                checkout target
+        update Stage checksum
     checkout [Ducfile]
         if no Ducfile(s) passed, use index
-        for each target:
-            looks up target hash
-            checkout target from cache
-            if checkout would clobber existing workspace file, refuse unless --forced
+        for each Stage:
+            for each output Artifact:
+                checkout Artifact from cache (using present checksum)
+                if checkout would clobber existing workspace file, refuse unless --forced
     status [Ducfile]
         if no Ducfile(s) passed, use index
-        reads Ducfile
-        for each target:
-            return status of target:
-                in workspace?
-                in cache?
-                different or the same?
+        collect all Artifacts (inputs and outputs) from all Stages
+        for each Artifact:
+            return status
+                (see status.txt)
     run <Ducfile> (aka repro)
-        ...
-        delete targets
-            (if a target is persisted, only unprotect)
-        ...
-        (doesn't compute checksums! fields are left empty)
+        (TBD, but see note above)
+        (Note: doesn't compute checksums! fields are left empty)
+
+misc:
+    integrate with rclone for remote caches?
+    support multiple hash functions?
+    consider dropping datasize package dependency and using simple example here:
+        https://github.com/golang/go/wiki/Iota
+    test for proper cleanup of partially-written files in all cases
+    file locking during duc operation
