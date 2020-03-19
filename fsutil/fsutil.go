@@ -45,6 +45,26 @@ func SameFile(pathA, pathB string) (bool, error) {
 	return os.SameFile(aInfo, bInfo), nil
 }
 
+// IsLink returns true if path represents a symlink, otherwise it returns false.
+func IsLink(path string) (bool, error) {
+	fileInfo, err := os.Lstat(path)
+	if err != nil {
+		return false, err
+	}
+	return fileInfo.Mode()&os.ModeSymlink != 0, nil
+}
+
+// IsRegularFile returns true if path represents a regular file, otherwise it returns false.
+func IsRegularFile(path string) (bool, error) {
+	// If we use os.Stat, it'll follow links, which we don't want.
+	fileInfo, err := os.Lstat(path)
+	if err != nil {
+		return false, err
+	}
+	// See go doc os.ModeType
+	return fileInfo.Mode()&os.ModeType == 0, nil
+}
+
 // SameContents checks that two files contain the same bytes
 func SameContents(pathA, pathB string) (bool, error) {
 	fileA, err := os.Open(pathA)
@@ -62,11 +82,13 @@ func SameContents(pathA, pathB string) (bool, error) {
 	bytesB := make([]byte, 8*datasize.MB)
 	for {
 		nBytesReadA, errA := fileA.Read(bytesA)
-		if errA != nil && errA != io.EOF {
+		isEndOfFileA := errA == io.EOF
+		if errA != nil && !isEndOfFileA {
 			return false, errors.Wrapf(errA, "read %#v failed", pathA)
 		}
 		nBytesReadB, errB := fileB.Read(bytesB)
-		if errB != nil && errB != io.EOF {
+		isEndOfFileB := errB == io.EOF
+		if errB != nil && !isEndOfFileB {
 			return false, errors.Wrapf(errB, "read %#v failed", pathB)
 		}
 		if nBytesReadA != nBytesReadB {
@@ -75,11 +97,10 @@ func SameContents(pathA, pathB string) (bool, error) {
 		if !bytes.Equal(bytesA, bytesB) {
 			return false, nil
 		}
-		if errA == io.EOF {
-			if errB == io.EOF {
-				return true, nil
-			}
+		if isEndOfFileA != isEndOfFileB {
 			return false, nil
+		} else if isEndOfFileA {
+			return true, nil
 		}
 	}
 }

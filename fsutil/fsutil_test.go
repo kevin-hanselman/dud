@@ -70,6 +70,65 @@ func testExists(path string, followLinks, shouldExist bool, t *testing.T) {
 	}
 }
 
+func TestIsLinkIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+	if err := os.Symlink("fsutil.go", "fsutil.go.symlink"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("fsutil.go.symlink")
+	if err := os.Symlink("foo.txt", "bar.txt"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("bar.txt")
+
+	tests := map[string]bool{
+		"./fsutil.go.symlink": true,
+		"./bar.txt":           true,
+		"./fsutil.go":         false,
+	}
+	for path, shouldBeLink := range tests {
+		isLink, err := IsLink(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isLink != shouldBeLink {
+			t.Errorf("IsLink(%v) = %v", path, isLink)
+		}
+	}
+	if _, err := IsLink("foobar"); err == nil {
+		t.Errorf("IsLink to nonexistent file did not return an error")
+	}
+}
+
+func TestIsRegularFileIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+	if err := os.Symlink("fsutil.go", "fsutil.go.symlink"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("fsutil.go.symlink")
+
+	tests := map[string]bool{
+		"./fsutil.go.symlink": false,
+		"./fsutil.go":         true,
+	}
+	for path, shouldBeReg := range tests {
+		isReg, err := IsRegularFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isReg != shouldBeReg {
+			t.Errorf("IsRegularFile(%v) = %v", path, isReg)
+		}
+	}
+	if _, err := IsRegularFile("foobar"); err == nil {
+		t.Errorf("IsRegularFile to nonexistent file did not return an error")
+	}
+}
+
 func TestSameFileAndContentsIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()

@@ -22,11 +22,11 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(
 		artifact.Status{HasChecksum: false, ChecksumInCache: false, WorkspaceStatus: artifact.RegularFile},
 	)
+	defer os.RemoveAll(dirs.CacheDir)
+	defer os.RemoveAll(dirs.WorkDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(dirs.CacheDir)
-	defer os.RemoveAll(dirs.WorkDir)
 	cache := LocalCache{Dir: dirs.CacheDir}
 
 	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
@@ -58,5 +58,6 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0444)
 	}
 
+	// TODO: replace with a call to cache.Status then assert expected artifact.Status?
 	assertCheckoutExpectations(strat, fileWorkspacePath, fileCachePath, t)
 }

@@ -28,6 +28,7 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 }
 
 // AllTestCases returns a slice of all possible combinations TestCaseArgs values.
+// (See status.txt in the project root)
 func AllTestCases() (out []artifact.Status) {
 	allWorkspaceStatuses := []artifact.WorkspaceStatus{artifact.RegularFile, artifact.Link, artifact.Absent}
 	for _, workspaceStatus := range allWorkspaceStatuses {
@@ -65,8 +66,7 @@ func AllTestCases() (out []artifact.Status) {
 }
 
 // CreateArtifactTestCase sets up an integration test environment with a single
-// artifact according the arguments provided. The bool argument specifies whether the
-// artifact is present in the cache.
+// artifact that complies with the provided artifact.Status.
 func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact.Artifact, err error) {
 	dirs, err = CreateTempDirs()
 	if err != nil {

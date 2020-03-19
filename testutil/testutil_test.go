@@ -41,11 +41,11 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 
 func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T) {
 	dirs, art, err := CreateArtifactTestCase(status)
+	defer os.RemoveAll(dirs.WorkDir)
+	defer os.RemoveAll(dirs.CacheDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(dirs.WorkDir)
-	defer os.RemoveAll(dirs.CacheDir)
 
 	checksumEmpty := art.Checksum == ""
 	if checksumEmpty == status.HasChecksum {
