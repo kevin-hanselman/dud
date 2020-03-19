@@ -117,26 +117,26 @@ func (cache *LocalCache) Status(workingDir string, art artifact.Artifact) (artif
 	workPath := path.Join(workingDir, art.Path)
 	cachePath, err := cache.CachePathForArtifact(art)
 	if err != nil {
-		// TODO: don't necessarily throw error, report invalid (or missing?) checksum
-		return status, err
+		status.HasChecksum = false
+	} else {
+		exists, err := fsutil.Exists(cachePath, false)
+		if err != nil {
+			return status, err
+		}
+		status.ChecksumInCache = exists
 	}
-	exists, err := fsutil.Exists(cachePath, false)
-	if err != nil {
-		return status, err
-	}
-	status.ChecksumInCache = exists
 
-	exists, err = fsutil.Exists(workPath, false)
+	exists, err := fsutil.Exists(workPath, false)
 	if err != nil {
 		return status, err
 	}
 
 	if exists {
-		// TODO: check file contents, and for incorrect link location
 		linkDst, _ := os.Readlink(workPath)
 		if linkDst == cachePath {
 			status.WorkspaceStatus = artifact.Link
 		} else {
+			// TODO: check file contents
 			status.WorkspaceStatus = artifact.RegularFile
 		}
 	} else {

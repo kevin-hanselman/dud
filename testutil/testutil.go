@@ -28,25 +28,40 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 }
 
 // AllTestCases returns a slice of all possible combinations TestCaseArgs values.
-func AllTestCases() (allArgs []artifact.Status) {
-	for _, wspaceStatus := range []artifact.WorkspaceStatus{artifact.Absent, artifact.RegularFile, artifact.Link} {
-		for _, checksumInCache := range []bool{true, false} {
-			for _, contentsMatch := range []bool{true, false} {
-				for _, hasChecksum := range []bool{true, false} {
-					allArgs = append(
-						allArgs,
-						artifact.Status{
-							ContentsMatch:   contentsMatch,
-							HasChecksum:     hasChecksum,
-							ChecksumInCache: checksumInCache,
-							WorkspaceStatus: wspaceStatus,
-						},
-					)
-				}
-			}
+func AllTestCases() (out []artifact.Status) {
+	allWorkspaceStatuses := []artifact.WorkspaceStatus{artifact.RegularFile, artifact.Link, artifact.Absent}
+	for _, workspaceStatus := range allWorkspaceStatuses {
+		if workspaceStatus != artifact.Absent {
+			out = append(
+				out,
+				artifact.Status{
+					WorkspaceStatus: workspaceStatus,
+					HasChecksum:     true,
+					ChecksumInCache: true,
+					ContentsMatch:   true,
+				},
+			)
 		}
+		out = append(
+			out,
+			artifact.Status{
+				WorkspaceStatus: workspaceStatus,
+				HasChecksum:     true,
+				ChecksumInCache: true,
+				ContentsMatch:   false,
+			},
+			artifact.Status{
+				WorkspaceStatus: workspaceStatus,
+				HasChecksum:     true,
+				ChecksumInCache: false,
+			},
+			artifact.Status{
+				WorkspaceStatus: workspaceStatus,
+				HasChecksum:     false,
+			},
+		)
 	}
-	return allArgs
+	return
 }
 
 // CreateArtifactTestCase sets up an integration test environment with a single
@@ -69,6 +84,10 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 	fileCachePath := path.Join(fileCacheDir, art.Checksum[2:])
 	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
 
+	if !status.HasChecksum {
+		art.Checksum = ""
+	}
+
 	if status.ChecksumInCache {
 		if err = os.Mkdir(fileCacheDir, 0755); err != nil {
 			return
@@ -77,15 +96,21 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 			return
 		}
 	}
-	// TODO: if !status.ContentsInCache && !WorkspaceStatus != Absent, change workspace file contents
 
 	switch status.WorkspaceStatus {
 	case artifact.RegularFile:
+		if !status.ContentsMatch {
+			fileContents = []byte("Not the same as in the cache")
+		}
 		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0644); err != nil {
 			return
 		}
 	case artifact.Link:
-		if err = os.Symlink(fileCachePath, fileWorkspacePath); err != nil {
+		targetPath := fileCachePath
+		if !status.ContentsMatch {
+			targetPath = "foobar"
+		}
+		if err = os.Symlink(targetPath, fileWorkspacePath); err != nil {
 			return
 		}
 	}

@@ -19,7 +19,7 @@ func TestCheckoutIntegration(t *testing.T) {
 
 func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(
-		artifact.Status{ChecksumInCache: true, WorkspaceStatus: artifact.Absent},
+		artifact.Status{HasChecksum: true, ChecksumInCache: true, WorkspaceStatus: artifact.Absent},
 	)
 	if err != nil {
 		t.Fatal(err)

@@ -20,7 +20,7 @@ func TestCommitIntegration(t *testing.T) {
 
 func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(
-		artifact.Status{ChecksumInCache: false, WorkspaceStatus: artifact.RegularFile},
+		artifact.Status{HasChecksum: false, ChecksumInCache: false, WorkspaceStatus: artifact.RegularFile},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -30,12 +30,12 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	cache := LocalCache{Dir: dirs.CacheDir}
 
 	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
-	fileCachePath, err := cache.CachePathForArtifact(art)
-	if err != nil {
+	if err := cache.Commit(dirs.WorkDir, &art, strat); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := cache.Commit(dirs.WorkDir, &art, strat); err != nil {
+	fileCachePath, err := cache.CachePathForArtifact(art)
+	if err != nil {
 		t.Fatal(err)
 	}
 
