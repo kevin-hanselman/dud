@@ -9,3 +9,7 @@ const (
 	// CopyStrategy creates copies of files in the cache
 	CopyStrategy
 )
+
+func (strat CheckoutStrategy) String() string {
+	return [...]string{"LinkStrategy", "CopyStrategy"}[strat]
+}

@@ -14,7 +14,7 @@ func TestStatusIntegration(t *testing.T) {
 		t.Skip()
 	}
 	for _, testCase := range testutil.AllTestCases() {
-		t.Run(fmt.Sprintf("%#v", testCase), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%+v", testCase), func(t *testing.T) {
 			testStatusIntegration(testCase, t)
 		})
 	}

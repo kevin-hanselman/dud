@@ -16,7 +16,7 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 	srcFile, err := os.Open(srcPath)
 	defer srcFile.Close()
 	if err != nil {
-		return errors.Wrapf(err, "opening %#v failed", srcPath)
+		return err
 	}
 	dstFile, err := ioutil.TempFile(cache.Dir, "")
 	defer dstFile.Close()

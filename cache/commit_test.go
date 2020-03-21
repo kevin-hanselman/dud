@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/strategy"
@@ -13,14 +14,17 @@ func TestCommitIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	t.Run("Copy", func(t *testing.T) { testCommitIntegration(strategy.CopyStrategy, t) })
-	t.Run("Link", func(t *testing.T) { testCommitIntegration(strategy.LinkStrategy, t) })
+	for _, testCase := range testutil.AllTestCases() {
+		for _, strat := range []strategy.CheckoutStrategy{strategy.CopyStrategy, strategy.LinkStrategy} {
+			t.Run(fmt.Sprintf("%s %+v", strat, testCase), func(t *testing.T) {
+				testCommitIntegration(strat, testCase, t)
+			})
+		}
+	}
 }
 
-func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
-	dirs, art, err := testutil.CreateArtifactTestCase(
-		artifact.Status{HasChecksum: false, ChecksumInCache: false, WorkspaceStatus: artifact.RegularFile},
-	)
+func testCommitIntegration(strat strategy.CheckoutStrategy, status artifact.Status, t *testing.T) {
+	dirs, art, err := testutil.CreateArtifactTestCase(status)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
 	if err != nil {
@@ -28,23 +32,19 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 	cache := LocalCache{Dir: dirs.CacheDir}
 
-	if err := cache.Commit(dirs.WorkDir, &art, strat); err != nil {
-		t.Fatal(err)
+	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
+
+	if status.WorkspaceStatus == artifact.Absent {
+		if os.IsNotExist(commitErr) {
+			return
+			// TODO: assert expected status
+		}
+		t.Fatalf("expected Commit to raise NotExist error, got %v", commitErr)
+	} else if commitErr != nil {
+		t.Fatal(commitErr)
 	}
 
-	fileCachePath, err := cache.CachePathForArtifact(art)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	cachedFileInfo, err := os.Stat(fileCachePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	// TODO: check this in cache.Status?
-	if cachedFileInfo.Mode() != 0444 {
-		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0444)
-	}
+	testCachePermissions(cache, art, t)
 
 	statusGot, err := cache.Status(dirs.WorkDir, art)
 	if err != nil {
@@ -64,5 +64,20 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
+	}
+}
+
+func testCachePermissions(cache LocalCache, art artifact.Artifact, t *testing.T) {
+	fileCachePath, err := cache.CachePathForArtifact(art)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cachedFileInfo, err := os.Stat(fileCachePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// TODO: check this in cache.Status?
+	if cachedFileInfo.Mode() != 0444 {
+		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0444)
 	}
 }

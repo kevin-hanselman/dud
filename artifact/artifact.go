@@ -30,3 +30,7 @@ const (
 	// Link means that the artifact exists as a link in the workspace
 	Link
 )
+
+func (ws WorkspaceStatus) String() string {
+	return [...]string{"Absent", "RegularFile", "Link"}[ws]
+}
