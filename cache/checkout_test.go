@@ -1,11 +1,11 @@
 package cache
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"os"
-	"path"
 	"testing"
 )
 
@@ -28,16 +28,27 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 	cache := LocalCache{Dir: dirs.CacheDir}
 
-	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
-	fileCachePath, err := cache.CachePathForArtifact(art)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	if err := cache.Checkout(dirs.WorkDir, &art, strat); err != nil {
 		t.Fatal(err)
 	}
 
-	// TODO: replace with a call to cache.Status then assert expected artifact.Status?
-	assertCheckoutExpectations(strat, fileWorkspacePath, fileCachePath, t)
+	statusGot, err := cache.Status(dirs.WorkDir, art)
+	if err != nil {
+		t.Fatal(err)
+	}
+	statusWant := artifact.Status{
+		HasChecksum:     true,
+		ChecksumInCache: true,
+		ContentsMatch:   true,
+	}
+	switch strat {
+	case strategy.CopyStrategy:
+		statusWant.WorkspaceStatus = artifact.RegularFile
+	case strategy.LinkStrategy:
+		statusWant.WorkspaceStatus = artifact.Link
+	}
+
+	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
+		t.Fatalf("Status() -want +got:\n%s", diff)
+	}
 }
