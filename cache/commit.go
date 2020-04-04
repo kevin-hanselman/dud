@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
@@ -13,9 +14,16 @@ import (
 // Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
 func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	srcPath := path.Join(workingDir, art.Path)
-	srcFile, err := os.Open(srcPath)
+	isRegFile, err := fsutil.IsRegularFile(srcPath)
 	if err != nil {
 		return err
+	}
+	if !isRegFile {
+		return fmt.Errorf("file %#v is not a regular file", srcPath)
+	}
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err // Don't wrap this so we can use os.IsNotExist on it
 	}
 	defer srcFile.Close()
 	dstFile, err := ioutil.TempFile(cache.Dir, "")
