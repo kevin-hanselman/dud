@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/strategy"
@@ -13,14 +14,17 @@ func TestCheckoutIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	t.Run("Copy", func(t *testing.T) { testCheckoutIntegration(strategy.CopyStrategy, t) })
-	t.Run("Link", func(t *testing.T) { testCheckoutIntegration(strategy.LinkStrategy, t) })
+	for _, testCase := range testutil.AllTestCases() {
+		for _, strat := range []strategy.CheckoutStrategy{strategy.CopyStrategy, strategy.LinkStrategy} {
+			t.Run(fmt.Sprintf("%s %+v", strat, testCase), func(t *testing.T) {
+				testCheckoutIntegration(strat, testCase, t)
+			})
+		}
+	}
 }
 
-func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
-	dirs, art, err := testutil.CreateArtifactTestCase(
-		artifact.Status{HasChecksum: true, ChecksumInCache: true, WorkspaceStatus: artifact.Absent},
-	)
+func testCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifact.Status, t *testing.T) {
+	dirs, art, err := testutil.CreateArtifactTestCase(statusStart)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
 	if err != nil {
@@ -28,8 +32,14 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 	cache := LocalCache{Dir: dirs.CacheDir}
 
-	if err := cache.Checkout(dirs.WorkDir, &art, strat); err != nil {
-		t.Fatal(err)
+	checkoutErr := cache.Checkout(dirs.WorkDir, &art, strat)
+	if statusStart.WorkspaceStatus != artifact.Absent {
+		if os.IsExist(checkoutErr) {
+			return
+		}
+		t.Fatalf("expected Checkout to raise Exist error, got %#v", checkoutErr)
+	} else if checkoutErr != nil {
+		t.Fatal(checkoutErr)
 	}
 
 	statusGot, err := cache.Status(dirs.WorkDir, art)

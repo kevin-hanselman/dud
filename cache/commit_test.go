@@ -36,13 +36,12 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 
 	if statusStart.WorkspaceStatus == artifact.Absent {
 		if os.IsNotExist(commitErr) {
-			return
-			// TODO: assert expected status
+			return // TODO: assert expected status
 		}
 		t.Fatalf("expected Commit to raise NotExist error, got %#v", commitErr)
 	} else if statusStart.WorkspaceStatus == artifact.Link {
 		if commitErr != nil {
-			return
+			return // TODO: assert expected status
 		}
 		t.Fatal("expected Commit to raise error")
 	} else if commitErr != nil {
