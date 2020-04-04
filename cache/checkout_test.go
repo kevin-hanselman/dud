@@ -33,6 +33,21 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifa
 	cache := LocalCache{Dir: dirs.CacheDir}
 
 	checkoutErr := cache.Checkout(dirs.WorkDir, &art, strat)
+
+	if !statusStart.HasChecksum {
+		if checkoutErr != nil {
+			return
+		}
+		t.Fatal("expected Checkout to raise invalid checksum error")
+	}
+
+	if !statusStart.ChecksumInCache {
+		if checkoutErr != nil {
+			return
+		}
+		t.Fatal("expected Checkout to raise missing checksum in cache error")
+	}
+
 	if statusStart.WorkspaceStatus != artifact.Absent {
 		if os.IsExist(checkoutErr) {
 			return

@@ -39,6 +39,13 @@ func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, str
 			return fmt.Errorf("checkout %#v: found checksum %#v, expected %#v", dstPath, checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
+		isRegFile, err := fsutil.IsRegularFile(srcPath)
+		if err != nil {
+			return err
+		}
+		if !isRegFile {
+			return fmt.Errorf("file %#v is not a regular file", srcPath)
+		}
 		// TODO: hardlink when possible?
 		if err := os.Symlink(srcPath, dstPath); err != nil {
 			return err
