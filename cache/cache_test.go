@@ -22,7 +22,7 @@ func TestCachePathForArtifact(t *testing.T) {
 
 	art.Checksum = ""
 
-	cachePath, err = ch.CachePathForArtifact(art)
+	_, err = ch.CachePathForArtifact(art)
 	if err == nil {
 		t.Fatalf("expected error for cache.CachePathForArtifact(%#v)", art)
 	}

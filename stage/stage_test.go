@@ -43,7 +43,9 @@ func TestSetChecksum(t *testing.T) {
 		},
 	}
 
-	s.SetChecksum()
+	if err := s.SetChecksum(); err != nil {
+		t.Fatal(err)
+	}
 
 	if s.Checksum == "" {
 		t.Fatal("stage.SetChecksum() didn't change (empty) checksum")
@@ -53,7 +55,9 @@ func TestSetChecksum(t *testing.T) {
 
 	s.Checksum = "this should not affect the checksum"
 
-	s.SetChecksum()
+	if err := s.SetChecksum(); err != nil {
+		t.Fatal(err)
+	}
 
 	if diff := cmp.Diff(expected, s); diff != "" {
 		t.Fatalf("stage.SetChecksum() -want +got:\n%s", diff)
@@ -62,7 +66,9 @@ func TestSetChecksum(t *testing.T) {
 	origChecksum := s.Checksum
 	s.WorkingDir = "this should affect the checksum"
 
-	s.SetChecksum()
+	if err := s.SetChecksum(); err != nil {
+		t.Fatal(err)
+	}
 
 	if s.Checksum == origChecksum {
 		t.Fatal("changing stage.WorkingDir should have affected checksum")
@@ -95,7 +101,9 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 		cache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 
-	stg.Commit(&cache, strat)
+	if err := stg.Commit(&cache, strat); err != nil {
+		t.Fatal(err)
+	}
 
 	cache.AssertExpectations(t)
 }
@@ -126,7 +134,9 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 		cache.On("Checkout", "workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 
-	stg.Checkout(&cache, strat)
+	if err := stg.Checkout(&cache, strat); err != nil {
+		t.Fatal(err)
+	}
 
 	cache.AssertExpectations(t)
 }

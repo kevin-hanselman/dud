@@ -23,8 +23,8 @@ func TestCommitIntegration(t *testing.T) {
 	}
 }
 
-func testCommitIntegration(strat strategy.CheckoutStrategy, status artifact.Status, t *testing.T) {
-	dirs, art, err := testutil.CreateArtifactTestCase(status)
+func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact.Status, t *testing.T) {
+	dirs, art, err := testutil.CreateArtifactTestCase(statusStart)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
 	if err != nil {
@@ -34,14 +34,14 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, status artifact.Stat
 
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 
-	if status.WorkspaceStatus == artifact.Absent {
+	if statusStart.WorkspaceStatus == artifact.Absent {
 		if os.IsNotExist(commitErr) {
 			return
 			// TODO: assert expected status
 		}
 		t.Fatalf("expected Commit to raise NotExist error, got %v", commitErr)
 	} else if commitErr != nil {
-		t.Fatal(commitErr)
+		t.Fatalf("unexpected error: %v", commitErr)
 	}
 
 	testCachePermissions(cache, art, t)

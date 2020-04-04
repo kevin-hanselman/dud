@@ -46,6 +46,4 @@ loc:
 	tokei --sort lines --exclude "*_test.go"
 
 depgraph:
-	godepgraph -nostdlib $(wildcard **/*.go) | dot -Tpng -o deps.png
-	feh deps.png
-	rm deps.png
+	godepgraph -nostdlib $(wildcard **/*.go) | dot -Tpng -o depgraph.png

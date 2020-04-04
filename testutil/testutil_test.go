@@ -54,15 +54,19 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 
 	workPath := path.Join(dirs.WorkDir, art.Path)
 	ch := cache.LocalCache{Dir: dirs.CacheDir}
-	cachePath, err := ch.CachePathForArtifact(art)
-
 	exists, err := fsutil.Exists(workPath, false)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	shouldExist := status.WorkspaceStatus != artifact.Absent
 	if exists != shouldExist {
 		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
+	}
+
+	cachePath, err := ch.CachePathForArtifact(art)
+	if status.HasChecksum && (err != nil) {
+		t.Fatal(err)
 	}
 
 	exists, err = fsutil.Exists(cachePath, false)

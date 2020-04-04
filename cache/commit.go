@@ -14,15 +14,16 @@ import (
 func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	srcPath := path.Join(workingDir, art.Path)
 	srcFile, err := os.Open(srcPath)
-	defer srcFile.Close()
 	if err != nil {
 		return err
 	}
+	defer srcFile.Close()
 	dstFile, err := ioutil.TempFile(cache.Dir, "")
-	defer dstFile.Close()
 	if err != nil {
 		return errors.Wrapf(err, "creating tempfile in %#v failed", cache.Dir)
 	}
+	defer dstFile.Close()
+
 	// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
 	// OR, if we're using CopyStrategy
 	checksum, err := fsutil.ChecksumAndCopy(srcFile, dstFile)
