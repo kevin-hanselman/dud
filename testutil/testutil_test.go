@@ -32,9 +32,9 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	for _, args := range AllTestCases() {
-		t.Run(fmt.Sprintf("%+v", args), func(t *testing.T) {
-			testCreateArtifactTestCaseIntegration(args, t)
+	for _, status := range AllTestCases() {
+		t.Run(fmt.Sprintf("%+v", status), func(t *testing.T) {
+			testCreateArtifactTestCaseIntegration(status, t)
 		})
 	}
 }

@@ -23,7 +23,7 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 	}
 	srcFile, err := os.Open(srcPath)
 	if err != nil {
-		return err // Don't wrap this so we can use os.IsNotExist on it
+		return err
 	}
 	defer srcFile.Close()
 	dstFile, err := ioutil.TempFile(cache.Dir, "")

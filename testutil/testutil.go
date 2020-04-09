@@ -27,7 +27,7 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 	return
 }
 
-// AllTestCases returns a slice of all possible combinations TestCaseArgs values.
+// AllTestCases returns a slice of all valid artifact.Status structs.
 // (See status.txt in the project root)
 func AllTestCases() (out []artifact.Status) {
 	allWorkspaceStatuses := []artifact.WorkspaceStatus{artifact.RegularFile, artifact.Link, artifact.Absent}

@@ -10,6 +10,28 @@ import (
 	"testing"
 )
 
+func TestCommitDirectory(t *testing.T) {
+	// TODO
+	// mock function to list files in a directory, probably using package var instead of testify
+	// one of:
+	//  filepath.Walk
+	//  ioutil.ReadDir
+	//  os.File.Readdir
+
+	// mock function to save directory struct to disk
+
+	// call cache.Commit on a directory artifact
+	// assert that mocked cache.Commit is called on each file in dir
+	// assert that mocked "save" function is called as expected
+
+	// assert result is correct
+	//   dir artifact has correct checksum
+	//   checksum should be invariant to file order
+	//   an error when committing a file should cause an error for the dir
+	//   don't commit any files if one them is invalid prior to starting commit?
+	//   etc.
+}
+
 func TestCommitIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()

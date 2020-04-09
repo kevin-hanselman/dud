@@ -8,7 +8,6 @@ things:
     Commit List: all Stages that are... staged for the next commit
                  always a subset of Index
 
-
 notes:
     DUC only computes checksums on commit. This allows most other operations to be fast.
 

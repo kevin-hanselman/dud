@@ -35,7 +35,7 @@ fmt:
 	gofmt -s -w .
 
 clean:
-	rm -f *.out
+	rm -f *.out depgraph.png
 	go clean ./...
 
 tidy:
