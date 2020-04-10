@@ -13,9 +13,16 @@ import (
 
 var readDir = ioutil.ReadDir
 
+type commitFileArtifactArgs struct {
+	Cache      *LocalCache
+	WorkingDir string
+	Artifact   *artifact.Artifact
+	Strategy   strategy.CheckoutStrategy
+}
+
 // defined as a private var to enable mocking
-var commitFileArtifact = func(cache *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-	srcPath := path.Join(workingDir, art.Path)
+var commitFileArtifact = func(args commitFileArtifactArgs) error {
+	srcPath := path.Join(args.WorkingDir, args.Artifact.Path)
 	isRegFile, err := fsutil.IsRegularFile(srcPath)
 	if err != nil {
 		return err
@@ -28,9 +35,9 @@ var commitFileArtifact = func(cache *LocalCache, workingDir string, art *artifac
 		return err
 	}
 	defer srcFile.Close()
-	dstFile, err := ioutil.TempFile(cache.Dir, "")
+	dstFile, err := ioutil.TempFile(args.Cache.Dir, "")
 	if err != nil {
-		return errors.Wrapf(err, "creating tempfile in %#v failed", cache.Dir)
+		return errors.Wrapf(err, "creating tempfile in %#v failed", args.Cache.Dir)
 	}
 	defer dstFile.Close()
 
@@ -40,7 +47,7 @@ var commitFileArtifact = func(cache *LocalCache, workingDir string, art *artifac
 	if err != nil {
 		return errors.Wrapf(err, "checksum of %#v failed", srcPath)
 	}
-	dstDir := path.Join(cache.Dir, checksum[:2])
+	dstDir := path.Join(args.Cache.Dir, checksum[:2])
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
 		return errors.Wrapf(err, "mkdirs %#v failed", dstDir)
 	}
@@ -51,14 +58,14 @@ var commitFileArtifact = func(cache *LocalCache, workingDir string, art *artifac
 	if err := os.Chmod(cachePath, 0444); err != nil {
 		return errors.Wrapf(err, "chmod %#v failed", cachePath)
 	}
-	art.Checksum = checksum
+	args.Artifact.Checksum = checksum
 	// There's no need to call Checkout if using CopyStrategy; the original file still exists.
-	if strat == strategy.LinkStrategy {
+	if args.Strategy == strategy.LinkStrategy {
 		// TODO: add rm to checkout as "force" option
 		if err := os.Remove(srcPath); err != nil {
 			return errors.Wrapf(err, "rm %#v failed", srcPath)
 		}
-		return cache.Checkout(workingDir, art, strat)
+		return args.Cache.Checkout(args.WorkingDir, args.Artifact, args.Strategy)
 	}
 	return nil
 }
@@ -74,13 +81,25 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 		for _, entry := range entries {
 			if !entry.Mode().IsDir() {
 				fileArt := artifact.Artifact{Path: entry.Name()}
-				if err := commitFileArtifact(cache, newWorkingDir, &fileArt, strat); err != nil {
+				args := commitFileArtifactArgs{
+					Cache:      cache,
+					WorkingDir: newWorkingDir,
+					Artifact:   &fileArt,
+					Strategy:   strat,
+				}
+				if err := commitFileArtifact(args); err != nil {
 					return err
 				}
 			}
 		}
 	} else {
-		return commitFileArtifact(cache, workingDir, art, strat)
+		args := commitFileArtifactArgs{
+			Cache:      cache,
+			WorkingDir: workingDir,
+			Artifact:   art,
+			Strategy:   strat,
+		}
+		return commitFileArtifact(args)
 	}
 	return nil
 }

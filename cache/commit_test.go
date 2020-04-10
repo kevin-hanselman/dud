@@ -11,47 +11,45 @@ import (
 )
 
 func TestCommitDirectory(t *testing.T) {
-	commitFileArtifactCallCount := 0
+	commitFileArtifactCalls := []commitFileArtifactArgs{}
 	commitFileArtifactOrig := commitFileArtifact
-	commitFileArtifact = func(cache *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-		commitFileArtifactCallCount++
+	commitFileArtifact = func(args commitFileArtifactArgs) error {
+		commitFileArtifactCalls = append(commitFileArtifactCalls, args)
 		return nil
 	}
 	defer func() { commitFileArtifact = commitFileArtifactOrig }()
 
+	mockFiles := []os.FileInfo{
+		testutil.MockFileInfo{MockName: "my_file1"},
+		testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+		testutil.MockFileInfo{MockName: "my_file2"},
+	}
+
 	readDirOrig := readDir
 	readDir = func(dir string) ([]os.FileInfo, error) {
-		return []os.FileInfo{
-			testutil.MockFileInfo{MockName: "foo"},
-			testutil.MockFileInfo{MockName: "bar"},
-		}, nil
+		return mockFiles, nil
 	}
 	defer func() { readDir = readDirOrig }()
 
 	cache := LocalCache{Dir: "cache_root"}
 
-	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "my_dir"}
+	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
-	commitErr := cache.Commit("", &dirArt, strategy.LinkStrategy)
+	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy)
 	if commitErr != nil {
 		t.Fatal(commitErr)
 	}
 
-	if commitFileArtifactCallCount != 2 {
-		t.Fatalf("commitFileArtifactCallCount = %v, want 2", commitFileArtifactCallCount)
+	expectedCommitFileArtifactCalls := []commitFileArtifactArgs{
+		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_file1"}},
+		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_link"}},
+		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_file2"}},
 	}
-	// TODO
-	// mock function to list files in a directory, probably using package var instead of testify
-	// one of:
-	//  filepath.Walk
-	//  ioutil.ReadDir
-	//  os.File.Readdir
 
-	// mock function to save directory struct to cache
-
-	// call cache.Commit on a directory artifact
-	// assert that mocked cache.Commit is called on each file in dir
-	// assert that mocked "save" function is called as expected
+	if diff := cmp.Diff(commitFileArtifactCalls, expectedCommitFileArtifactCalls); diff != "" {
+		t.Fatalf("commitFileArtifactCalls -want +got:\n%s", diff)
+	}
 
 	// assert result is correct
 	//   dir artifact has correct checksum
