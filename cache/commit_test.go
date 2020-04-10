@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -14,6 +16,7 @@ func TestCommitDirectory(t *testing.T) {
 	commitFileArtifactCalls := []commitArgs{}
 	commitFileArtifactOrig := commitFileArtifact
 	commitFileArtifact = func(args commitArgs) error {
+		// TODO assign dummy checksum
 		commitFileArtifactCalls = append(commitFileArtifactCalls, args)
 		return nil
 	}
@@ -32,6 +35,14 @@ func TestCommitDirectory(t *testing.T) {
 	}
 	defer func() { readDir = readDirOrig }()
 
+	var actualManifest *directoryManifest
+	writeDirManifestOrig := writeDirManifest
+	writeDirManifest = func(manifest *directoryManifest) error {
+		actualManifest = manifest
+		return nil
+	}
+	defer func() { writeDirManifest = writeDirManifestOrig }()
+
 	cache := LocalCache{Dir: "cache_root"}
 
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
@@ -41,15 +52,33 @@ func TestCommitDirectory(t *testing.T) {
 		t.Fatal(commitErr)
 	}
 
-	expectedCommitFileArtifactCalls := []commitArgs{
-		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_file1"}},
-		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_link"}},
-		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_file2"}},
+	expectedArtifacts := []*artifact.Artifact{
+		{Path: "my_file1"},
+		{Path: "my_link"},
+		{Path: "my_file2"},
 	}
 
-	if diff := cmp.Diff(commitFileArtifactCalls, expectedCommitFileArtifactCalls); diff != "" {
+	expectedCommitFileArtifactCalls := []commitArgs{}
+
+	baseDir := path.Join("work_dir", "art_dir")
+
+	for i := range expectedArtifacts {
+		expectedCommitFileArtifactCalls = append(
+			expectedCommitFileArtifactCalls,
+			commitArgs{Cache: &cache, WorkingDir: baseDir, Artifact: expectedArtifacts[i]},
+		)
+	}
+
+	if diff := cmp.Diff(expectedCommitFileArtifactCalls, commitFileArtifactCalls); diff != "" {
 		t.Fatalf("commitFileArtifactCalls -want +got:\n%s", diff)
 	}
+
+	// TODO add artifact checksums
+	expectedManifest := directoryManifest{
+		Path:     baseDir,
+		Contents: expectedArtifacts,
+	}
+	checksum.Update(&expectedManifest)
 
 	// assert result is correct
 	//   dir artifact has correct checksum
@@ -57,6 +86,10 @@ func TestCommitDirectory(t *testing.T) {
 	//   an error when committing a file should cause an error for the dir
 	//   don't commit any files if one them is invalid prior to starting commit?
 	//   etc.
+
+	if diff := cmp.Diff(expectedManifest, *actualManifest); diff != "" {
+		t.Fatalf("directoryManifest -want +got:\n%s", diff)
+	}
 }
 
 func TestCommitIntegration(t *testing.T) {

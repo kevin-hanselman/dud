@@ -76,23 +76,32 @@ var writeDirManifest = func(manifest *directoryManifest) error {
 }
 
 func commitDirArtifact(args commitArgs) error {
-	entries, err := readDir(args.WorkingDir)
+	baseDir := path.Join(args.WorkingDir, args.Artifact.Path)
+	entries, err := readDir(baseDir)
 	if err != nil {
 		return err
 	}
+	manifest := directoryManifest{Path: baseDir}
 	for _, entry := range entries {
 		if !entry.Mode().IsDir() { // TODO: only proceed for reg files and links
 			fileArt := artifact.Artifact{Path: entry.Name()}
 			args := commitArgs{
 				Cache:      args.Cache,
-				WorkingDir: args.WorkingDir,
+				WorkingDir: baseDir,
 				Artifact:   &fileArt,
 				Strategy:   args.Strategy,
 			}
 			if err := commitFileArtifact(args); err != nil {
 				return err
 			}
+			manifest.Contents = append(manifest.Contents, &fileArt)
 		}
+	}
+	if err := checksum.Update(&manifest); err != nil {
+		return err
+	}
+	if err := writeDirManifest(&manifest); err != nil {
+		return err
 	}
 	return nil
 }
@@ -106,7 +115,6 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 		Strategy:   strat,
 	}
 	if art.IsDir {
-		args.WorkingDir = path.Join(workingDir, art.Path)
 		return commitDirArtifact(args)
 	}
 	return commitFileArtifact(args)
