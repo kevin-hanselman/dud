@@ -5,7 +5,46 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 )
+
+// MockFileInfo mocks os.FileInfo
+type MockFileInfo struct {
+	MockName    string
+	MockSize    int64
+	MockMode    os.FileMode
+	MockModTime time.Time
+}
+
+// Name returns the basename of the file
+func (m MockFileInfo) Name() string {
+	return m.MockName
+}
+
+// Size return the size of the file
+func (m MockFileInfo) Size() int64 {
+	return m.MockSize
+}
+
+// Mode returns the os.FileMode of the file
+func (m MockFileInfo) Mode() os.FileMode {
+	return m.MockMode
+}
+
+// ModTime returns the modification time of the file
+func (m MockFileInfo) ModTime() time.Time {
+	return m.MockModTime
+}
+
+// IsDir returns true if the file is a directory, false otherwise
+func (m MockFileInfo) IsDir() bool {
+	return m.Mode().IsDir()
+}
+
+// Sys only exists to satisfy the FileInfo interface; it always returns nil
+func (m MockFileInfo) Sys() interface{} {
+	return nil
+}
 
 // TempDirs holds a pair of cache and workspace directory paths for integration testing.
 type TempDirs struct {

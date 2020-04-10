@@ -31,6 +31,7 @@ func TestTrackOnePath(t *testing.T) {
 		t.Error(err)
 	}
 
+	// TODO replace with cmp
 	if !reflect.DeepEqual(stageObj, expected) {
 		t.Errorf("Track(%s) = %#v, want %#v", path, stageObj, expected)
 	}

@@ -61,8 +61,7 @@ func IsRegularFile(path string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// See go doc os.ModeType
-	return fileInfo.Mode()&os.ModeType == 0, nil
+	return fileInfo.Mode().IsRegular(), nil
 }
 
 // SameContents checks that two files contain the same bytes

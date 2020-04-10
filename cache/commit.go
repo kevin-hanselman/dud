@@ -11,8 +11,10 @@ import (
 	"path"
 )
 
-// Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
-func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+var readDir = ioutil.ReadDir
+
+// defined as a private var to enable mocking
+var commitFileArtifact = func(cache *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	srcPath := path.Join(workingDir, art.Path)
 	isRegFile, err := fsutil.IsRegularFile(srcPath)
 	if err != nil {
@@ -57,6 +59,28 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 			return errors.Wrapf(err, "rm %#v failed", srcPath)
 		}
 		return cache.Checkout(workingDir, art, strat)
+	}
+	return nil
+}
+
+// Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
+func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	if art.IsDir {
+		newWorkingDir := path.Join(workingDir, art.Path)
+		entries, err := readDir(newWorkingDir)
+		if err != nil {
+			return err
+		}
+		for _, entry := range entries {
+			if !entry.Mode().IsDir() {
+				fileArt := artifact.Artifact{Path: entry.Name()}
+				if err := commitFileArtifact(cache, newWorkingDir, &fileArt, strat); err != nil {
+					return err
+				}
+			}
+		}
+	} else {
+		return commitFileArtifact(cache, workingDir, art, strat)
 	}
 	return nil
 }

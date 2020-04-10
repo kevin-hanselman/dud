@@ -4,6 +4,7 @@ package artifact
 type Artifact struct {
 	Checksum string
 	Path     string
+	IsDir    bool
 }
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.

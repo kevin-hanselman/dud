@@ -11,6 +11,35 @@ import (
 )
 
 func TestCommitDirectory(t *testing.T) {
+	commitFileArtifactCallCount := 0
+	commitFileArtifactOrig := commitFileArtifact
+	commitFileArtifact = func(cache *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+		commitFileArtifactCallCount++
+		return nil
+	}
+	defer func() { commitFileArtifact = commitFileArtifactOrig }()
+
+	readDirOrig := readDir
+	readDir = func(dir string) ([]os.FileInfo, error) {
+		return []os.FileInfo{
+			testutil.MockFileInfo{MockName: "foo"},
+			testutil.MockFileInfo{MockName: "bar"},
+		}, nil
+	}
+	defer func() { readDir = readDirOrig }()
+
+	cache := LocalCache{Dir: "cache_root"}
+
+	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "my_dir"}
+
+	commitErr := cache.Commit("", &dirArt, strategy.LinkStrategy)
+	if commitErr != nil {
+		t.Fatal(commitErr)
+	}
+
+	if commitFileArtifactCallCount != 2 {
+		t.Fatalf("commitFileArtifactCallCount = %v, want 2", commitFileArtifactCallCount)
+	}
 	// TODO
 	// mock function to list files in a directory, probably using package var instead of testify
 	// one of:
@@ -18,7 +47,7 @@ func TestCommitDirectory(t *testing.T) {
 	//  ioutil.ReadDir
 	//  os.File.Readdir
 
-	// mock function to save directory struct to disk
+	// mock function to save directory struct to cache
 
 	// call cache.Commit on a directory artifact
 	// assert that mocked cache.Commit is called on each file in dir
