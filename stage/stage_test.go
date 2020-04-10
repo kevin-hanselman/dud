@@ -61,7 +61,7 @@ func TestSetChecksum(t *testing.T) {
 	}
 
 	if diff := cmp.Diff(expected, s); diff != "" {
-		t.Fatalf("stage.SetChecksum() -want +got:\n%s", diff)
+		t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
 	}
 
 	origChecksum := s.Checksum
@@ -73,6 +73,16 @@ func TestSetChecksum(t *testing.T) {
 
 	if s.Checksum == origChecksum {
 		t.Fatal("changing stage.WorkingDir should have affected checksum")
+	}
+
+	origChecksum = s.Checksum
+	s.Outputs[0].Path = "cat.png"
+
+	if err := checksum.Update(&s); err != nil {
+		t.Fatal(err)
+	}
+	if s.Checksum == origChecksum {
+		t.Fatal("changing stage.Outputs should have affected checksum")
 	}
 }
 
