@@ -3,6 +3,7 @@ package stage
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -43,7 +44,7 @@ func TestSetChecksum(t *testing.T) {
 		},
 	}
 
-	if err := s.SetChecksum(); err != nil {
+	if err := checksum.Update(&s); err != nil {
 		t.Fatal(err)
 	}
 
@@ -55,7 +56,7 @@ func TestSetChecksum(t *testing.T) {
 
 	s.Checksum = "this should not affect the checksum"
 
-	if err := s.SetChecksum(); err != nil {
+	if err := checksum.Update(&s); err != nil {
 		t.Fatal(err)
 	}
 
@@ -66,7 +67,7 @@ func TestSetChecksum(t *testing.T) {
 	origChecksum := s.Checksum
 	s.WorkingDir = "this should affect the checksum"
 
-	if err := s.SetChecksum(); err != nil {
+	if err := checksum.Update(&s); err != nil {
 		t.Fatal(err)
 	}
 

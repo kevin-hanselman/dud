@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"os"
@@ -31,7 +32,7 @@ func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, str
 		}
 		defer dstFile.Close()
 
-		checksum, err := fsutil.ChecksumAndCopy(srcFile, dstFile)
+		checksum, err := checksum.CalculateAndCopy(srcFile, dstFile)
 		if err != nil {
 			return err
 		}

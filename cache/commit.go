@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
@@ -43,7 +44,7 @@ var commitFileArtifact = func(args commitArgs) error {
 
 	// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
 	// OR, if we're using CopyStrategy
-	checksum, err := fsutil.ChecksumAndCopy(srcFile, dstFile)
+	checksum, err := checksum.CalculateAndCopy(srcFile, dstFile)
 	if err != nil {
 		return errors.Wrapf(err, "checksum of %#v failed", srcPath)
 	}
@@ -67,6 +68,10 @@ var commitFileArtifact = func(args commitArgs) error {
 		}
 		return args.Cache.Checkout(args.WorkingDir, args.Artifact, args.Strategy)
 	}
+	return nil
+}
+
+var writeDirManifest = func(manifest *directoryManifest) error {
 	return nil
 }
 

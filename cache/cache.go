@@ -28,3 +28,9 @@ func (cache *LocalCache) CachePathForArtifact(art artifact.Artifact) (string, er
 	}
 	return path.Join(cache.Dir, art.Checksum[:2], art.Checksum[2:]), nil
 }
+
+type directoryManifest struct {
+	Checksum string
+	Path     string
+	Contents []artifact.Artifact
+}
