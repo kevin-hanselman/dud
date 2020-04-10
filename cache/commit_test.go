@@ -11,9 +11,9 @@ import (
 )
 
 func TestCommitDirectory(t *testing.T) {
-	commitFileArtifactCalls := []commitFileArtifactArgs{}
+	commitFileArtifactCalls := []commitArgs{}
 	commitFileArtifactOrig := commitFileArtifact
-	commitFileArtifact = func(args commitFileArtifactArgs) error {
+	commitFileArtifact = func(args commitArgs) error {
 		commitFileArtifactCalls = append(commitFileArtifactCalls, args)
 		return nil
 	}
@@ -41,7 +41,7 @@ func TestCommitDirectory(t *testing.T) {
 		t.Fatal(commitErr)
 	}
 
-	expectedCommitFileArtifactCalls := []commitFileArtifactArgs{
+	expectedCommitFileArtifactCalls := []commitArgs{
 		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_file1"}},
 		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_link"}},
 		{Cache: &cache, WorkingDir: "work_dir/art_dir", Artifact: &artifact.Artifact{Path: "my_file2"}},
