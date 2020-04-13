@@ -11,7 +11,7 @@ import (
 func (cache *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
 	var status artifact.Status
 	workPath := path.Join(workingDir, art.Path)
-	cachePath, err := cache.CachePathForChecksum(art.Checksum)
+	cachePath, err := cache.PathForChecksum(art.Checksum)
 	if err != nil { // An error means the checksum is invalid
 		status.HasChecksum = false
 	} else {

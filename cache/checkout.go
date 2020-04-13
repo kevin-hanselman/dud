@@ -14,7 +14,7 @@ import (
 // artifact in the working directory.
 func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	dstPath := path.Join(workingDir, art.Path)
-	srcPath, err := cache.CachePathForChecksum(art.Checksum)
+	srcPath, err := cache.PathForChecksum(art.Checksum)
 	if err != nil {
 		return err
 	}

@@ -50,7 +50,7 @@ var commitFileArtifact = func(args commitArgs) error {
 	if err != nil {
 		return errors.Wrapf(err, "checksum of %#v failed", srcPath)
 	}
-	// TODO: remove usage of checksum slices -- leave this logic to CachePathForChecksum
+	// TODO: remove usage of checksum slices -- leave this logic to PathForChecksum
 	dstDir := path.Join(args.Cache.Dir, checksum[:2])
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
 		return errors.Wrapf(err, "mkdirs %#v failed", dstDir)
@@ -110,7 +110,7 @@ func commitDirArtifact(args commitArgs) error {
 	if err := checksum.Update(&manifest); err != nil {
 		return err
 	}
-	path, err := args.Cache.CachePathForChecksum(manifest.Checksum)
+	path, err := args.Cache.PathForChecksum(manifest.Checksum)
 	if err != nil {
 		return err
 	}

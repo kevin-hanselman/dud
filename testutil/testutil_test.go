@@ -64,7 +64,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
 	}
 
-	cachePath, err := ch.CachePathForChecksum(art.Checksum)
+	cachePath, err := ch.PathForChecksum(art.Checksum)
 	if status.HasChecksum && (err != nil) {
 		t.Fatal(err)
 	}

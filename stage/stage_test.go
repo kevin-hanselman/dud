@@ -23,7 +23,7 @@ func (c *mockCache) Checkout(workingDir string, art *artifact.Artifact, strat st
 	return args.Error(0)
 }
 
-func (c *mockCache) CachePathForChecksum(checksum string) (string, error) {
+func (c *mockCache) PathForChecksum(checksum string) (string, error) {
 	args := c.Called(checksum)
 	return args.String(0), args.Error(1)
 }

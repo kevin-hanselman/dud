@@ -85,7 +85,7 @@ func TestCommitDirectory(t *testing.T) {
 	}
 	checksum.Update(&expectedManifest)
 
-	expectedPath, err := cache.CachePathForChecksum(expectedManifest.Checksum)
+	expectedPath, err := cache.PathForChecksum(expectedManifest.Checksum)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 }
 
 func testCachePermissions(cache LocalCache, art artifact.Artifact, t *testing.T) {
-	fileCachePath, err := cache.CachePathForChecksum(art.Checksum)
+	fileCachePath, err := cache.PathForChecksum(art.Checksum)
 	if err != nil {
 		t.Fatal(err)
 	}
