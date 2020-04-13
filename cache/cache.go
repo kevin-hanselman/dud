@@ -11,7 +11,7 @@ import (
 type Cache interface {
 	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
-	CachePathForArtifact(art artifact.Artifact) (string, error)
+	CachePathForChecksum(checksum string) (string, error)
 	Status(workingDir string, art artifact.Artifact) (artifact.Status, error)
 }
 
@@ -20,13 +20,14 @@ type LocalCache struct {
 	Dir string
 }
 
-// CachePathForArtifact returns the expected location of the given artifact in the cache.
-// If the artifact has an invalid (e.g. empty) checksum value, this function returns an error.
-func (cache *LocalCache) CachePathForArtifact(art artifact.Artifact) (string, error) {
-	if len(art.Checksum) < 3 {
-		return "", fmt.Errorf("invalid checksum: %#v", art.Checksum)
+// CachePathForChecksum returns the expected location of an object with the
+// given checksum in the cache. If the checksum has an invalid (e.g. empty)
+// checksum value, this function returns an error.
+func (cache *LocalCache) CachePathForChecksum(checksum string) (string, error) {
+	if len(checksum) < 3 {
+		return "", fmt.Errorf("invalid checksum: %#v", checksum)
 	}
-	return path.Join(cache.Dir, art.Checksum[:2], art.Checksum[2:]), nil
+	return path.Join(cache.Dir, checksum[:2], checksum[2:]), nil
 }
 
 type directoryManifest struct {

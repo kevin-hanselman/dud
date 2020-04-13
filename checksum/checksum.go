@@ -12,6 +12,7 @@ import (
 )
 
 // Checksummable objects can get and set their checksum
+// TODO: better name? ChecksummableStruct?
 type Checksummable interface {
 	GetChecksum() string
 	SetChecksum(string)
@@ -27,12 +28,12 @@ func Update(c Checksummable) error {
 	if err := enc.Encode(c); err != nil {
 		return err
 	}
-	c.SetChecksum(HashToHexString(h))
+	c.SetChecksum(hashToHexString(h))
 	return nil
 }
 
-// HashToHexString returns the sum of the hash object encoded as a hex string.
-func HashToHexString(h hash.Hash) string {
+// hashToHexString returns the sum of the hash object encoded as a hex string.
+func hashToHexString(h hash.Hash) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -67,7 +68,7 @@ func CalculateAndCopy(reader io.Reader, writer io.Writer) (string, error) {
 		}
 
 		if readErr == io.EOF {
-			return HashToHexString(h), nil
+			return hashToHexString(h), nil
 		}
 	}
 }

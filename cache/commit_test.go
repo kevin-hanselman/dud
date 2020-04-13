@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
@@ -35,13 +36,17 @@ func TestCommitDirectory(t *testing.T) {
 	}
 	defer func() { readDir = readDirOrig }()
 
-	var actualManifest *directoryManifest
-	writeDirManifestOrig := writeDirManifest
-	writeDirManifest = func(manifest *directoryManifest) error {
-		actualManifest = manifest
+	var actualManifest directoryManifest
+	var actualPath string
+	writeFileOrig := writeFile
+	writeFile = func(path string, data []byte, perm os.FileMode) error {
+		actualPath = path
+		if err := json.Unmarshal(data, &actualManifest); err != nil {
+			t.Fatal(err)
+		}
 		return nil
 	}
-	defer func() { writeDirManifest = writeDirManifestOrig }()
+	defer func() { writeFile = writeFileOrig }()
 
 	cache := LocalCache{Dir: "cache_root"}
 
@@ -80,6 +85,14 @@ func TestCommitDirectory(t *testing.T) {
 	}
 	checksum.Update(&expectedManifest)
 
+	expectedPath, err := cache.CachePathForChecksum(expectedManifest.Checksum)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if actualPath != expectedPath {
+		t.Fatalf("manifest path = %v, want %v", actualPath, expectedPath)
+	}
+
 	// assert result is correct
 	//   dir artifact has correct checksum
 	//   checksum should be invariant to file order
@@ -87,7 +100,7 @@ func TestCommitDirectory(t *testing.T) {
 	//   don't commit any files if one them is invalid prior to starting commit?
 	//   etc.
 
-	if diff := cmp.Diff(expectedManifest, *actualManifest); diff != "" {
+	if diff := cmp.Diff(expectedManifest, actualManifest); diff != "" {
 		t.Fatalf("directoryManifest -want +got:\n%s", diff)
 	}
 }
@@ -154,7 +167,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 }
 
 func testCachePermissions(cache LocalCache, art artifact.Artifact, t *testing.T) {
-	fileCachePath, err := cache.CachePathForArtifact(art)
+	fileCachePath, err := cache.CachePathForChecksum(art.Checksum)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
@@ -13,6 +14,7 @@ import (
 )
 
 var readDir = ioutil.ReadDir
+var writeFile = ioutil.WriteFile
 
 type commitArgs struct {
 	Cache      *LocalCache
@@ -48,6 +50,7 @@ var commitFileArtifact = func(args commitArgs) error {
 	if err != nil {
 		return errors.Wrapf(err, "checksum of %#v failed", srcPath)
 	}
+	// TODO: remove usage of checksum slices -- leave this logic to CachePathForChecksum
 	dstDir := path.Join(args.Cache.Dir, checksum[:2])
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
 		return errors.Wrapf(err, "mkdirs %#v failed", dstDir)
@@ -71,7 +74,14 @@ var commitFileArtifact = func(args commitArgs) error {
 	return nil
 }
 
-var writeDirManifest = func(manifest *directoryManifest) error {
+func writeDirManifest(path string, manifest *directoryManifest) error {
+	manifestBytes, err := json.Marshal(manifest)
+	if err != nil {
+		return err
+	}
+	if err := writeFile(path, manifestBytes, 0444); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -100,7 +110,11 @@ func commitDirArtifact(args commitArgs) error {
 	if err := checksum.Update(&manifest); err != nil {
 		return err
 	}
-	if err := writeDirManifest(&manifest); err != nil {
+	path, err := args.Cache.CachePathForChecksum(manifest.Checksum)
+	if err != nil {
+		return err
+	}
+	if err := writeDirManifest(path, &manifest); err != nil {
 		return err
 	}
 	return nil
