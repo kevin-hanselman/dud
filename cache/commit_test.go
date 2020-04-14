@@ -17,7 +17,7 @@ func TestCommitDirectory(t *testing.T) {
 	commitFileArtifactCalls := []commitArgs{}
 	commitFileArtifactOrig := commitFileArtifact
 	commitFileArtifact = func(args commitArgs) error {
-		// TODO assign dummy checksum
+		args.Artifact.Checksum = "123456789"
 		commitFileArtifactCalls = append(commitFileArtifactCalls, args)
 		return nil
 	}
@@ -26,6 +26,7 @@ func TestCommitDirectory(t *testing.T) {
 	mockFiles := []os.FileInfo{
 		testutil.MockFileInfo{MockName: "my_file1"},
 		testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+		// TODO: cover handling of symlinks (and other irregular files?)
 		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
 		testutil.MockFileInfo{MockName: "my_file2"},
 	}
@@ -58,9 +59,9 @@ func TestCommitDirectory(t *testing.T) {
 	}
 
 	expectedArtifacts := []*artifact.Artifact{
-		{Path: "my_file1"},
-		{Path: "my_link"},
-		{Path: "my_file2"},
+		{Checksum: "123456789", Path: "my_file1"},
+		{Checksum: "123456789", Path: "my_link"},
+		{Checksum: "123456789", Path: "my_file2"},
 	}
 
 	expectedCommitFileArtifactCalls := []commitArgs{}
@@ -78,7 +79,6 @@ func TestCommitDirectory(t *testing.T) {
 		t.Fatalf("commitFileArtifactCalls -want +got:\n%s", diff)
 	}
 
-	// TODO add artifact checksums
 	expectedManifest := directoryManifest{
 		Path:     baseDir,
 		Contents: expectedArtifacts,
