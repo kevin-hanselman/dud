@@ -8,10 +8,25 @@ import (
 )
 
 // Status reports the status of an Artifact in the Cache.
-func (cache *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
+func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
+	args := statusArgs{
+		Cache:      ch,
+		WorkingDir: workingDir,
+		Artifact:   art,
+	}
+	return fileArtifactStatus(args)
+}
+
+type statusArgs struct {
+	Cache      *LocalCache
+	WorkingDir string
+	Artifact   artifact.Artifact
+}
+
+var fileArtifactStatus = func(args statusArgs) (artifact.Status, error) {
 	var status artifact.Status
-	workPath := path.Join(workingDir, art.Path)
-	cachePath, err := cache.PathForChecksum(art.Checksum)
+	workPath := path.Join(args.WorkingDir, args.Artifact.Path)
+	cachePath, err := args.Cache.PathForChecksum(args.Artifact.Checksum)
 	if err != nil { // An error means the checksum is invalid
 		status.HasChecksum = false
 	} else {

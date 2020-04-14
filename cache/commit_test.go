@@ -50,7 +50,6 @@ func TestCommitDirectory(t *testing.T) {
 	defer func() { writeFile = writeFileOrig }()
 
 	cache := LocalCache{Dir: "cache_root"}
-
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
 	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy)

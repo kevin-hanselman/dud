@@ -9,6 +9,38 @@ import (
 	"testing"
 )
 
+func TestDirectoryStatus(t *testing.T) {
+	fileArtifactStatusCalls := []statusArgs{}
+	fileArtifactStatusOrig := fileArtifactStatus
+	fileArtifactStatus = func(args statusArgs) (artifact.Status, error) {
+		fileArtifactStatusCalls = append(fileArtifactStatusCalls, args)
+		return artifact.Status{}, nil
+	}
+	defer func() { fileArtifactStatus = fileArtifactStatusOrig }()
+
+	mockFiles := []os.FileInfo{
+		testutil.MockFileInfo{MockName: "my_file1"},
+		testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+		// TODO: cover handling of symlinks (and other irregular files?)
+		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+		testutil.MockFileInfo{MockName: "my_file2"},
+	}
+
+	readDirOrig := readDir
+	readDir = func(dir string) ([]os.FileInfo, error) {
+		return mockFiles, nil
+	}
+	defer func() { readDir = readDirOrig }()
+
+	cache := LocalCache{Dir: "cache_root"}
+	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
+
+	status, commitErr := cache.Status("work_dir", dirArt)
+	if commitErr != nil {
+		t.Fatal(commitErr)
+	}
+}
+
 func TestStatusIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
