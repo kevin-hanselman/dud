@@ -13,6 +13,20 @@ import (
 	"path"
 )
 
+// Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
+func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	args := commitArgs{
+		WorkingDir: workingDir,
+		Cache:      cache,
+		Artifact:   art,
+		Strategy:   strat,
+	}
+	if art.IsDir {
+		return commitDirArtifact(args)
+	}
+	return commitFileArtifact(args)
+}
+
 var readDir = ioutil.ReadDir
 var writeFile = ioutil.WriteFile
 
@@ -118,18 +132,4 @@ func commitDirArtifact(args commitArgs) error {
 		return err
 	}
 	return nil
-}
-
-// Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
-func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-	args := commitArgs{
-		WorkingDir: workingDir,
-		Cache:      cache,
-		Artifact:   art,
-		Strategy:   strat,
-	}
-	if art.IsDir {
-		return commitDirArtifact(args)
-	}
-	return commitFileArtifact(args)
 }

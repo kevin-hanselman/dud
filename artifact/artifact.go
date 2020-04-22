@@ -28,8 +28,10 @@ const (
 	Absent WorkspaceStatus = iota
 	// RegularFile means that the artifact exists as a regular file in the workspace.
 	RegularFile
-	// Link means that the artifact exists as a link in the workspace
+	// Link means that the artifact exists as a link in the workspace.
 	Link
+	// Directory means that the artifact exists as a directory in the workspace.
+	Directory
 )
 
 func (ws WorkspaceStatus) String() string {

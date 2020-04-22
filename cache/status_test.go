@@ -6,6 +6,7 @@ import (
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/testutil"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -32,12 +33,33 @@ func TestDirectoryStatus(t *testing.T) {
 	}
 	defer func() { readDir = readDirOrig }()
 
+	expectedArtifacts := []artifact.Artifact{
+		{Path: "my_file1"},
+		{Path: "my_link"},
+		{Path: "my_file2"},
+	}
+
 	cache := LocalCache{Dir: "cache_root"}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
-	status, commitErr := cache.Status("work_dir", dirArt)
+	_, commitErr := cache.Status("work_dir", dirArt)
 	if commitErr != nil {
 		t.Fatal(commitErr)
+	}
+
+	expectedfileArtifactStatusCalls := []statusArgs{}
+
+	baseDir := path.Join("work_dir", "art_dir")
+
+	for i := range expectedArtifacts {
+		expectedfileArtifactStatusCalls = append(
+			expectedfileArtifactStatusCalls,
+			statusArgs{Cache: &cache, WorkingDir: baseDir, Artifact: expectedArtifacts[i]},
+		)
+	}
+
+	if diff := cmp.Diff(expectedfileArtifactStatusCalls, fileArtifactStatusCalls); diff != "" {
+		t.Fatalf("fileArtifactStatusCalls -want +got:\n%s", diff)
 	}
 }
 

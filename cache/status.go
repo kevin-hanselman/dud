@@ -14,6 +14,9 @@ func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact
 		WorkingDir: workingDir,
 		Artifact:   art,
 	}
+	if art.IsDir {
+		return dirArtifactStatus(args)
+	}
 	return fileArtifactStatus(args)
 }
 
@@ -77,4 +80,28 @@ var fileArtifactStatus = func(args statusArgs) (artifact.Status, error) {
 	}
 
 	return status, nil
+}
+
+func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
+	var dirStatus artifact.Status
+	baseDir := path.Join(args.WorkingDir, args.Artifact.Path)
+	entries, err := readDir(baseDir)
+	if err != nil {
+		return dirStatus, err
+	}
+	// manifest := directoryManifest{Path: baseDir}
+	for _, entry := range entries {
+		if !entry.Mode().IsDir() { // TODO: only proceed for reg files and links
+			fileArt := artifact.Artifact{Path: entry.Name()}
+			_, err := fileArtifactStatus(statusArgs{
+				Cache:      args.Cache,
+				WorkingDir: baseDir,
+				Artifact:   fileArt,
+			})
+			if err != nil {
+				return dirStatus, err
+			}
+		}
+	}
+	return dirStatus, nil
 }
