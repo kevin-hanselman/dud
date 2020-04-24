@@ -1,10 +1,8 @@
 package fsutil
 
 import (
-	"bytes"
-	"github.com/c2h5oh/datasize"
+	"github.com/kevlar1818/duc/artifact"
 	"github.com/pkg/errors"
-	"io"
 	"os"
 )
 
@@ -28,19 +26,6 @@ func Exists(path string, followLinks bool) (bool, error) {
 	return false, errors.Wrapf(err, "stat %#v failed", path)
 }
 
-// SameFile wraps os.SameFile and handles calling os.Stat on both paths.
-func SameFile(pathA, pathB string) (bool, error) {
-	aInfo, err := os.Stat(pathA)
-	if err != nil {
-		return false, errors.Wrapf(err, "stat %#v failed", pathA)
-	}
-	bInfo, err := os.Stat(pathB)
-	if err != nil {
-		return false, errors.Wrapf(err, "stat %#v failed", pathB)
-	}
-	return os.SameFile(aInfo, bInfo), nil
-}
-
 // IsLink returns true if path represents a symlink, otherwise it returns false.
 func IsLink(path string) (bool, error) {
 	fileInfo, err := os.Lstat(path)
@@ -60,42 +45,28 @@ func IsRegularFile(path string) (bool, error) {
 	return fileInfo.Mode().IsRegular(), nil
 }
 
-// SameContents checks that two files contain the same bytes
-func SameContents(pathA, pathB string) (bool, error) {
-	fileA, err := os.Open(pathA)
+// FileStatusFromPath converts a path into a artifact.FileStatus enum value.
+func FileStatusFromPath(path string) (artifact.FileStatus, error) {
+	fileInfo, err := os.Lstat(path)
 	if err != nil {
-		return false, errors.Wrapf(err, "open %#v failed", pathA)
+		if os.IsNotExist(err) {
+			return artifact.Absent, nil
+		}
+		return 0, err
 	}
-	defer fileA.Close()
-	fileB, err := os.Open(pathB)
-	if err != nil {
-		return false, errors.Wrapf(err, "open %#v failed", pathB)
-	}
-	defer fileB.Close()
+	mode := fileInfo.Mode()
 
-	bytesA := make([]byte, 8*datasize.MB)
-	bytesB := make([]byte, 8*datasize.MB)
-	for {
-		nBytesReadA, errA := fileA.Read(bytesA)
-		isEndOfFileA := errA == io.EOF
-		if errA != nil && !isEndOfFileA {
-			return false, errors.Wrapf(errA, "read %#v failed", pathA)
-		}
-		nBytesReadB, errB := fileB.Read(bytesB)
-		isEndOfFileB := errB == io.EOF
-		if errB != nil && !isEndOfFileB {
-			return false, errors.Wrapf(errB, "read %#v failed", pathB)
-		}
-		if nBytesReadA != nBytesReadB {
-			return false, nil
-		}
-		if !bytes.Equal(bytesA, bytesB) {
-			return false, nil
-		}
-		if isEndOfFileA != isEndOfFileB {
-			return false, nil
-		} else if isEndOfFileA {
-			return true, nil
-		}
+	if mode.IsRegular() {
+		return artifact.RegularFile, nil
 	}
+
+	if mode.IsDir() {
+		return artifact.Directory, nil
+	}
+
+	if (mode & os.ModeSymlink) != 0 {
+		return artifact.Link, nil
+	}
+
+	return artifact.Other, nil
 }

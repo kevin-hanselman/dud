@@ -2,8 +2,12 @@ State Description               Workspace   Checksum in artifact    Checksum in 
 
 R/W, up to date                 file        yes                     yes                 yes
 modified                        file        yes                     yes                 no
-uncommitted changes             file        yes                     no
-missing checksum                file        no
+warning: missing from cache     file        yes                     no
+missing/invalid checksum        file        no
+up to date                      directory   yes                     yes                 yes
+modified                        directory   yes                     yes                 no
+uncommitted changes             directory   yes                     no
+missing checksum                directory   no
 RO, up to date                  link        yes                     yes                 yes
 warning: invalid link           link        yes                     yes                 no
 warning: broken link            link        yes                     no

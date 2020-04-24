@@ -69,35 +69,35 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 // AllTestCases returns a slice of all valid artifact.Status structs.
 // (See status.txt in the project root)
 func AllTestCases() (out []artifact.Status) {
-	allWorkspaceStatuses := []artifact.WorkspaceStatus{artifact.RegularFile, artifact.Link, artifact.Absent}
+	allWorkspaceStatuses := []artifact.FileStatus{artifact.RegularFile, artifact.Link, artifact.Absent}
 	for _, workspaceStatus := range allWorkspaceStatuses {
 		if workspaceStatus != artifact.Absent {
 			out = append(
 				out,
 				artifact.Status{
-					WorkspaceStatus: workspaceStatus,
-					HasChecksum:     true,
-					ChecksumInCache: true,
-					ContentsMatch:   true,
+					WorkspaceFileStatus: workspaceStatus,
+					HasChecksum:         true,
+					ChecksumInCache:     true,
+					ContentsMatch:       true,
 				},
 			)
 		}
 		out = append(
 			out,
 			artifact.Status{
-				WorkspaceStatus: workspaceStatus,
-				HasChecksum:     true,
-				ChecksumInCache: true,
-				ContentsMatch:   false,
+				WorkspaceFileStatus: workspaceStatus,
+				HasChecksum:         true,
+				ChecksumInCache:     true,
+				ContentsMatch:       false,
 			},
 			artifact.Status{
-				WorkspaceStatus: workspaceStatus,
-				HasChecksum:     true,
-				ChecksumInCache: false,
+				WorkspaceFileStatus: workspaceStatus,
+				HasChecksum:         true,
+				ChecksumInCache:     false,
 			},
 			artifact.Status{
-				WorkspaceStatus: workspaceStatus,
-				HasChecksum:     false,
+				WorkspaceFileStatus: workspaceStatus,
+				HasChecksum:         false,
 			},
 		)
 	}
@@ -136,7 +136,7 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 		}
 	}
 
-	switch status.WorkspaceStatus {
+	switch status.WorkspaceFileStatus {
 	case artifact.RegularFile:
 		if !status.ContentsMatch {
 			fileContents = []byte("Not the same as in the cache")

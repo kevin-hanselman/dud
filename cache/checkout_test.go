@@ -48,7 +48,7 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifa
 		t.Fatal("expected Checkout to raise missing checksum in cache error")
 	}
 
-	if statusStart.WorkspaceStatus != artifact.Absent {
+	if statusStart.WorkspaceFileStatus != artifact.Absent {
 		if os.IsExist(checkoutErr) {
 			return
 		}
@@ -68,9 +68,9 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifa
 	}
 	switch strat {
 	case strategy.CopyStrategy:
-		statusWant.WorkspaceStatus = artifact.RegularFile
+		statusWant.WorkspaceFileStatus = artifact.RegularFile
 	case strategy.LinkStrategy:
-		statusWant.WorkspaceStatus = artifact.Link
+		statusWant.WorkspaceFileStatus = artifact.Link
 	}
 
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {

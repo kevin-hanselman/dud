@@ -2,6 +2,7 @@ package fsutil
 
 import (
 	"fmt"
+	"github.com/kevlar1818/duc/artifact"
 	"os"
 	"testing"
 )
@@ -126,7 +127,7 @@ func TestIsRegularFileIntegration(t *testing.T) {
 	}
 }
 
-func TestSameFileAndContentsIntegration(t *testing.T) {
+func TestWorkspaceStatusFromPathIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -134,51 +135,27 @@ func TestSameFileAndContentsIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer os.Remove("fsutil.go.symlink")
-	if err := os.Link("fsutil.go", "fsutil.go.hardlink"); err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove("fsutil.go.hardlink")
 
-	tests := map[[2]string]bool{
-		{"fsutil_test.go", "fsutil_test.go"}: true,
-		{"fsutil.go", "fsutil_test.go"}:      false,
-		{"fsutil_test.go", "fsutil.go"}:      false,
-		{"fsutil.go", "fsutil.go.symlink"}:   true,
-		{"fsutil.go", "fsutil.go.hardlink"}:  true,
+	tests := map[string]artifact.FileStatus{
+		"./fsutil_test.go":    artifact.RegularFile,
+		"./foobar.txt":        artifact.Absent,
+		"../fsutil":           artifact.Directory,
+		"./fsutil.go.symlink": artifact.Link,
 	}
 
-	for paths, shouldBeSame := range tests {
-		t.Run(
-			paths[0]+"=="+paths[1],
-			func(t *testing.T) {
-				testSameFile(paths[0], paths[1], shouldBeSame, t)
-			},
-		)
-		t.Run(
-			paths[0]+"=="+paths[1],
-			func(t *testing.T) {
-				testSameContents(paths[0], paths[1], shouldBeSame, t)
-			},
-		)
-	}
-}
-
-func testSameFile(pathA, pathB string, shouldBeSame bool, t *testing.T) {
-	same, err := SameFile(pathA, pathB)
-	if err != nil {
-		t.Errorf("SameFile(%#v, %#v) raised error: %v", pathA, pathB, err)
-	}
-	if same != shouldBeSame {
-		t.Errorf("SameFile(%#v, %#v) = %v", pathA, pathB, same)
-	}
-}
-
-func testSameContents(pathA, pathB string, shouldBeSame bool, t *testing.T) {
-	same, err := SameContents(pathA, pathB)
-	if err != nil {
-		t.Errorf("SameFile(%#v, %#v) raised error: %v", pathA, pathB, err)
-	}
-	if same != shouldBeSame {
-		t.Errorf("SameFile(%#v, %#v) = %v", pathA, pathB, same)
+	for path, expectedWorkspaceStatus := range tests {
+		wspaceStatus, err := FileStatusFromPath(path)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if wspaceStatus != expectedWorkspaceStatus {
+			t.Errorf(
+				"WorkspaceStatusFromPath(%#v) = %s, want %s",
+				path,
+				wspaceStatus,
+				expectedWorkspaceStatus,
+			)
+		}
 	}
 }

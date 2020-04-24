@@ -33,6 +33,15 @@ func TestDirectoryStatus(t *testing.T) {
 	}
 	defer func() { readDir = readDirOrig }()
 
+	quickStatusOrig := quickStatus
+	quickStatus = func(args statusArgs) (status artifact.Status, cachePath, workPath string, err error) {
+		status.WorkspaceFileStatus = artifact.Directory
+		workPath = path.Join(args.WorkingDir, args.Artifact.Path)
+		cachePath = "foobar"
+		return
+	}
+	defer func() { quickStatus = quickStatusOrig }()
+
 	expectedArtifacts := []artifact.Artifact{
 		{Path: "my_file1"},
 		{Path: "my_link"},
@@ -42,15 +51,13 @@ func TestDirectoryStatus(t *testing.T) {
 	cache := LocalCache{Dir: "cache_root"}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
-	_, commitErr := cache.Status("work_dir", dirArt)
+	status, commitErr := cache.Status("work_dir", dirArt)
 	if commitErr != nil {
 		t.Fatal(commitErr)
 	}
 
 	expectedfileArtifactStatusCalls := []statusArgs{}
-
 	baseDir := path.Join("work_dir", "art_dir")
-
 	for i := range expectedArtifacts {
 		expectedfileArtifactStatusCalls = append(
 			expectedfileArtifactStatusCalls,
@@ -60,6 +67,17 @@ func TestDirectoryStatus(t *testing.T) {
 
 	if diff := cmp.Diff(expectedfileArtifactStatusCalls, fileArtifactStatusCalls); diff != "" {
 		t.Fatalf("fileArtifactStatusCalls -want +got:\n%s", diff)
+	}
+
+	expectedStatus := artifact.Status{
+		WorkspaceFileStatus: artifact.Directory,
+		HasChecksum:         true,
+		ChecksumInCache:     true,
+		ContentsMatch:       true,
+	}
+
+	if diff := cmp.Diff(expectedStatus, status); diff != "" {
+		t.Fatalf("directory artifact.Status -want +got:\n%s", diff)
 	}
 }
 

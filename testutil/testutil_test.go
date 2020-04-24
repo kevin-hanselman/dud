@@ -59,7 +59,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		t.Fatal(err)
 	}
 
-	shouldExist := status.WorkspaceStatus != artifact.Absent
+	shouldExist := status.WorkspaceFileStatus != artifact.Absent
 	if exists != shouldExist {
 		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
 	}
@@ -77,7 +77,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		t.Fatalf("Exists(%#v) = %#v", cachePath, exists)
 	}
 
-	switch status.WorkspaceStatus {
+	switch status.WorkspaceFileStatus {
 	case artifact.Link:
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {

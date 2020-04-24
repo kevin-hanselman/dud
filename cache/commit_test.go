@@ -128,12 +128,12 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 
-	if statusStart.WorkspaceStatus == artifact.Absent {
+	if statusStart.WorkspaceFileStatus == artifact.Absent {
 		if os.IsNotExist(commitErr) {
 			return // TODO: assert expected status
 		}
 		t.Fatalf("expected Commit to raise NotExist error, got %#v", commitErr)
-	} else if statusStart.WorkspaceStatus == artifact.Link {
+	} else if statusStart.WorkspaceFileStatus == artifact.Link {
 		if commitErr != nil {
 			return // TODO: assert expected status
 		}
@@ -155,9 +155,9 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	}
 	switch strat {
 	case strategy.CopyStrategy:
-		statusWant.WorkspaceStatus = artifact.RegularFile
+		statusWant.WorkspaceFileStatus = artifact.RegularFile
 	case strategy.LinkStrategy:
-		statusWant.WorkspaceStatus = artifact.Link
+		statusWant.WorkspaceFileStatus = artifact.Link
 	}
 
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
