@@ -28,7 +28,6 @@ func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat
 }
 
 var readDir = ioutil.ReadDir
-var writeFile = ioutil.WriteFile
 
 type commitArgs struct {
 	Cache      *LocalCache
@@ -88,15 +87,12 @@ var commitFileArtifact = func(args commitArgs) error {
 	return nil
 }
 
-func writeDirManifest(path string, manifest *directoryManifest) error {
-	manifestBytes, err := json.Marshal(manifest)
+var writeDirManifest = func(path string, manifest *directoryManifest) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0444)
 	if err != nil {
 		return err
 	}
-	if err := writeFile(path, manifestBytes, 0444); err != nil {
-		return err
-	}
-	return nil
+	return json.NewEncoder(file).Encode(manifest)
 }
 
 func commitDirArtifact(args commitArgs) error {

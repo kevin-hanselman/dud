@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"os"
@@ -70,7 +71,7 @@ var fileArtifactStatus = func(args statusArgs) (artifact.Status, error) {
 }
 
 func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
-	status, _, baseDir, err := quickStatus(args)
+	status, cachePath, workPath, err := quickStatus(args)
 	if err != nil {
 		return status, err
 	}
@@ -83,18 +84,22 @@ func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
 		return status, nil
 	}
 
-	entries, err := readDir(baseDir)
+	_, err = readDirManifest(cachePath)
 	if err != nil {
 		return status, err
 	}
 
-	//manifest := directoryManifest{Path: baseDir}
+	entries, err := readDir(workPath)
+	if err != nil {
+		return status, err
+	}
+
 	for _, entry := range entries {
 		if !entry.Mode().IsDir() { // TODO: only proceed for reg files and links
 			fileArt := artifact.Artifact{Path: entry.Name()}
 			_, err := fileArtifactStatus(statusArgs{
 				Cache:      args.Cache,
-				WorkingDir: baseDir,
+				WorkingDir: workPath,
 				Artifact:   fileArt,
 			})
 			if err != nil {
@@ -103,4 +108,13 @@ func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
 		}
 	}
 	return status, nil
+}
+
+var readDirManifest = func(path string) (man directoryManifest, err error) {
+	manifestFile, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	err = json.NewDecoder(manifestFile).Decode(&man)
+	return
 }

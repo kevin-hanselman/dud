@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
@@ -39,15 +38,13 @@ func TestCommitDirectory(t *testing.T) {
 
 	var actualManifest directoryManifest
 	var actualPath string
-	writeFileOrig := writeFile
-	writeFile = func(path string, data []byte, perm os.FileMode) error {
+	writeDirManifestOrig := writeDirManifest
+	writeDirManifest = func(path string, man *directoryManifest) error {
 		actualPath = path
-		if err := json.Unmarshal(data, &actualManifest); err != nil {
-			t.Fatal(err)
-		}
+		actualManifest = *man
 		return nil
 	}
-	defer func() { writeFile = writeFileOrig }()
+	defer func() { writeDirManifest = writeDirManifestOrig }()
 
 	cache := LocalCache{Dir: "cache_root"}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}

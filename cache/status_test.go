@@ -33,9 +33,19 @@ func TestDirectoryStatus(t *testing.T) {
 	}
 	defer func() { readDir = readDirOrig }()
 
+	readDirManifestOrig := readDirManifest
+	readDirManifest = func(path string) (directoryManifest, error) {
+		return directoryManifest{}, nil
+	}
+	defer func() { readDirManifest = readDirManifestOrig }()
+
 	quickStatusOrig := quickStatus
 	quickStatus = func(args statusArgs) (status artifact.Status, cachePath, workPath string, err error) {
-		status.WorkspaceFileStatus = artifact.Directory
+		status = artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+		}
 		workPath = path.Join(args.WorkingDir, args.Artifact.Path)
 		cachePath = "foobar"
 		return
