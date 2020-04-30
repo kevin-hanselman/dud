@@ -13,9 +13,15 @@ import (
 func TestDirectoryStatus(t *testing.T) {
 	fileArtifactStatusCalls := []statusArgs{}
 	fileArtifactStatusOrig := fileArtifactStatus
-	fileArtifactStatus = func(args statusArgs) (artifact.Status, error) {
+	fileArtifactStatus = func(args statusArgs) (status artifact.Status, err error) {
 		fileArtifactStatusCalls = append(fileArtifactStatusCalls, args)
-		return artifact.Status{}, nil
+		status = artifact.Status{
+			WorkspaceFileStatus: artifact.RegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
+		return
 	}
 	defer func() { fileArtifactStatus = fileArtifactStatusOrig }()
 
@@ -27,6 +33,13 @@ func TestDirectoryStatus(t *testing.T) {
 		testutil.MockFileInfo{MockName: "my_file2"},
 	}
 
+	expectedArtifacts := []*artifact.Artifact{
+		{Path: "my_file1"},
+		{Path: "my_link"},
+		{Path: "my_file2"},
+	}
+	t.Logf("%#v", expectedArtifacts)
+
 	readDirOrig := readDir
 	readDir = func(dir string) ([]os.FileInfo, error) {
 		return mockFiles, nil
@@ -35,7 +48,11 @@ func TestDirectoryStatus(t *testing.T) {
 
 	readDirManifestOrig := readDirManifest
 	readDirManifest = func(path string) (directoryManifest, error) {
-		return directoryManifest{}, nil
+		man := directoryManifest{}
+		for _, art := range expectedArtifacts {
+			man.Contents = append(man.Contents, art)
+		}
+		return man, nil
 	}
 	defer func() { readDirManifest = readDirManifestOrig }()
 
@@ -52,12 +69,6 @@ func TestDirectoryStatus(t *testing.T) {
 	}
 	defer func() { quickStatus = quickStatusOrig }()
 
-	expectedArtifacts := []artifact.Artifact{
-		{Path: "my_file1"},
-		{Path: "my_link"},
-		{Path: "my_file2"},
-	}
-
 	cache := LocalCache{Dir: "cache_root"}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
@@ -71,7 +82,7 @@ func TestDirectoryStatus(t *testing.T) {
 	for i := range expectedArtifacts {
 		expectedfileArtifactStatusCalls = append(
 			expectedfileArtifactStatusCalls,
-			statusArgs{Cache: &cache, WorkingDir: baseDir, Artifact: expectedArtifacts[i]},
+			statusArgs{Cache: &cache, WorkingDir: baseDir, Artifact: *expectedArtifacts[i]},
 		)
 	}
 

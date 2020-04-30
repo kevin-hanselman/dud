@@ -76,7 +76,7 @@ func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
 		return status, err
 	}
 
-	if !status.ChecksumInCache {
+	if !(status.HasChecksum && status.ChecksumInCache) {
 		return status, nil
 	}
 
@@ -84,29 +84,42 @@ func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
 		return status, nil
 	}
 
-	_, err = readDirManifest(cachePath)
+	dirManifest, err := readDirManifest(cachePath)
 	if err != nil {
 		return status, err
 	}
 
+	// first, ensure all artifacts in the directoryManifest are up-to-date;
+	// quit early if any are not.
+	manFilePaths := make(map[string]bool)
+	for _, fileArt := range dirManifest.Contents {
+		manFilePaths[fileArt.Path] = true
+		artStatus, err := fileArtifactStatus(statusArgs{
+			Cache:      args.Cache,
+			WorkingDir: workPath,
+			Artifact:   *fileArt,
+		})
+		if err != nil {
+			return status, err
+		}
+		if !artStatus.ContentsMatch {
+			return status, nil
+		}
+	}
+
+	// second, get a directory listing and check for untracked files;
+	// quit early if any exist.
 	entries, err := readDir(workPath)
 	if err != nil {
 		return status, err
 	}
-
 	for _, entry := range entries {
-		if !entry.Mode().IsDir() { // TODO: only proceed for reg files and links
-			fileArt := artifact.Artifact{Path: entry.Name()}
-			_, err := fileArtifactStatus(statusArgs{
-				Cache:      args.Cache,
-				WorkingDir: workPath,
-				Artifact:   fileArt,
-			})
-			if err != nil {
-				return status, err
-			}
+		// TODO: only proceed for reg files and links
+		if !entry.IsDir() && !manFilePaths[entry.Name()] {
+			return status, nil
 		}
 	}
+	status.ContentsMatch = true
 	return status, nil
 }
 
