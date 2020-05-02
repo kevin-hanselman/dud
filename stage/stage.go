@@ -1,10 +1,12 @@
 package stage
 
 import (
+	"github.com/go-yaml/yaml"
 	"github.com/kevlar1818/duc/artifact"
 	cachePkg "github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
+	"io/ioutil"
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
@@ -46,4 +48,33 @@ func (s *Stage) Checkout(cache cachePkg.Cache, strategy strategy.CheckoutStrateg
 		}
 	}
 	return nil
+}
+
+// ToFile saves the stage struct to yaml
+func (s *Stage) ToFile(path string) error {
+	out, err := yaml.Marshal(s)
+	if err != nil {
+		return errors.Wrap(err, "marshalling stage to yaml failed")
+	}
+
+	if err := ioutil.WriteFile(path, out, 0644); err != nil {
+		return errors.Wrap(err, "writing stage file failed")
+	}
+
+	return nil
+}
+
+// FromFile loads the stage struct from yaml
+func FromFile(path string) (Stage, error) {
+	s := Stage{}
+	in, err := ioutil.ReadFile(path)
+
+	if err != nil {
+		return s, errors.Wrap(err, "reading stage file failed")
+	}
+	if err := yaml.Unmarshal(in, &s); err != nil {
+		return s, errors.Wrap(err, "unmarshalling yaml to yaml failed")
+	}
+
+	return s, nil
 }
