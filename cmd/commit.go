@@ -20,7 +20,6 @@ var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "Compute the checksum value and move to cache",
 	Long:  "Compute the checksum value and move to cache",
-	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		strategyFlag, err := cmd.Flags().GetString("strategy")
 		if err != nil {
@@ -39,6 +38,10 @@ var commitCmd = &cobra.Command{
 
 		// TODO load cache from config
 		cache := cachePkg.LocalCache{Dir: "/tmp/.duc"}
+
+		if len(args) == 0 {
+			args = append(args, "Ducfile")
+		}
 
 		for _, arg := range args {
 			stage, err := stage.FromFile(arg)

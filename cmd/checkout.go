@@ -20,7 +20,6 @@ var checkoutCmd = &cobra.Command{
 	Use:   "checkout",
 	Short: "checkout all artifacts from the cache",
 	Long:  "checkout all artifacts from the cache",
-	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		strategyFlag, err := cmd.Flags().GetString("strategy")
 		if err != nil {
@@ -40,6 +39,10 @@ var checkoutCmd = &cobra.Command{
 
 		// TODO load cache from config
 		cache := cachePkg.LocalCache{Dir: "/tmp/.duc"}
+
+		if len(args) == 0 {
+			args = append(args, "Ducfile")
+		}
 
 		for _, arg := range args {
 			stage, err := stage.FromFile(arg)
