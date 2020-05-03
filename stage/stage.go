@@ -1,7 +1,7 @@
 package stage
 
 import (
-	"encoding/json"
+	"github.com/go-yaml/yaml"
 	"github.com/kevlar1818/duc/artifact"
 	cachePkg "github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/strategy"
@@ -50,23 +50,21 @@ func (s *Stage) Checkout(cache cachePkg.Cache, strategy strategy.CheckoutStrateg
 	return nil
 }
 
-// ToFile saves the stage struct to json
+// ToFile saves the stage struct to yaml
 func (s *Stage) ToFile(path string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	enc := json.NewEncoder(file)
-	enc.SetIndent("", "  ")
-	return enc.Encode(s)
+	return yaml.NewEncoder(file).Encode(s)
 }
 
-// FromFile loads the stage struct from json
+// FromFile loads the stage struct from yaml
 func FromFile(path string) (s Stage, err error) {
 	stageFile, err := os.Open(path)
 	if err != nil {
 		return
 	}
-	err = json.NewDecoder(stageFile).Decode(&s)
+	err = yaml.NewDecoder(stageFile).Decode(&s)
 	return
 }
