@@ -2,8 +2,8 @@
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 
-build:
-	go build ./...
+build: test
+	go build -o duc
 
 docker_build:
 	docker build -t go_dev .
