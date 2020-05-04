@@ -163,10 +163,10 @@ func testDirectoryStatus(
 	t *testing.T,
 ) {
 	fileArtifactStatusOrig := fileArtifactStatus
-	fileArtifactStatus = func(args statusArgs) (status artifact.Status, err error) {
-		status, ok := manifestFileStatuses[args.Artifact.Path]
+	fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, err error) {
+		status, ok := manifestFileStatuses[art.Path]
 		if !ok {
-			t.Errorf("fileArtifactStatus called with unexpected args: %+v", args)
+			t.Errorf("fileArtifactStatus called with unexpected artifact: %+v", art)
 		}
 		return
 	}
@@ -194,9 +194,9 @@ func testDirectoryStatus(
 	defer func() { readDirManifest = readDirManifestOrig }()
 
 	quickStatusOrig := quickStatus
-	quickStatus = func(args statusArgs) (status artifact.Status, cachePath, workPath string, err error) {
+	quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, cachePath, workPath string, err error) {
 		status = dirQuickStatus
-		workPath = path.Join(args.WorkingDir, args.Artifact.Path)
+		workPath = path.Join(workingDir, art.Path)
 		cachePath = "foobar"
 		return
 	}

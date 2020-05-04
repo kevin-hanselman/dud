@@ -10,20 +10,20 @@ import (
 	"testing"
 )
 
-func TestCheckoutIntegration(t *testing.T) {
+func TestFileCheckoutIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
 	for _, testCase := range testutil.AllTestCases() {
 		for _, strat := range []strategy.CheckoutStrategy{strategy.CopyStrategy, strategy.LinkStrategy} {
 			t.Run(fmt.Sprintf("%s %+v", strat, testCase), func(t *testing.T) {
-				testCheckoutIntegration(strat, testCase, t)
+				testFileCheckoutIntegration(strat, testCase, t)
 			})
 		}
 	}
 }
 
-func testCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifact.Status, t *testing.T) {
+func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifact.Status, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(statusStart)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
@@ -76,4 +76,7 @@ func testCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifa
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
+}
+
+func TestDirectoryCheckout(t *testing.T) {
 }

@@ -13,6 +13,10 @@ import (
 // Checkout finds the artifact in the cache and adds a copy of/link to said
 // artifact in the working directory.
 func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	return cache.checkoutFile(workingDir, art, strat)
+}
+
+func (cache *LocalCache) checkoutFile(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	dstPath := path.Join(workingDir, art.Path)
 	srcPath, err := cache.PathForChecksum(art.Checksum)
 	if err != nil {

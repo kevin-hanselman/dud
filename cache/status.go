@@ -10,29 +10,18 @@ import (
 
 // Status reports the status of an Artifact in the Cache.
 func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
-	args := statusArgs{
-		Cache:      ch,
-		WorkingDir: workingDir,
-		Artifact:   art,
-	}
 	if art.IsDir {
-		return dirArtifactStatus(args)
+		return dirArtifactStatus(ch, workingDir, art)
 	}
-	return fileArtifactStatus(args)
-}
-
-type statusArgs struct {
-	Cache      *LocalCache
-	WorkingDir string
-	Artifact   artifact.Artifact
+	return fileArtifactStatus(ch, workingDir, art)
 }
 
 // quickStatus populates all artifact.Status fields except for ContentsMatch.
 // TODO: It may be worth exposing this version of status (bypassing the full
 // status check) using a CLI flag
-var quickStatus = func(args statusArgs) (status artifact.Status, cachePath, workPath string, err error) {
-	workPath = path.Join(args.WorkingDir, args.Artifact.Path)
-	cachePath, err = args.Cache.PathForChecksum(args.Artifact.Checksum)
+var quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, cachePath, workPath string, err error) {
+	workPath = path.Join(workingDir, art.Path)
+	cachePath, err = ch.PathForChecksum(art.Checksum)
 	if err != nil { // An error means the checksum is invalid
 		status.HasChecksum = false
 	} else {
@@ -46,8 +35,11 @@ var quickStatus = func(args statusArgs) (status artifact.Status, cachePath, work
 	return
 }
 
-var fileArtifactStatus = func(args statusArgs) (artifact.Status, error) {
-	status, cachePath, workPath, err := quickStatus(args)
+var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
+	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
+	if err != nil {
+		return status, err
+	}
 
 	if !status.ChecksumInCache {
 		return status, nil
@@ -70,8 +62,8 @@ var fileArtifactStatus = func(args statusArgs) (artifact.Status, error) {
 	return status, nil
 }
 
-func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
-	status, cachePath, workPath, err := quickStatus(args)
+func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
+	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
 	if err != nil {
 		return status, err
 	}
@@ -94,11 +86,7 @@ func dirArtifactStatus(args statusArgs) (artifact.Status, error) {
 	manFilePaths := make(map[string]bool)
 	for _, fileArt := range dirManifest.Contents {
 		manFilePaths[fileArt.Path] = true
-		artStatus, err := fileArtifactStatus(statusArgs{
-			Cache:      args.Cache,
-			WorkingDir: workPath,
-			Artifact:   *fileArt,
-		})
+		artStatus, err := fileArtifactStatus(ch, workPath, *fileArt)
 		if err != nil {
 			return status, err
 		}
