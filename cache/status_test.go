@@ -11,48 +11,163 @@ import (
 )
 
 func TestDirectoryStatus(t *testing.T) {
-	dirQuickStatus := artifact.Status{
-		WorkspaceFileStatus: artifact.Directory,
-		HasChecksum:         true,
-		ChecksumInCache:     true,
-	}
 
-	expectedFileStatuses := map[string]artifact.Status{
-		"my_file1": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-		"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-		"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-	}
+	t.Run("happy path: all files up to date", func(t *testing.T) {
+		dirQuickStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+		}
 
-	workspaceFiles := []os.FileInfo{
-		testutil.MockFileInfo{MockName: "my_file1"},
-		testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
-		// TODO: cover handling of symlinks (and other irregular files?)
-		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
-		testutil.MockFileInfo{MockName: "my_file2"},
-	}
+		manifestFileStatuses := map[string]artifact.Status{
+			"my_file1": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+		}
 
-	expectedDirStatus := artifact.Status{
-		WorkspaceFileStatus: artifact.Directory,
-		HasChecksum:         true,
-		ChecksumInCache:     true,
-		ContentsMatch:       true,
-	}
+		workspaceFiles := []os.FileInfo{
+			testutil.MockFileInfo{MockName: "my_file1"},
+			testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+			// TODO: cover handling of symlinks (and other irregular files?)
+			testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+			testutil.MockFileInfo{MockName: "my_file2"},
+		}
 
-	testDirectoryStatus(dirQuickStatus, expectedFileStatuses, workspaceFiles, expectedDirStatus, t)
+		expectedDirStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
+
+		testDirectoryStatus(dirQuickStatus, manifestFileStatuses, workspaceFiles, expectedDirStatus, t)
+	})
+
+	t.Run("file missing from workspace", func(t *testing.T) {
+		dirQuickStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+		}
+
+		manifestFileStatuses := map[string]artifact.Status{
+			"my_file1": {WorkspaceFileStatus: artifact.Absent},
+			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+		}
+
+		workspaceFiles := []os.FileInfo{
+			testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+			testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+			testutil.MockFileInfo{MockName: "my_file2"},
+		}
+
+		expectedDirStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       false,
+		}
+
+		testDirectoryStatus(dirQuickStatus, manifestFileStatuses, workspaceFiles, expectedDirStatus, t)
+	})
+
+	t.Run("untracked file in dir", func(t *testing.T) {
+		dirQuickStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+		}
+
+		manifestFileStatuses := map[string]artifact.Status{
+			"my_file1": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+		}
+
+		workspaceFiles := []os.FileInfo{
+			testutil.MockFileInfo{MockName: "my_file1"},
+			testutil.MockFileInfo{MockName: "my_other_file"},
+			testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+			testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+			testutil.MockFileInfo{MockName: "my_file2"},
+		}
+
+		expectedDirStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       false,
+		}
+
+		testDirectoryStatus(dirQuickStatus, manifestFileStatuses, workspaceFiles, expectedDirStatus, t)
+	})
+
+	t.Run("file out of date", func(t *testing.T) {
+		dirQuickStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+		}
+
+		manifestFileStatuses := map[string]artifact.Status{
+			"my_file1": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: false},
+		}
+
+		workspaceFiles := []os.FileInfo{
+			testutil.MockFileInfo{MockName: "my_file1"},
+			testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+			testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+			testutil.MockFileInfo{MockName: "my_file2"},
+		}
+
+		expectedDirStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       false,
+		}
+
+		testDirectoryStatus(dirQuickStatus, manifestFileStatuses, workspaceFiles, expectedDirStatus, t)
+	})
+
+	t.Run("shortcircuit on quickStatus results", func(t *testing.T) {
+		dirQuickStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     false,
+		}
+
+		manifestFileStatuses := map[string]artifact.Status{}
+
+		workspaceFiles := []os.FileInfo{}
+
+		expectedDirStatus := artifact.Status{
+			WorkspaceFileStatus: artifact.Directory,
+			HasChecksum:         true,
+			ChecksumInCache:     false,
+			ContentsMatch:       false,
+		}
+
+		testDirectoryStatus(dirQuickStatus, manifestFileStatuses, workspaceFiles, expectedDirStatus, t)
+	})
 }
 
 func testDirectoryStatus(
 	dirQuickStatus artifact.Status,
-	expectedFileStatuses map[string]artifact.Status,
+	manifestFileStatuses map[string]artifact.Status,
 	workspaceFiles []os.FileInfo,
 	expectedDirStatus artifact.Status,
 	t *testing.T,
 ) {
-	fileArtifactStatusCalls := []statusArgs{}
 	fileArtifactStatusOrig := fileArtifactStatus
 	fileArtifactStatus = func(args statusArgs) (status artifact.Status, err error) {
-		fileArtifactStatusCalls = append(fileArtifactStatusCalls, args)
-		status = expectedFileStatuses[args.Artifact.Path]
+		status, ok := manifestFileStatuses[args.Artifact.Path]
+		if !ok {
+			t.Errorf("fileArtifactStatus called with unexpected args: %+v", args)
+		}
 		return
 	}
 	defer func() { fileArtifactStatus = fileArtifactStatusOrig }()
@@ -64,7 +179,7 @@ func testDirectoryStatus(
 	defer func() { readDir = readDirOrig }()
 
 	expectedArtifacts := []artifact.Artifact{}
-	for path := range expectedFileStatuses {
+	for path := range manifestFileStatuses {
 		expectedArtifacts = append(expectedArtifacts, artifact.Artifact{Path: path})
 	}
 
@@ -88,28 +203,11 @@ func testDirectoryStatus(
 	defer func() { quickStatus = quickStatusOrig }()
 
 	cache := LocalCache{Dir: "cache_root"}
-	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
+	dirArt := artifact.Artifact{IsDir: true, Checksum: "dummy_checksum", Path: "art_dir"}
 
 	status, commitErr := cache.Status("work_dir", dirArt)
 	if commitErr != nil {
 		t.Fatal(commitErr)
-	}
-
-	expectedFileArtifactStatusCalls := []statusArgs{}
-	baseDir := path.Join("work_dir", "art_dir")
-	for i := range expectedArtifacts {
-		expectedFileArtifactStatusCalls = append(
-			expectedFileArtifactStatusCalls,
-			statusArgs{
-				Cache:      &cache,
-				WorkingDir: baseDir,
-				Artifact:   expectedArtifacts[i],
-			},
-		)
-	}
-
-	if diff := cmp.Diff(expectedFileArtifactStatusCalls, fileArtifactStatusCalls); diff != "" {
-		t.Fatalf("fileArtifactStatusCalls -want +got:\n%s", diff)
 	}
 
 	if diff := cmp.Diff(expectedDirStatus, status); diff != "" {
