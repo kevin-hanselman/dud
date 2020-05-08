@@ -88,6 +88,12 @@ func TestDirectoryCheckout(t *testing.T) {
 
 	strat := strategy.CopyStrategy
 
+	fileArtifacts := []*artifact.Artifact{
+		{Path: "file1"},
+		{Path: "file2"},
+		{Path: "file3"},
+	}
+
 	quickStatusOrig := quickStatus
 	quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, cachePath, workPath string, err error) {
 		status = dirQuickStatus
@@ -98,14 +104,19 @@ func TestDirectoryCheckout(t *testing.T) {
 	defer func() { quickStatus = quickStatusOrig }()
 
 	checkoutFileOrig := checkoutFile
+	checkoutFileArtifacts := []*artifact.Artifact{}
 	checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+		checkoutFileArtifacts = append(checkoutFileArtifacts, art)
 		return nil
 	}
 	defer func() { checkoutFile = checkoutFileOrig }()
 
 	readDirManifestOrig := readDirManifest
 	readDirManifest = func(path string) (directoryManifest, error) {
-		man := directoryManifest{}
+		man := directoryManifest{
+			Path:     "art_dir",
+			Contents: fileArtifacts,
+		}
 		return man, nil
 	}
 	defer func() { readDirManifest = readDirManifestOrig }()
@@ -113,5 +124,12 @@ func TestDirectoryCheckout(t *testing.T) {
 	cache := LocalCache{Dir: "/cache"}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "dummy_checksum", Path: "art_dir"}
 
-	_ = cache.Checkout("work_dir", &dirArt, strat)
+	checkoutErr := cache.Checkout("work_dir", &dirArt, strat)
+	if checkoutErr != nil {
+		t.Fatal(checkoutErr)
+	}
+
+	if diff := cmp.Diff(fileArtifacts, checkoutFileArtifacts); diff != "" {
+		t.Fatalf("checkoutFileArtifacts -want +got:\n%s", diff)
+	}
 }

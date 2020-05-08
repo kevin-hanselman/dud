@@ -22,14 +22,15 @@ var checksumCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) == 0 {
-			args = append(args, "/dev/stdin")
+			checksum, err := checksum.Checksum(os.Stdin, bufSize)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%s  -\n", checksum)
+			return
 		}
 
 		for _, path := range args {
-			//info, err := os.Stat(path)
-			//if err != nil {
-			//	log.Fatal(err)
-			//}
 			f, err := os.Open(path)
 			if err != nil {
 				log.Fatal(err)

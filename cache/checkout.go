@@ -21,6 +21,7 @@ func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, str
 }
 
 var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	// TODO: refactor to use quickStatus
 	dstPath := path.Join(workingDir, art.Path)
 	srcPath, err := ch.PathForChecksum(art.Checksum)
 	if err != nil {
@@ -64,5 +65,25 @@ var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifac
 }
 
 func checkoutDir(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	status, cachePath, workPath, err := quickStatus(ch, workingDir, *art)
+	if err != nil {
+		return err
+	}
+	if !status.HasChecksum {
+		return fmt.Errorf("artifact has invalid checksum: %v", art.Checksum)
+	}
+	if !status.ChecksumInCache {
+		return fmt.Errorf("checksum %v not found in cache", art.Checksum)
+	}
+	if !(status.WorkspaceFileStatus == artifact.Absent || status.WorkspaceFileStatus == artifact.Directory) {
+		return fmt.Errorf("expected target to be empty or a directory, found %v", status.WorkspaceFileStatus)
+	}
+	man, err := readDirManifest(cachePath)
+	for _, fileArt := range man.Contents {
+		if err := checkoutFile(ch, workPath, fileArt, strat); err != nil {
+			// TODO: undo previous file checkouts?
+			return err
+		}
+	}
 	return nil
 }

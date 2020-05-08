@@ -1,22 +1,22 @@
 package track
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/stage"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"testing"
 )
 
 func TestTrackOnePath(t *testing.T) {
-	fileExistsOrig := fileExists
-	fileExists = func(path string, followLinks bool) (bool, error) {
-		return true, nil
+	fileStatusFromPathOrig := fileStatusFromPath
+	fileStatusFromPath = func(path string) (artifact.FileStatus, error) {
+		return artifact.RegularFile, nil
 	}
-	defer func() { fileExists = fileExistsOrig }()
+	defer func() { fileStatusFromPath = fileStatusFromPathOrig }()
 	path := "foobar.txt"
-	expected := stage.Stage{
+	expectedStage := stage.Stage{
 		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
@@ -25,26 +25,25 @@ func TestTrackOnePath(t *testing.T) {
 		},
 	}
 
-	stageObj, err := Track(path)
+	actualStage, err := Track(path)
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	// TODO replace with cmp
-	if !reflect.DeepEqual(stageObj, expected) {
-		t.Errorf("Track(%s) = %#v, want %#v", path, stageObj, expected)
+	if diff := cmp.Diff(expectedStage, actualStage); diff != "" {
+		t.Fatalf("Track() -want +got:\n%s", diff)
 	}
 }
 
 func TestTrackMultiplePaths(t *testing.T) {
-	fileExistsOrig := fileExists
-	fileExists = func(path string, followLinks bool) (bool, error) {
-		return true, nil
+	fileStatusFromPathOrig := fileStatusFromPath
+	fileStatusFromPath = func(path string) (artifact.FileStatus, error) {
+		return artifact.RegularFile, nil
 	}
-	defer func() { fileExists = fileExistsOrig }()
+	defer func() { fileStatusFromPath = fileStatusFromPathOrig }()
 	paths := []string{"foo.txt", "bar.bin"}
-	expected := stage.Stage{
+	expectedStage := stage.Stage{
 		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
@@ -57,14 +56,14 @@ func TestTrackMultiplePaths(t *testing.T) {
 		},
 	}
 
-	stageObj, err := Track(paths...)
+	actualStage, err := Track(paths...)
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(stageObj, expected) {
-		t.Errorf("Track(%s) = %#v, want %#v", paths, stageObj, expected)
+	if diff := cmp.Diff(expectedStage, actualStage); diff != "" {
+		t.Fatalf("Track() -want +got:\n%s", diff)
 	}
 }
 
@@ -88,7 +87,7 @@ func TestTrackIntegration(t *testing.T) {
 		paths[i] = f.Name()
 	}
 
-	expected := stage.Stage{
+	expectedStage := stage.Stage{
 		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
@@ -101,13 +100,13 @@ func TestTrackIntegration(t *testing.T) {
 		},
 	}
 
-	stage, err := Track(paths...)
+	actualStage, err := Track(paths...)
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(stage, expected) {
-		t.Errorf("Track(%s) = %#v, want %#v", paths, stage, expected)
+	if diff := cmp.Diff(expectedStage, actualStage); diff != "" {
+		t.Fatalf("Track() -want +got:\n%s", diff)
 	}
 }
