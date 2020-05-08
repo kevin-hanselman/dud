@@ -1,12 +1,14 @@
 package stage
 
 import (
+	"os"
+
 	"github.com/go-yaml/yaml"
 	"github.com/kevlar1818/duc/artifact"
 	cachePkg "github.com/kevlar1818/duc/cache"
+	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
-	"os"
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
@@ -35,6 +37,7 @@ func (s *Stage) Commit(cache cachePkg.Cache, strategy strategy.CheckoutStrategy)
 			return errors.Wrap(err, "stage commit failed")
 		}
 	}
+	checksum.Update(s)
 	return nil
 }
 

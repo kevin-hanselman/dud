@@ -117,6 +117,10 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	cache.AssertExpectations(t)
+
+	if stg.Checksum == "" {
+		t.Error("expected stage checksum to be set")
+	}
 }
 
 func TestCheckout(t *testing.T) {
@@ -125,6 +129,7 @@ func TestCheckout(t *testing.T) {
 }
 
 func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
+	// TODO: test stage checksum? what does it mean if the checksum is invalid/empty?
 	stg := Stage{
 		Checksum:   "",
 		WorkingDir: "workDir",
