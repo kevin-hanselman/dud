@@ -2,7 +2,6 @@ package fsutil
 
 import (
 	"github.com/kevlar1818/duc/artifact"
-	"github.com/pkg/errors"
 	"os"
 )
 
@@ -23,7 +22,7 @@ func Exists(path string, followLinks bool) (bool, error) {
 	if os.IsNotExist(err) {
 		return false, nil
 	}
-	return false, errors.Wrapf(err, "stat %#v failed", path)
+	return false, err
 }
 
 // IsLink returns true if path represents a symlink, otherwise it returns false.

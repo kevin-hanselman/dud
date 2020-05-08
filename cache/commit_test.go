@@ -7,6 +7,7 @@ import (
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
+	"github.com/pkg/errors"
 	"os"
 	"path"
 	"testing"
@@ -89,6 +90,10 @@ func TestCommitDirectory(t *testing.T) {
 		t.Fatalf("manifest path = %v, want %v", actualPath, expectedPath)
 	}
 
+	if dirArt.Checksum != expectedManifest.Checksum {
+		t.Fatalf("artifact checksum want %#v, got %#v", expectedManifest.Checksum, dirArt.Checksum)
+	}
+
 	// assert result is correct
 	//   dir artifact has correct checksum
 	//   checksum should be invariant to file order
@@ -126,7 +131,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 
 	if statusStart.WorkspaceFileStatus == artifact.Absent {
-		if os.IsNotExist(commitErr) {
+		if os.IsNotExist(errors.Cause(commitErr)) {
 			return // TODO: assert expected status
 		}
 		t.Fatalf("expected Commit to raise NotExist error, got %#v", commitErr)

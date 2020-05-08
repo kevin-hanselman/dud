@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
+	"github.com/pkg/errors"
 	"os"
 	"path"
 )
@@ -38,7 +39,7 @@ var quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact)
 var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
 	if err != nil {
-		return status, err
+		return status, errors.Wrap(err, "fileStatus")
 	}
 
 	if !status.ChecksumInCache {
@@ -49,13 +50,13 @@ var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Ar
 	case artifact.RegularFile:
 		status.ContentsMatch, err = fsutil.SameContents(workPath, cachePath)
 		if err != nil {
-			return status, err
+			return status, errors.Wrap(err, "fileStatus")
 		}
 	case artifact.Link:
 		// TODO: make this a helper function? (to remove os dep)
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {
-			return status, err
+			return status, errors.Wrap(err, "fileStatus")
 		}
 		status.ContentsMatch = linkDst == cachePath
 	}
@@ -65,7 +66,7 @@ var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Ar
 func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
 	if err != nil {
-		return status, err
+		return status, errors.Wrap(err, "dirStatus")
 	}
 
 	if !(status.HasChecksum && status.ChecksumInCache) {
@@ -78,7 +79,7 @@ func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact)
 
 	dirManifest, err := readDirManifest(cachePath)
 	if err != nil {
-		return status, err
+		return status, errors.Wrap(err, "dirStatus")
 	}
 
 	// first, ensure all artifacts in the directoryManifest are up-to-date;
@@ -88,7 +89,7 @@ func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact)
 		manFilePaths[fileArt.Path] = true
 		artStatus, err := fileArtifactStatus(ch, workPath, *fileArt)
 		if err != nil {
-			return status, err
+			return status, errors.Wrap(err, "dirStatus")
 		}
 		if !artStatus.ContentsMatch {
 			return status, nil
@@ -99,7 +100,7 @@ func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact)
 	// quit early if any exist.
 	entries, err := readDir(workPath)
 	if err != nil {
-		return status, err
+		return status, errors.Wrap(err, "dirStatus")
 	}
 	for _, entry := range entries {
 		// TODO: only proceed for reg files and links

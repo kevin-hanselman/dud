@@ -6,6 +6,7 @@ import (
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
+	"github.com/pkg/errors"
 	"io"
 	"os"
 	"path"
@@ -25,25 +26,25 @@ var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifac
 	dstPath := path.Join(workingDir, art.Path)
 	srcPath, err := ch.PathForChecksum(art.Checksum)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "checkoutFile")
 	}
 	switch strat {
 	case strategy.CopyStrategy:
 		srcFile, err := os.Open(srcPath)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "checkoutFile")
 		}
 		defer srcFile.Close()
 
 		dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "checkoutFile")
 		}
 		defer dstFile.Close()
 
 		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), 0)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "checkoutFile")
 		}
 		if checksum != art.Checksum {
 			return fmt.Errorf("checkout %#v: found checksum %#v, expected %#v", dstPath, checksum, art.Checksum)
@@ -51,14 +52,14 @@ var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifac
 	case strategy.LinkStrategy:
 		isRegFile, err := fsutil.IsRegularFile(srcPath)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "checkoutFile")
 		}
 		if !isRegFile {
-			return fmt.Errorf("file %#v is not a regular file", srcPath)
+			return fmt.Errorf("checkoutFile: file %#v is not a regular file", srcPath)
 		}
 		// TODO: hardlink when possible?
 		if err := os.Symlink(srcPath, dstPath); err != nil {
-			return err
+			return errors.Wrap(err, "checkoutFile")
 		}
 	}
 	return nil
@@ -67,22 +68,22 @@ var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifac
 func checkoutDir(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, *art)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "checkoutDir")
 	}
 	if !status.HasChecksum {
-		return fmt.Errorf("artifact has invalid checksum: %v", art.Checksum)
+		return fmt.Errorf("checkoutDir: artifact has invalid checksum: %v", art.Checksum)
 	}
 	if !status.ChecksumInCache {
-		return fmt.Errorf("checksum %v not found in cache", art.Checksum)
+		return fmt.Errorf("checkoutDir: checksum %v not found in cache", art.Checksum)
 	}
 	if !(status.WorkspaceFileStatus == artifact.Absent || status.WorkspaceFileStatus == artifact.Directory) {
-		return fmt.Errorf("expected target to be empty or a directory, found %v", status.WorkspaceFileStatus)
+		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %v", status.WorkspaceFileStatus)
 	}
 	man, err := readDirManifest(cachePath)
 	for _, fileArt := range man.Contents {
 		if err := checkoutFile(ch, workPath, fileArt, strat); err != nil {
 			// TODO: undo previous file checkouts?
-			return err
+			return errors.Wrap(err, "checkoutDir")
 		}
 	}
 	return nil

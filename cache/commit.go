@@ -38,24 +38,23 @@ type commitArgs struct {
 	Strategy   strategy.CheckoutStrategy
 }
 
-// defined as a private var to enable mocking
 var commitFileArtifact = func(args commitArgs) error {
 	srcPath := path.Join(args.WorkingDir, args.Artifact.Path)
 	isRegFile, err := fsutil.IsRegularFile(srcPath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "commitFile")
 	}
 	if !isRegFile {
-		return fmt.Errorf("file %#v is not a regular file", srcPath)
+		return fmt.Errorf("commitFile: path %v is not a regular file", srcPath)
 	}
 	srcFile, err := os.Open(srcPath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "commitFile")
 	}
 	defer srcFile.Close()
 	dstFile, err := ioutil.TempFile(args.Cache.Dir, "")
 	if err != nil {
-		return errors.Wrapf(err, "creating tempfile in %#v failed", args.Cache.Dir)
+		return errors.Wrap(err, "commitFile")
 	}
 	defer dstFile.Close()
 
@@ -63,36 +62,42 @@ var commitFileArtifact = func(args commitArgs) error {
 	// OR, if we're using CopyStrategy
 	checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), 0)
 	if err != nil {
-		return errors.Wrapf(err, "checksum of %#v failed", srcPath)
+		return errors.Wrap(err, "commitFile")
 	}
 	// TODO: remove usage of checksum slices -- leave this logic to PathForChecksum
 	dstDir := path.Join(args.Cache.Dir, checksum[:2])
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
-		return errors.Wrapf(err, "mkdirs %#v failed", dstDir)
+		return errors.Wrap(err, "commitFile")
 	}
 	cachePath := path.Join(dstDir, checksum[2:])
 	if err = os.Rename(dstFile.Name(), cachePath); err != nil {
-		return errors.Wrapf(err, "mv %#v failed", dstFile)
+		return errors.Wrap(err, "commitFile")
 	}
 	if err := os.Chmod(cachePath, 0444); err != nil {
-		return errors.Wrapf(err, "chmod %#v failed", cachePath)
+		return errors.Wrap(err, "commitFile")
 	}
 	args.Artifact.Checksum = checksum
 	// There's no need to call Checkout if using CopyStrategy; the original file still exists.
 	if args.Strategy == strategy.LinkStrategy {
 		// TODO: add rm to checkout as "force" option
 		if err := os.Remove(srcPath); err != nil {
-			return errors.Wrapf(err, "rm %#v failed", srcPath)
+			return errors.Wrap(err, "commitFile")
 		}
 		return args.Cache.Checkout(args.WorkingDir, args.Artifact, args.Strategy)
 	}
 	return nil
 }
 
-var writeDirManifest = func(path string, manifest *directoryManifest) error {
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0444)
+var writeDirManifest = func(manPath string, manifest *directoryManifest) error {
+	if err := os.MkdirAll(path.Dir(manPath), 0755); err != nil {
+		return errors.Wrap(err, "writeDirManifest")
+	}
+	file, err := os.OpenFile(manPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0444)
 	if err != nil {
-		return err
+		if os.IsExist(err) { // If the file already exists, trust the cache and carry on.
+			return nil
+		}
+		return errors.Wrap(err, "writeDirManifest")
 	}
 	return json.NewEncoder(file).Encode(manifest)
 }
@@ -101,7 +106,7 @@ func commitDirArtifact(args commitArgs) error {
 	baseDir := path.Join(args.WorkingDir, args.Artifact.Path)
 	entries, err := readDir(baseDir)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "commitDir")
 	}
 	manifest := directoryManifest{Path: baseDir}
 	for _, entry := range entries {
@@ -114,20 +119,23 @@ func commitDirArtifact(args commitArgs) error {
 				Strategy:   args.Strategy,
 			}
 			if err := commitFileArtifact(args); err != nil {
-				return err
+				return errors.Wrap(err, "commitDir")
 			}
 			manifest.Contents = append(manifest.Contents, &fileArt)
 		}
 	}
+	// TODO: Dir manifests don't need to store the checksum internally. The
+	// checksum should be stored in the artifact.
 	if err := checksum.Update(&manifest); err != nil {
-		return err
+		return errors.Wrap(err, "commitDir")
 	}
+	args.Artifact.Checksum = manifest.Checksum
 	path, err := args.Cache.PathForChecksum(manifest.Checksum)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "commitDir")
 	}
 	if err := writeDirManifest(path, &manifest); err != nil {
-		return err
+		return errors.Wrap(err, "commitDir")
 	}
 	return nil
 }

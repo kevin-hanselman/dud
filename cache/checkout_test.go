@@ -6,6 +6,7 @@ import (
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
+	"github.com/pkg/errors"
 	"os"
 	"path"
 	"testing"
@@ -50,7 +51,7 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 	}
 
 	if statusStart.WorkspaceFileStatus != artifact.Absent {
-		if os.IsExist(checkoutErr) {
+		if os.IsExist(errors.Cause(checkoutErr)) {
 			return
 		}
 		t.Fatalf("expected Checkout to raise Exist error, got %#v", checkoutErr)
