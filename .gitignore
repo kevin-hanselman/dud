@@ -1,6 +1,8 @@
 .tags
 duc
 *.png
+# test files for benchmarking
+*.bin
 
 # Binaries for programs and plugins
 *.exe

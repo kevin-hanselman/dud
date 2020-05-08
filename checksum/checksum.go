@@ -36,13 +36,9 @@ func hashToHexString(h hash.Hash) string {
 }
 
 // Checksum reads from reader and returns the hash of the bytes as a hex string.
-func Checksum(reader io.Reader, size uint64) (string, error) {
-	// Benchmarking (on a Linux laptop) shows significantly improved performance
-	// on small files (KBs to 10's of MBs) using a 1KB buffer, while
-	// maintaining a larger buffer on larger files.
-	bufSize := datasize.KB
-	if size >= 500*datasize.MB.Bytes() {
-		bufSize = 8 * datasize.MB
+func Checksum(reader io.Reader, bufSize int64) (string, error) {
+	if bufSize == 0 {
+		bufSize = int64(1 * datasize.MB)
 	}
 	h := sha1.New()
 	buf := make([]byte, bufSize)

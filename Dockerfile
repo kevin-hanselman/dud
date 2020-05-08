@@ -1,9 +1,11 @@
-FROM golang:alpine
+FROM archlinux
 
-RUN apk add --no-cache git
+RUN pacman -Sy --noconfirm base-devel git go hyperfine && pacman -Scc --noconfirm
 
 RUN go get -u golang.org/x/lint/golint \
     && go get -u github.com/kisielk/godepgraph
+
+ENV PATH=$PATH:~/go/bin/
 
 RUN mkdir /src
 

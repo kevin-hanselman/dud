@@ -17,7 +17,7 @@ test-int: test
 	go test -run Integration ./...
 
 bench: test
-	go test ./... -bench .
+	go test ./... -benchmem -bench .
 
 %-test-cov: %-test-cov.out
 	go tool cover -html=$<
@@ -47,3 +47,10 @@ loc:
 
 depgraph:
 	godepgraph -nostdlib $(wildcard **/*.go) | dot -Tpng -o depgraph.png
+
+50mb_random.bin:
+	dd if=/dev/urandom of=$@ bs=1M count=50
+
+hyperfine: build 50mb_random.bin
+	hyperfine 'sha1sum 50mb_random.bin'
+	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 './duc checksum -b{bufsize} 50mb_random.bin'
