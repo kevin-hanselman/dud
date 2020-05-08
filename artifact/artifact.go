@@ -10,6 +10,8 @@ type Artifact struct {
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.
 type Status struct {
 	// WorkspaceFileStatus represents the status of Artifact's file in the workspace.
+	// TODO: We need some way to identify a "bad" workspace file status.
+	// Replace and/or augment this with a boolean?
 	WorkspaceFileStatus FileStatus
 	// HasChecksum is true if the Artifact has a valid Checksum member, false otherwise.
 	HasChecksum bool
@@ -20,6 +22,47 @@ type Status struct {
 	// are identical. For links, true means that the workspace link points to
 	// the correct cache file.
 	ContentsMatch bool
+}
+
+func (stat Status) String() string {
+	switch stat.WorkspaceFileStatus {
+	case Absent:
+		if stat.HasChecksum {
+			if stat.ChecksumInCache {
+				return "missing from workspace"
+			}
+			return "missing from cache"
+		}
+		return "unknown artifact"
+
+	case RegularFile, Directory:
+		if stat.HasChecksum {
+			if stat.ChecksumInCache {
+				if stat.ContentsMatch {
+					return "up-to-date"
+				}
+				return "modified"
+			}
+			return "missing from cache"
+		}
+		return "uncommitted file"
+
+	case Link:
+		if stat.HasChecksum {
+			if stat.ChecksumInCache {
+				if stat.ContentsMatch {
+					return "linked to cache"
+				}
+				return "incorrect link"
+			}
+			return "broken link"
+		}
+		return "link with no checksum"
+
+	case Other:
+		return "invalid file type"
+	}
+	panic("exited switch unexpectedly")
 }
 
 // FileStatus enumerates the states of a file on the filesystem.

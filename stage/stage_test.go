@@ -29,7 +29,8 @@ func (c *mockCache) PathForChecksum(checksum string) (string, error) {
 }
 
 func (c *mockCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
-	return artifact.Status{}, nil
+	args := c.Called(workingDir, art)
+	return args.Get(0).(artifact.Status), args.Error(1)
 }
 
 func TestSetChecksum(t *testing.T) {
@@ -151,6 +152,43 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	if err := stg.Checkout(&cache, strat); err != nil {
+		t.Fatal(err)
+	}
+
+	cache.AssertExpectations(t)
+}
+
+func TestStatus(t *testing.T) {
+	stg := Stage{
+		Checksum:   "",
+		WorkingDir: "workDir",
+		Outputs: []artifact.Artifact{
+			{
+				Checksum: "",
+				Path:     "foo.txt",
+			},
+			{
+				Checksum: "",
+				Path:     "bar.txt",
+			},
+		},
+	}
+
+	artStatus := artifact.Status{
+		WorkspaceFileStatus: artifact.RegularFile,
+		HasChecksum:         true,
+		ChecksumInCache:     true,
+		ContentsMatch:       true,
+	}
+
+	cache := mockCache{}
+	for _, art := range stg.Outputs {
+		cache.On("Status", "workDir", art).Return(artStatus, nil)
+	}
+
+	// TODO: check output (i.e. test stage.Status.String())
+	_, err := stg.Status(&cache)
+	if err != nil {
 		t.Fatal(err)
 	}
 
