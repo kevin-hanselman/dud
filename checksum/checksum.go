@@ -4,9 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/gob"
 	"encoding/hex"
-	"fmt"
 	"github.com/c2h5oh/datasize"
-	"github.com/pkg/errors"
 	"hash"
 	"io"
 )
@@ -37,38 +35,24 @@ func hashToHexString(h hash.Hash) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// CalculateAndCopy copies the contents of reader to writer and returns the hash of the
-// bytes as a hex string. Passing nil as writer skips writing and simply checksums reader.
-func CalculateAndCopy(reader io.Reader, writer io.Writer) (string, error) {
-	// TODO: This function should have 100% coverage
+// Checksum reads from reader and returns the hash of the bytes as a hex string.
+func Checksum(reader io.Reader, size uint64) (string, error) {
+	// Benchmarking (on a Linux laptop) shows significantly improved performance
+	// on small files (KBs to 10's of MBs) using a 1KB buffer, while
+	// maintaining a larger buffer on larger files.
+	bufSize := datasize.KB
+	if size >= 500*datasize.MB.Bytes() {
+		bufSize = 8 * datasize.MB
+	}
 	h := sha1.New()
-	b := make([]byte, 8*datasize.MB)
+	buf := make([]byte, bufSize)
+	tee := io.TeeReader(reader, h)
 	for {
-		nBytesRead, readErr := reader.Read(b)
-		if readErr != nil && readErr != io.EOF {
-			return "", errors.Wrap(readErr, "read failed")
-		}
-
-		nBytesHashed, hashErr := h.Write(b[:nBytesRead])
-		if hashErr != nil {
-			return "", errors.Wrap(hashErr, "updating hash failed")
-		}
-		if nBytesHashed != nBytesRead {
-			return "", fmt.Errorf("commit: read %d byte(s), hashed %d byte(s)", nBytesRead, nBytesHashed)
-		}
-
-		if writer != nil {
-			nBytesWritten, writeErr := writer.Write(b[:nBytesRead])
-			if writeErr != nil {
-				return "", errors.Wrap(writeErr, "write failed")
+		if _, err := tee.Read(buf); err != nil {
+			if err == io.EOF {
+				return hashToHexString(h), nil
 			}
-			if nBytesWritten != nBytesRead {
-				return "", fmt.Errorf("commit: read %d byte(s), wrote %d byte(s)", nBytesRead, nBytesWritten)
-			}
-		}
-
-		if readErr == io.EOF {
-			return hashToHexString(h), nil
+			return "", err
 		}
 	}
 }

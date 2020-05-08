@@ -1,4 +1,4 @@
-.PHONY: build docker_build test test-int %-test-cov bench cover fmt clean tidy loc depgraph
+.PHONY: build docker_build test test-int %-test-cov bench fmt clean tidy loc depgraph
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 

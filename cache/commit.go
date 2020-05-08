@@ -3,14 +3,16 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path"
+
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
-	"io/ioutil"
-	"os"
-	"path"
 )
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
@@ -59,7 +61,7 @@ var commitFileArtifact = func(args commitArgs) error {
 
 	// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
 	// OR, if we're using CopyStrategy
-	checksum, err := checksum.CalculateAndCopy(srcFile, dstFile)
+	checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), 0)
 	if err != nil {
 		return errors.Wrapf(err, "checksum of %#v failed", srcPath)
 	}

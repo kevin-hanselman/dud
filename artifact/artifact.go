@@ -23,6 +23,7 @@ type Status struct {
 }
 
 // FileStatus enumerates the states of a file on the filesystem.
+// TODO: move to fsutil?
 type FileStatus int
 
 const (

@@ -7,6 +7,7 @@ import (
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"os"
+	"path"
 	"testing"
 )
 
@@ -79,4 +80,38 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 }
 
 func TestDirectoryCheckout(t *testing.T) {
+	dirQuickStatus := artifact.Status{
+		WorkspaceFileStatus: artifact.Absent,
+		HasChecksum:         true,
+		ChecksumInCache:     true,
+	}
+
+	strat := strategy.CopyStrategy
+
+	quickStatusOrig := quickStatus
+	quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, cachePath, workPath string, err error) {
+		status = dirQuickStatus
+		workPath = path.Join(workingDir, art.Path)
+		cachePath = "foobar"
+		return
+	}
+	defer func() { quickStatus = quickStatusOrig }()
+
+	checkoutFileOrig := checkoutFile
+	checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+		return nil
+	}
+	defer func() { checkoutFile = checkoutFileOrig }()
+
+	readDirManifestOrig := readDirManifest
+	readDirManifest = func(path string) (directoryManifest, error) {
+		man := directoryManifest{}
+		return man, nil
+	}
+	defer func() { readDirManifest = readDirManifestOrig }()
+
+	cache := LocalCache{Dir: "/cache"}
+	dirArt := artifact.Artifact{IsDir: true, Checksum: "dummy_checksum", Path: "art_dir"}
+
+	_ = cache.Checkout("work_dir", &dirArt, strat)
 }

@@ -61,3 +61,4 @@ misc:
         https://github.com/golang/go/wiki/Iota
     test for proper cleanup of partially-written files in all cases
     file locking during duc operation
+    recursive directory ops

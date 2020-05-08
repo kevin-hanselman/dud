@@ -6,6 +6,7 @@ import (
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
+	"io"
 	"os"
 	"path"
 )
@@ -13,12 +14,15 @@ import (
 // Checkout finds the artifact in the cache and adds a copy of/link to said
 // artifact in the working directory.
 func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-	return cache.checkoutFile(workingDir, art, strat)
+	if art.IsDir {
+		return checkoutDir(cache, workingDir, art, strat)
+	}
+	return checkoutFile(cache, workingDir, art, strat)
 }
 
-func (cache *LocalCache) checkoutFile(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	dstPath := path.Join(workingDir, art.Path)
-	srcPath, err := cache.PathForChecksum(art.Checksum)
+	srcPath, err := ch.PathForChecksum(art.Checksum)
 	if err != nil {
 		return err
 	}
@@ -36,7 +40,7 @@ func (cache *LocalCache) checkoutFile(workingDir string, art *artifact.Artifact,
 		}
 		defer dstFile.Close()
 
-		checksum, err := checksum.CalculateAndCopy(srcFile, dstFile)
+		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), 0)
 		if err != nil {
 			return err
 		}
@@ -56,5 +60,9 @@ func (cache *LocalCache) checkoutFile(workingDir string, art *artifact.Artifact,
 			return err
 		}
 	}
+	return nil
+}
+
+func checkoutDir(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	return nil
 }
