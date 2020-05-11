@@ -19,6 +19,12 @@ var initCmd = &cobra.Command{
 		if err := os.Mkdir(".duc", 0755); err != nil {
 			log.Fatal(err)
 		}
+		file, err := os.Create(".duc/index")
+		if err != nil {
+			log.Fatal(err)
+		}
+		file.Close()
+
 		fmt.Println("Initialized .duc folder")
 	},
 }

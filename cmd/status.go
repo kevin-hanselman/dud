@@ -5,6 +5,7 @@ import (
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/stage"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 )
 
@@ -32,7 +33,7 @@ var statusCmd = &cobra.Command{
 			args = append(args, "Ducfile")
 		}
 
-		ch := cache.LocalCache{Dir: "/tmp/.duc"}
+		ch := cache.LocalCache{Dir: viper.GetString("cache")}
 
 		for _, arg := range args {
 			stg, err := stage.FromFile(arg)
