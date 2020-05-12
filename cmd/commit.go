@@ -6,6 +6,7 @@ import (
 	"github.com/kevlar1818/duc/stage"
 	strategyPkg "github.com/kevlar1818/duc/strategy"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 )
 
@@ -36,8 +37,7 @@ var commitCmd = &cobra.Command{
 			log.Fatal(fmt.Errorf("invalid strategy specified: %s", strategyFlag))
 		}
 
-		// TODO load cache from config
-		cache := cachePkg.LocalCache{Dir: "/tmp/.duc"}
+		cache := cachePkg.LocalCache{Dir: viper.GetString("cache")}
 
 		if len(args) == 0 {
 			args = append(args, "Ducfile")
