@@ -10,7 +10,6 @@ import (
 
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
-	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
 )
@@ -39,22 +38,26 @@ type commitArgs struct {
 }
 
 var commitFileArtifact = func(args commitArgs) error {
-	srcPath := path.Join(args.WorkingDir, args.Artifact.Path)
-	isRegFile, err := fsutil.IsRegularFile(srcPath)
+	// ignore cachePath because the artifact likely has a stale or empty checksum
+	status, _, workPath, err := quickStatus(args.Cache, args.WorkingDir, *args.Artifact)
+	errorPrefix := fmt.Sprintf("commit %#v", workPath)
 	if err != nil {
-		return errors.Wrap(err, "commitFile")
+		return errors.Wrap(err, errorPrefix)
 	}
-	if !isRegFile {
-		return fmt.Errorf("commitFile: path %v is not a regular file", srcPath)
+	if status.WorkspaceFileStatus == artifact.Absent {
+		return errors.Wrapf(os.ErrNotExist, "commitFile: %#v does not exist", workPath)
 	}
-	srcFile, err := os.Open(srcPath)
+	if status.WorkspaceFileStatus != artifact.RegularFile {
+		return fmt.Errorf("%s: not a regular file", errorPrefix)
+	}
+	srcFile, err := os.Open(workPath)
 	if err != nil {
-		return errors.Wrap(err, "commitFile")
+		return errors.Wrap(err, errorPrefix)
 	}
 	defer srcFile.Close()
 	dstFile, err := ioutil.TempFile(args.Cache.Dir, "")
 	if err != nil {
-		return errors.Wrap(err, "commitFile")
+		return errors.Wrap(err, errorPrefix)
 	}
 	defer dstFile.Close()
 
@@ -62,26 +65,28 @@ var commitFileArtifact = func(args commitArgs) error {
 	// OR, if we're using CopyStrategy
 	checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), 0)
 	if err != nil {
-		return errors.Wrap(err, "commitFile")
+		return errors.Wrap(err, errorPrefix)
 	}
-	// TODO: remove usage of checksum slices -- leave this logic to PathForChecksum
-	dstDir := path.Join(args.Cache.Dir, checksum[:2])
+	cachePath, err := args.Cache.PathForChecksum(checksum)
+	if err != nil {
+		return errors.Wrap(err, errorPrefix)
+	}
+	dstDir := path.Dir(cachePath)
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
-		return errors.Wrap(err, "commitFile")
+		return errors.Wrap(err, errorPrefix)
 	}
-	cachePath := path.Join(dstDir, checksum[2:])
 	if err = os.Rename(dstFile.Name(), cachePath); err != nil {
-		return errors.Wrap(err, "commitFile")
+		return errors.Wrap(err, errorPrefix)
 	}
 	if err := os.Chmod(cachePath, 0444); err != nil {
-		return errors.Wrap(err, "commitFile")
+		return errors.Wrap(err, errorPrefix)
 	}
 	args.Artifact.Checksum = checksum
 	// There's no need to call Checkout if using CopyStrategy; the original file still exists.
 	if args.Strategy == strategy.LinkStrategy {
 		// TODO: add rm to checkout as "force" option
-		if err := os.Remove(srcPath); err != nil {
-			return errors.Wrap(err, "commitFile")
+		if err := os.Remove(workPath); err != nil {
+			return errors.Wrap(err, errorPrefix)
 		}
 		return args.Cache.Checkout(args.WorkingDir, args.Artifact, args.Strategy)
 	}

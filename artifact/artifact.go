@@ -31,7 +31,7 @@ func (stat Status) String() string {
 			if stat.ChecksumInCache {
 				return "missing from workspace"
 			}
-			return "missing from cache"
+			return "missing from cache and workspace"
 		}
 		return "unknown artifact"
 
@@ -45,7 +45,7 @@ func (stat Status) String() string {
 			}
 			return "missing from cache"
 		}
-		return "uncommitted file"
+		return "uncommitted"
 
 	case Link:
 		if stat.HasChecksum {
