@@ -35,9 +35,9 @@ var statusCmd = &cobra.Command{
 
 		ch := cache.LocalCache{Dir: viper.GetString("cache")}
 
-		for _, arg := range args {
-			stg, err := stage.FromFile(arg)
-			if err != nil {
+		for _, path := range args {
+			stg := new(stage.Stage)
+			if err := stg.FromFile(path); err != nil {
 				log.Fatal(err)
 			}
 			status, err := stg.Status(&ch)

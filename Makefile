@@ -1,4 +1,4 @@
-.PHONY: build docker_build test test-int %-test-cov bench fmt clean tidy loc depgraph hyperfine
+.PHONY: build docker_build test test-int %-test-cov bench fmt clean tidy loc mocks depgraph hyperfine
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 
@@ -44,6 +44,12 @@ tidy:
 loc:
 	tokei --sort lines
 	tokei --sort lines --exclude "*_test.go"
+
+mockery:
+	curl -L https://github.com/vektra/mockery/releases/download/v1.1.2/mockery_1.1.2_Linux_x86_64.tar.gz | tar -zxvf - mockery
+
+mocks: mockery
+	./mockery -all
 
 depgraph:
 	godepgraph -nostdlib $(wildcard **/*.go) | dot -Tpng -o depgraph.png

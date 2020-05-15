@@ -1,6 +1,9 @@
+*.png
+*.sh
 .tags
 duc
-*.png
+mockery
+
 # test files for benchmarking
 *.bin
 

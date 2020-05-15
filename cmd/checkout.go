@@ -44,12 +44,12 @@ var checkoutCmd = &cobra.Command{
 			args = append(args, "Ducfile")
 		}
 
-		for _, arg := range args {
-			stage, err := stage.FromFile(arg)
-			if err != nil {
+		for _, path := range args {
+			stg := new(stage.Stage)
+			if err := stg.FromFile(path); err != nil {
 				log.Fatal(err)
 			}
-			if err := stage.Checkout(&cache, strategy); err != nil {
+			if err := stg.Checkout(&cache, strategy); err != nil {
 				log.Fatal(err)
 			}
 		}

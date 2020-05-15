@@ -43,15 +43,15 @@ var commitCmd = &cobra.Command{
 			args = append(args, "Ducfile")
 		}
 
-		for _, arg := range args {
-			stage, err := stage.FromFile(arg)
-			if err != nil {
+		for _, path := range args {
+			stg := new(stage.Stage)
+			if err := stg.FromFile(path); err != nil {
 				log.Fatal(err)
 			}
-			if err := stage.Commit(&cache, strategy); err != nil {
+			if err := stg.Commit(&cache, strategy); err != nil {
 				log.Fatal(err)
 			}
-			if err := stage.ToFile(arg); err != nil {
+			if err := stg.ToFile(path); err != nil {
 				log.Fatal(err)
 			}
 		}

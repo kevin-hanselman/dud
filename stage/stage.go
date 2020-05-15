@@ -19,6 +19,15 @@ type Stage struct {
 	Outputs    []artifact.Artifact
 }
 
+// A Stager is the interface for a Stage
+type Stager interface {
+	Commit(cache cachePkg.Cache, strat strategy.CheckoutStrategy) error
+	Checkout(cache cachePkg.Cache, strat strategy.CheckoutStrategy) error
+	Status(cache cachePkg.Cache) (Status, error)
+	ToFile(path string) error
+	FromFile(path string) error
+}
+
 // Status holds a map of artifact names to statuses
 type Status map[string]string
 
@@ -72,19 +81,18 @@ func (s *Stage) Status(cache cachePkg.Cache) (Status, error) {
 
 // ToFile saves the stage struct to yaml
 func (s *Stage) ToFile(path string) error {
-	file, err := os.Create(path)
+	stageFile, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-	return yaml.NewEncoder(file).Encode(s)
+	return yaml.NewEncoder(stageFile).Encode(s)
 }
 
 // FromFile loads the stage struct from yaml
-func FromFile(path string) (s Stage, err error) {
+func (s *Stage) FromFile(path string) error {
 	stageFile, err := os.Open(path)
 	if err != nil {
-		return
+		return err
 	}
-	err = yaml.NewDecoder(stageFile).Decode(&s)
-	return
+	return yaml.NewDecoder(stageFile).Decode(s)
 }
