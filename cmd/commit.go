@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevlar1818/duc/index"
 	"github.com/kevlar1818/duc/stage"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/spf13/cobra"
@@ -22,6 +23,7 @@ var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "Compute the checksum value and move to cache",
 	Long:  "Compute the checksum value and move to cache",
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		strategyFlag, err := cmd.Flags().GetString("strategy")
 		if err != nil {
@@ -43,22 +45,34 @@ var commitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if len(args) == 0 {
-			args = append(args, "Ducfile")
+		indexPath, err := getIndexPath()
+		if err != nil {
+			log.Fatal(err)
 		}
 
-		for _, path := range args {
+		idx := new(index.Index)
+		if err := fsutil.FromYamlFile(indexPath, idx); err != nil {
+			log.Fatal(err)
+		}
+
+		for commitStage := range idx.CommitSet() {
 			stg := new(stage.Stage)
-			if err := fsutil.FromYamlFile(path, stg); err != nil {
+			if err := fsutil.FromYamlFile(commitStage, stg); err != nil {
 				log.Fatal(err)
 			}
 			// TODO: add recursive flag
 			if err := stg.Commit(ch, strat); err != nil {
 				log.Fatal(err)
 			}
-			if err := fsutil.ToYamlFile(path, stg); err != nil {
+			if err := fsutil.ToYamlFile(commitStage, stg); err != nil {
 				log.Fatal(err)
 			}
+		}
+
+		idx.ClearCommitSet()
+
+		if err := fsutil.ToYamlFile(indexPath, idx); err != nil {
+			log.Fatal(err)
 		}
 	},
 }

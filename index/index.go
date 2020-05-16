@@ -10,7 +10,8 @@ type Index struct {
 	StageFiles map[string]bool
 }
 
-var fromFile = fsutil.FromYamlFile
+// FromFile is the function used when reading a file
+var FromFile = fsutil.FromYamlFile
 
 // NewIndex initializes a new Index
 func NewIndex() *Index {
@@ -23,9 +24,10 @@ func NewIndex() *Index {
 // path is invalid.
 func (idx *Index) Add(path string) error {
 	stg := new(stage.Stage)
-	if err := fromFile(path, stg); err != nil {
+	if err := FromFile(path, stg); err != nil {
 		return err
 	}
+
 	idx.StageFiles[path] = true
 	return nil
 }

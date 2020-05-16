@@ -11,11 +11,11 @@ import (
 )
 
 func TestTrackOnePath(t *testing.T) {
-	fileStatusFromPathOrig := fileStatusFromPath
-	fileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
+	fileStatusFromPathOrig := FileStatusFromPath
+	FileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
 		return fsutil.RegularFile, nil
 	}
-	defer func() { fileStatusFromPath = fileStatusFromPathOrig }()
+	defer func() { FileStatusFromPath = fileStatusFromPathOrig }()
 	path := "foobar.txt"
 	expectedStage := stage.Stage{
 		Outputs: []artifact.Artifact{
@@ -38,11 +38,11 @@ func TestTrackOnePath(t *testing.T) {
 }
 
 func TestTrackMultiplePaths(t *testing.T) {
-	fileStatusFromPathOrig := fileStatusFromPath
-	fileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
+	fileStatusFromPathOrig := FileStatusFromPath
+	FileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
 		return fsutil.RegularFile, nil
 	}
-	defer func() { fileStatusFromPath = fileStatusFromPathOrig }()
+	defer func() { FileStatusFromPath = fileStatusFromPathOrig }()
 	paths := []string{"foo.txt", "bar.bin"}
 	expectedStage := stage.Stage{
 		Outputs: []artifact.Artifact{

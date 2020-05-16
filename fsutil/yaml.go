@@ -20,5 +20,7 @@ func FromYamlFile(path string, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return yaml.NewDecoder(file).Decode(v)
+	decoder := yaml.NewDecoder(file)
+	decoder.SetStrict(true)
+	return decoder.Decode(v)
 }

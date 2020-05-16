@@ -2,17 +2,22 @@ package index
 
 import (
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevlar1818/duc/stage"
 	"os"
 	"testing"
 )
 
 func TestAdd(t *testing.T) {
 
-	fromFileOrig := fromFile
-	fromFile = func(path string, v interface{}) error {
+	fromFileOrig := FromFile
+	FromFile = func(path string, v interface{}) error {
+		stg, ok := v.(*stage.Stage)
+		if ok {
+			stg.WorkingDir = "."
+		}
 		return nil
 	}
-	defer func() { fromFile = fromFileOrig }()
+	defer func() { FromFile = fromFileOrig }()
 
 	t.Run("add new stage", func(t *testing.T) {
 		idx := NewIndex()
@@ -54,7 +59,7 @@ func TestAdd(t *testing.T) {
 		idx := NewIndex()
 		path := "foo/bar.duc"
 
-		fromFile = func(path string, v interface{}) error {
+		FromFile = func(path string, v interface{}) error {
 			return os.ErrNotExist
 		}
 
