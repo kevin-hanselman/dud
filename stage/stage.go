@@ -1,9 +1,6 @@
 package stage
 
 import (
-	"os"
-
-	"github.com/go-yaml/yaml"
 	"github.com/kevlar1818/duc/artifact"
 	cachePkg "github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/checksum"
@@ -17,15 +14,6 @@ type Stage struct {
 	Checksum   string
 	WorkingDir string
 	Outputs    []artifact.Artifact
-}
-
-// A Stager is the interface for a Stage
-type Stager interface {
-	Commit(cache cachePkg.Cache, strat strategy.CheckoutStrategy) error
-	Checkout(cache cachePkg.Cache, strat strategy.CheckoutStrategy) error
-	Status(cache cachePkg.Cache) (Status, error)
-	ToFile(path string) error
-	FromFile(path string) error
 }
 
 // Status holds a map of artifact names to statuses
@@ -77,22 +65,4 @@ func (s *Stage) Status(cache cachePkg.Cache) (Status, error) {
 		stat[art.Path] = artStatus.String()
 	}
 	return stat, nil
-}
-
-// ToFile saves the stage struct to yaml
-func (s *Stage) ToFile(path string) error {
-	stageFile, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	return yaml.NewEncoder(stageFile).Encode(s)
-}
-
-// FromFile loads the stage struct from yaml
-func (s *Stage) FromFile(path string) error {
-	stageFile, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	return yaml.NewDecoder(stageFile).Decode(s)
 }

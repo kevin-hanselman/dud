@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/track"
 	"github.com/spf13/cobra"
 	"log"
@@ -18,7 +19,7 @@ var trackCmd = &cobra.Command{
 	Short: "Create a Ducfile showing targets to be added",
 	Long:  "Create a Ducfile that shows which targets need to be added without computing checks",
 	Run: func(cmd *cobra.Command, args []string) {
-		stage, _ := track.Track(args...)
+		stg, _ := track.Track(args...)
 
 		ducfileFlag, err := cmd.Flags().GetString("output")
 		if err != nil {
@@ -29,6 +30,6 @@ var trackCmd = &cobra.Command{
 			ducfileFlag = "Ducfile"
 		}
 
-		stage.ToFile(ducfileFlag)
+		fsutil.ToYamlFile(ducfileFlag, stg)
 	},
 }

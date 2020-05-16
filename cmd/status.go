@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/kevlar1818/duc/cache"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,7 +38,7 @@ var statusCmd = &cobra.Command{
 
 		for _, path := range args {
 			stg := new(stage.Stage)
-			if err := stg.FromFile(path); err != nil {
+			if err := fsutil.FromYamlFile(path, stg); err != nil {
 				log.Fatal(err)
 			}
 			status, err := stg.Status(&ch)

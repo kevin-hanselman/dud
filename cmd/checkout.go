@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	cachePkg "github.com/kevlar1818/duc/cache"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
 	strategyPkg "github.com/kevlar1818/duc/strategy"
 	"github.com/spf13/cobra"
@@ -46,7 +47,7 @@ var checkoutCmd = &cobra.Command{
 
 		for _, path := range args {
 			stg := new(stage.Stage)
-			if err := stg.FromFile(path); err != nil {
+			if err := fsutil.FromYamlFile(path, stg); err != nil {
 				log.Fatal(err)
 			}
 			if err := stg.Checkout(&cache, strategy); err != nil {
