@@ -19,14 +19,15 @@ type Stage struct {
 // Status holds a map of artifact names to statuses
 type Status map[string]string
 
-// GetChecksum TODO
-func (s *Stage) GetChecksum() string {
-	return s.Checksum
-}
-
-// SetChecksum TODO
-func (s *Stage) SetChecksum(c string) {
-	s.Checksum = c
+// UpdateChecksum updates the Checksum field of the Stage.
+func (s *Stage) UpdateChecksum() error {
+	var err error
+	s.Checksum = ""
+	s.Checksum, err = checksum.ChecksumObject(s)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Commit commits all Outputs of the Stage.
@@ -37,8 +38,7 @@ func (s *Stage) Commit(cache cachePkg.Cache, strat strategy.CheckoutStrategy) er
 			return errors.Wrap(err, "stage commit failed")
 		}
 	}
-	checksum.Update(s)
-	return nil
+	return s.UpdateChecksum()
 }
 
 // Checkout checks out all Outputs of the Stage.

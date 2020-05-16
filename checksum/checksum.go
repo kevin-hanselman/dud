@@ -9,25 +9,14 @@ import (
 	"io"
 )
 
-// Checksummable objects can get and set their checksum
-// TODO: better name? ChecksummableStruct?
-type Checksummable interface {
-	GetChecksum() string
-	SetChecksum(string)
-}
-
-// Update calculates the checksum of a Checksummable (sans Checksum field)
-// then sets the Checksum field accordingly.
-func Update(c Checksummable) error {
-	c.SetChecksum("")
-
+// ChecksumObject returns the checksum of an object's encoded bytes.
+func ChecksumObject(v interface{}) (string, error) {
 	h := sha1.New()
 	enc := gob.NewEncoder(h)
-	if err := enc.Encode(c); err != nil {
-		return err
+	if err := enc.Encode(v); err != nil {
+		return "", err
 	}
-	c.SetChecksum(hashToHexString(h))
-	return nil
+	return hashToHexString(h), nil
 }
 
 // hashToHexString returns the sum of the hash object encoded as a hex string.
@@ -37,7 +26,7 @@ func hashToHexString(h hash.Hash) string {
 
 // Checksum reads from reader and returns the hash of the bytes as a hex string.
 func Checksum(reader io.Reader, bufSize int64) (string, error) {
-	if bufSize == 0 {
+	if bufSize <= 0 {
 		bufSize = int64(1 * datasize.MB)
 	}
 	h := sha1.New()

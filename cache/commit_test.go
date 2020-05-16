@@ -80,9 +80,12 @@ func TestCommitDirectory(t *testing.T) {
 		Path:     baseDir,
 		Contents: expectedArtifacts,
 	}
-	checksum.Update(&expectedManifest)
+	expectedChecksum, err := checksum.ChecksumObject(expectedManifest)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	expectedPath, err := cache.PathForChecksum(expectedManifest.Checksum)
+	expectedPath, err := cache.PathForChecksum(expectedChecksum)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,8 +93,8 @@ func TestCommitDirectory(t *testing.T) {
 		t.Fatalf("manifest path = %v, want %v", actualPath, expectedPath)
 	}
 
-	if dirArt.Checksum != expectedManifest.Checksum {
-		t.Fatalf("artifact checksum want %#v, got %#v", expectedManifest.Checksum, dirArt.Checksum)
+	if dirArt.Checksum != expectedChecksum {
+		t.Fatalf("artifact checksum want %#v, got %#v", expectedChecksum, dirArt.Checksum)
 	}
 
 	// assert result is correct

@@ -129,13 +129,12 @@ func commitDirArtifact(args commitArgs) error {
 			manifest.Contents = append(manifest.Contents, &fileArt)
 		}
 	}
-	// TODO: Dir manifests don't need to store the checksum internally. The
-	// checksum should be stored in the artifact.
-	if err := checksum.Update(&manifest); err != nil {
+	manChecksum, err := checksum.ChecksumObject(manifest)
+	if err != nil {
 		return errors.Wrap(err, "commitDir")
 	}
-	args.Artifact.Checksum = manifest.Checksum
-	path, err := args.Cache.PathForChecksum(manifest.Checksum)
+	args.Artifact.Checksum = manChecksum
+	path, err := args.Cache.PathForChecksum(manChecksum)
 	if err != nil {
 		return errors.Wrap(err, "commitDir")
 	}

@@ -31,15 +31,6 @@ func (cache *LocalCache) PathForChecksum(checksum string) (string, error) {
 }
 
 type directoryManifest struct {
-	Checksum string
 	Path     string
 	Contents []*artifact.Artifact
-}
-
-func (man *directoryManifest) GetChecksum() string {
-	return man.Checksum
-}
-
-func (man *directoryManifest) SetChecksum(checksum string) {
-	man.Checksum = checksum
 }

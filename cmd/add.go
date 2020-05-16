@@ -46,6 +46,5 @@ var addCmd = &cobra.Command{
 		if err = yaml.NewEncoder(indexFile).Encode(&index); err != nil {
 			log.Fatal(err)
 		}
-
 	},
 }
