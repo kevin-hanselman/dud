@@ -1,42 +1,32 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
+
 	cachePkg "github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
-	strategyPkg "github.com/kevlar1818/duc/strategy"
+	"github.com/kevlar1818/duc/strategy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
 )
 
 func init() {
 	rootCmd.AddCommand(checkoutCmd)
-	checkoutCmd.Flags().StringVarP(&checkoutStrategy, "strategy", "s", "", "Strategy to use for checkout. One of {link, copy}. Defaults to link.")
+	checkoutCmd.Flags().BoolVarP(&useCopyStrategy, "copy", "c", false, "Copy the file instead of linking.")
 }
 
-var checkoutStrategy string
+var useCopyStrategy bool
 
 var checkoutCmd = &cobra.Command{
 	Use:   "checkout",
 	Short: "checkout all artifacts from the cache",
 	Long:  "checkout all artifacts from the cache",
 	Run: func(cmd *cobra.Command, args []string) {
-		strategyFlag, err := cmd.Flags().GetString("strategy")
-		if err != nil {
-			log.Fatal(err)
-		}
 
-		// TODO DRY
-		var strategy strategyPkg.CheckoutStrategy
-
-		if strategyFlag == "" || strategyFlag == "link" {
-			strategy = strategyPkg.LinkStrategy
-		} else if strategyFlag == "copy" {
-			strategy = strategyPkg.CopyStrategy
-		} else {
-			log.Fatal(fmt.Errorf("invalid strategy specified: %s", strategyFlag))
+		strat := strategy.LinkStrategy
+		if useCopyStrategy {
+			strat = strategy.CopyStrategy
 		}
 
 		cache := cachePkg.LocalCache{Dir: viper.GetString("cache")}
@@ -50,7 +40,7 @@ var checkoutCmd = &cobra.Command{
 			if err := fsutil.FromYamlFile(path, stg); err != nil {
 				log.Fatal(err)
 			}
-			if err := stg.Checkout(&cache, strategy); err != nil {
+			if err := stg.Checkout(&cache, strat); err != nil {
 				log.Fatal(err)
 			}
 		}

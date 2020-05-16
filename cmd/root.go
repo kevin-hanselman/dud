@@ -13,7 +13,7 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "duc",
-		Short: "DUC is a tool for storing, version, and reproducing big data files",
+		Short: "DUC is a tool for storing, versioning, and reproducing big data files",
 		Long: `Data Under Control (duc) is a tool to store, version, and reproduce big
 		data files alongside the source code that creates it.
 		Inspired by Git.`,
