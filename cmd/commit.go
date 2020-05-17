@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	cachePkg "github.com/kevlar1818/duc/cache"
+	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
-	strategyPkg "github.com/kevlar1818/duc/strategy"
+	"github.com/kevlar1818/duc/strategy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -28,17 +28,20 @@ var commitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		var strategy strategyPkg.CheckoutStrategy
+		var strat strategy.CheckoutStrategy
 
 		if strategyFlag == "" || strategyFlag == "link" {
-			strategy = strategyPkg.LinkStrategy
+			strat = strategy.LinkStrategy
 		} else if strategyFlag == "copy" {
-			strategy = strategyPkg.CopyStrategy
+			strat = strategy.CopyStrategy
 		} else {
 			log.Fatal(fmt.Errorf("invalid strategy specified: %s", strategyFlag))
 		}
 
-		cache := cachePkg.LocalCache{Dir: viper.GetString("cache")}
+		ch, err := cache.NewLocalCache(viper.GetString("cache"))
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		if len(args) == 0 {
 			args = append(args, "Ducfile")
@@ -49,7 +52,7 @@ var commitCmd = &cobra.Command{
 			if err := fsutil.FromYamlFile(path, stg); err != nil {
 				log.Fatal(err)
 			}
-			if err := stg.Commit(&cache, strategy); err != nil {
+			if err := stg.Commit(ch, strat); err != nil {
 				log.Fatal(err)
 			}
 			if err := fsutil.ToYamlFile(path, stg); err != nil {

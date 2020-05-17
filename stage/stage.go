@@ -11,7 +11,7 @@ import (
 // A Stage holds all information required to reproduce data. It is the primary
 // artifact of DUC.
 type Stage struct {
-	Checksum   string
+	Checksum   string `yaml:",omitempty"`
 	WorkingDir string
 	Outputs    []artifact.Artifact
 }

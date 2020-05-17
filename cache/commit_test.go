@@ -9,7 +9,7 @@ import (
 	"github.com/kevlar1818/duc/testutil"
 	"github.com/pkg/errors"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
@@ -47,7 +47,10 @@ func TestCommitDirectory(t *testing.T) {
 	}
 	defer func() { writeDirManifest = writeDirManifestOrig }()
 
-	cache := LocalCache{Dir: "cache_root"}
+	cache, err := NewLocalCache("/cache_root")
+	if err != nil {
+		t.Fatal(err)
+	}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
 	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy)
@@ -63,12 +66,12 @@ func TestCommitDirectory(t *testing.T) {
 
 	expectedCommitFileArtifactCalls := []commitArgs{}
 
-	baseDir := path.Join("work_dir", "art_dir")
+	baseDir := filepath.Join("work_dir", "art_dir")
 
 	for i := range expectedArtifacts {
 		expectedCommitFileArtifactCalls = append(
 			expectedCommitFileArtifactCalls,
-			commitArgs{Cache: &cache, WorkingDir: baseDir, Artifact: expectedArtifacts[i]},
+			commitArgs{Cache: cache, WorkingDir: baseDir, Artifact: expectedArtifacts[i]},
 		)
 	}
 
@@ -129,7 +132,10 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	if err != nil {
 		t.Fatal(err)
 	}
-	cache := LocalCache{Dir: dirs.CacheDir}
+	cache, err := NewLocalCache(dirs.CacheDir)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 
@@ -170,7 +176,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	}
 }
 
-func testCachePermissions(cache LocalCache, art artifact.Artifact, t *testing.T) {
+func testCachePermissions(cache *LocalCache, art artifact.Artifact, t *testing.T) {
 	fileCachePath, err := cache.PathForChecksum(art.Checksum)
 	if err != nil {
 		t.Fatal(err)

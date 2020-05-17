@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
@@ -55,7 +55,7 @@ var commitFileArtifact = func(args commitArgs) error {
 		return errors.Wrap(err, errorPrefix)
 	}
 	defer srcFile.Close()
-	dstFile, err := ioutil.TempFile(args.Cache.Dir, "")
+	dstFile, err := ioutil.TempFile(args.Cache.Dir(), "")
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
@@ -71,7 +71,7 @@ var commitFileArtifact = func(args commitArgs) error {
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
-	dstDir := path.Dir(cachePath)
+	dstDir := filepath.Dir(cachePath)
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
@@ -94,7 +94,7 @@ var commitFileArtifact = func(args commitArgs) error {
 }
 
 var writeDirManifest = func(manPath string, manifest *directoryManifest) error {
-	if err := os.MkdirAll(path.Dir(manPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(manPath), 0755); err != nil {
 		return errors.Wrap(err, "writeDirManifest")
 	}
 	file, err := os.OpenFile(manPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0444)
@@ -108,7 +108,7 @@ var writeDirManifest = func(manPath string, manifest *directoryManifest) error {
 }
 
 func commitDirArtifact(args commitArgs) error {
-	baseDir := path.Join(args.WorkingDir, args.Artifact.Path)
+	baseDir := filepath.Join(args.WorkingDir, args.Artifact.Path)
 	entries, err := readDir(baseDir)
 	if err != nil {
 		return errors.Wrap(err, "commitDir")

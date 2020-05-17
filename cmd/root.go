@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -37,7 +38,11 @@ func initConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 
-	viper.SetDefault("cache", ".duc/cache")
+	defaultCachePath, err := filepath.Abs(".duc/cache")
+	if err != nil {
+		panic(err)
+	}
+	viper.SetDefault("cache", defaultCachePath)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

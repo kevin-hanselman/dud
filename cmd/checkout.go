@@ -3,7 +3,7 @@ package cmd
 import (
 	"log"
 
-	cachePkg "github.com/kevlar1818/duc/cache"
+	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
 	"github.com/kevlar1818/duc/strategy"
@@ -29,7 +29,10 @@ var checkoutCmd = &cobra.Command{
 			strat = strategy.CopyStrategy
 		}
 
-		cache := cachePkg.LocalCache{Dir: viper.GetString("cache")}
+		ch, err := cache.NewLocalCache(viper.GetString("cache"))
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		if len(args) == 0 {
 			args = append(args, "Ducfile")
@@ -40,7 +43,7 @@ var checkoutCmd = &cobra.Command{
 			if err := fsutil.FromYamlFile(path, stg); err != nil {
 				log.Fatal(err)
 			}
-			if err := stg.Checkout(&cache, strat); err != nil {
+			if err := stg.Checkout(ch, strat); err != nil {
 				log.Fatal(err)
 			}
 		}

@@ -1,29 +1,42 @@
 package cache
 
 import (
-	"github.com/kevlar1818/duc/artifact"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
 func TestPathForChecksum(t *testing.T) {
-	ch := LocalCache{Dir: "foo"}
-	art := artifact.Artifact{Checksum: "123456789"}
 
-	cachePath, err := ch.PathForChecksum(art.Checksum)
-	if err != nil {
-		t.Fatal(err)
-	}
+	t.Run("happy path", func(t *testing.T) {
+		ch, err := NewLocalCache("/foo")
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	want := path.Join("foo", "12", "3456789")
-	if cachePath != want {
-		t.Fatalf("cache.PathForChecksum(%#v) = %#v, want %#v", art.Checksum, cachePath, want)
-	}
+		checksum := "123456789"
+		cachePath, err := ch.PathForChecksum(checksum)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	art.Checksum = ""
+		want := filepath.Join("/foo", "12", "3456789")
+		if cachePath != want {
+			t.Fatalf("cache.PathForChecksum(%#v) = %#v, want %#v", checksum, cachePath, want)
+		}
 
-	_, err = ch.PathForChecksum(art.Checksum)
-	if err == nil {
-		t.Fatalf("expected error for cache.PathForChecksum(%#v)", art.Checksum)
-	}
+		checksum = ""
+
+		_, err = ch.PathForChecksum(checksum)
+		if err == nil {
+			t.Fatalf("expected error for cache.PathForChecksum(%#v)", checksum)
+		}
+	})
+
+	t.Run("reject relative paths ", func(t *testing.T) {
+		path := "foo/bar"
+		_, err := NewLocalCache(path)
+		if err == nil {
+			t.Fatalf("expected NewLocalCache(%#v) to raise an error (not absolute path)", path)
+		}
+	})
 }

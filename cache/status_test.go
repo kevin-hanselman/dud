@@ -202,7 +202,10 @@ func testDirectoryStatus(
 	}
 	defer func() { quickStatus = quickStatusOrig }()
 
-	cache := LocalCache{Dir: "cache_root"}
+	cache, err := NewLocalCache("/cache_root")
+	if err != nil {
+		t.Fatal(err)
+	}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "dummy_checksum", Path: "art_dir"}
 
 	status, commitErr := cache.Status("work_dir", dirArt)
@@ -233,7 +236,10 @@ func testStatusIntegration(statusWant artifact.Status, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cache := LocalCache{Dir: dirs.CacheDir}
+	cache, err := NewLocalCache(dirs.CacheDir)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	statusGot, err := cache.Status(dirs.WorkDir, art)
 	if err != nil {

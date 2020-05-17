@@ -34,14 +34,17 @@ var statusCmd = &cobra.Command{
 			args = append(args, "Ducfile")
 		}
 
-		ch := cache.LocalCache{Dir: viper.GetString("cache")}
+		ch, err := cache.NewLocalCache(viper.GetString("cache"))
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		for _, path := range args {
 			stg := new(stage.Stage)
 			if err := fsutil.FromYamlFile(path, stg); err != nil {
 				log.Fatal(err)
 			}
-			status, err := stg.Status(&ch)
+			status, err := stg.Status(ch)
 			if err != nil {
 				log.Fatal(err)
 			}

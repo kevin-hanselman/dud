@@ -53,7 +53,10 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 	}
 
 	workPath := path.Join(dirs.WorkDir, art.Path)
-	ch := cache.LocalCache{Dir: dirs.CacheDir}
+	ch, err := cache.NewLocalCache(dirs.CacheDir)
+	if err != nil {
+		t.Fatal(err)
+	}
 	exists, err := fsutil.Exists(workPath, false)
 	if err != nil {
 		t.Fatal(err)

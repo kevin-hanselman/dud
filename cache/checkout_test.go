@@ -32,7 +32,10 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 	if err != nil {
 		t.Fatal(err)
 	}
-	cache := LocalCache{Dir: dirs.CacheDir}
+	cache, err := NewLocalCache(dirs.CacheDir)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	checkoutErr := cache.Checkout(dirs.WorkDir, &art, strat)
 
@@ -122,7 +125,10 @@ func TestDirectoryCheckout(t *testing.T) {
 	}
 	defer func() { readDirManifest = readDirManifestOrig }()
 
-	cache := LocalCache{Dir: "/cache"}
+	cache, err := NewLocalCache("/cache")
+	if err != nil {
+		t.Fatal(err)
+	}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "dummy_checksum", Path: "art_dir"}
 
 	checkoutErr := cache.Checkout("work_dir", &dirArt, strat)
