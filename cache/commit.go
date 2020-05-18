@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -55,33 +56,10 @@ var commitFileArtifact = func(args commitArgs) error {
 		return errors.Wrap(err, errorPrefix)
 	}
 	defer srcFile.Close()
-	dstFile, err := ioutil.TempFile(args.Cache.Dir(), "")
-	if err != nil {
-		return errors.Wrap(err, errorPrefix)
-	}
-	defer dstFile.Close()
 
-	// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
-	// OR, if we're using CopyStrategy
-	checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), 0)
-	if err != nil {
-		return errors.Wrap(err, errorPrefix)
-	}
-	cachePath, err := args.Cache.PathForChecksum(checksum)
-	if err != nil {
-		return errors.Wrap(err, errorPrefix)
-	}
-	dstDir := filepath.Dir(cachePath)
-	if err = os.MkdirAll(dstDir, 0755); err != nil {
-		return errors.Wrap(err, errorPrefix)
-	}
-	if err = os.Rename(dstFile.Name(), cachePath); err != nil {
-		return errors.Wrap(err, errorPrefix)
-	}
-	if err := os.Chmod(cachePath, 0444); err != nil {
-		return errors.Wrap(err, errorPrefix)
-	}
-	args.Artifact.Checksum = checksum
+	cksum, err := args.Cache.commitBytes(srcFile)
+
+	args.Artifact.Checksum = cksum
 	// There's no need to call Checkout if using CopyStrategy; the original file still exists.
 	if args.Strategy == strategy.LinkStrategy {
 		// TODO: add rm to checkout as "force" option
@@ -93,18 +71,45 @@ var commitFileArtifact = func(args commitArgs) error {
 	return nil
 }
 
-var writeDirManifest = func(manPath string, manifest *directoryManifest) error {
-	if err := os.MkdirAll(filepath.Dir(manPath), 0755); err != nil {
-		return errors.Wrap(err, "writeDirManifest")
-	}
-	file, err := os.OpenFile(manPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0444)
+// commitBytes checksums and writes the bytes from reader to the cache.
+func (cache *LocalCache) commitBytes(reader io.Reader) (string, error) {
+	dstFile, err := ioutil.TempFile(cache.dir, "")
 	if err != nil {
-		if os.IsExist(err) { // If the file already exists, trust the cache and carry on.
-			return nil
-		}
-		return errors.Wrap(err, "writeDirManifest")
+		return "", err
 	}
-	return json.NewEncoder(file).Encode(manifest)
+	defer dstFile.Close()
+
+	// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
+	// OR, if we're using CopyStrategy
+	cksum, err := checksum.Checksum(io.TeeReader(reader, dstFile), 0)
+	if err != nil {
+		return "", err
+	}
+	cachePath, err := cache.PathForChecksum(cksum)
+	if err != nil {
+		return "", err
+	}
+	dstDir := filepath.Dir(cachePath)
+	if err = os.MkdirAll(dstDir, 0755); err != nil {
+		return "", err
+	}
+	if err = os.Rename(dstFile.Name(), cachePath); err != nil {
+		return "", err
+	}
+	if err := os.Chmod(cachePath, 0444); err != nil {
+		return "", err
+	}
+	return cksum, nil
+}
+
+var commitDirManifest = func(ch *LocalCache, manifest *directoryManifest) (string, error) {
+	// TODO: Consider using an io.Pipe() instead of a buffer.
+	// For large (nested) directories this is probably more important.
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(manifest); err != nil {
+		return "", err
+	}
+	return ch.commitBytes(buf)
 }
 
 func commitDirArtifact(args commitArgs) error {
@@ -129,17 +134,10 @@ func commitDirArtifact(args commitArgs) error {
 			manifest.Contents = append(manifest.Contents, &fileArt)
 		}
 	}
-	manChecksum, err := checksum.ChecksumObject(manifest)
+	cksum, err := commitDirManifest(args.Cache, &manifest)
 	if err != nil {
 		return errors.Wrap(err, "commitDir")
 	}
-	args.Artifact.Checksum = manChecksum
-	path, err := args.Cache.PathForChecksum(manChecksum)
-	if err != nil {
-		return errors.Wrap(err, "commitDir")
-	}
-	if err := writeDirManifest(path, &manifest); err != nil {
-		return errors.Wrap(err, "commitDir")
-	}
+	args.Artifact.Checksum = cksum
 	return nil
 }

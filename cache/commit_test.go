@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"github.com/pkg/errors"
@@ -38,14 +37,13 @@ func TestCommitDirectory(t *testing.T) {
 	defer func() { readDir = readDirOrig }()
 
 	var actualManifest directoryManifest
-	var actualPath string
-	writeDirManifestOrig := writeDirManifest
-	writeDirManifest = func(path string, man *directoryManifest) error {
-		actualPath = path
+	expectedChecksum := "deadbeef"
+	commitDirManifestOrig := commitDirManifest
+	commitDirManifest = func(ch *LocalCache, man *directoryManifest) (string, error) {
 		actualManifest = *man
-		return nil
+		return expectedChecksum, nil
 	}
-	defer func() { writeDirManifest = writeDirManifestOrig }()
+	defer func() { commitDirManifest = commitDirManifestOrig }()
 
 	cache, err := NewLocalCache("/cache_root")
 	if err != nil {
@@ -82,18 +80,6 @@ func TestCommitDirectory(t *testing.T) {
 	expectedManifest := directoryManifest{
 		Path:     baseDir,
 		Contents: expectedArtifacts,
-	}
-	expectedChecksum, err := checksum.ChecksumObject(expectedManifest)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	expectedPath, err := cache.PathForChecksum(expectedChecksum)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if actualPath != expectedPath {
-		t.Fatalf("manifest path = %v, want %v", actualPath, expectedPath)
 	}
 
 	if dirArt.Checksum != expectedChecksum {
