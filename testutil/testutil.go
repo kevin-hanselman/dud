@@ -69,7 +69,11 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 // AllTestCases returns a slice of all valid artifact.Status structs.
 // (See status.txt in the project root)
 func AllTestCases() (out []artifact.Status) {
-	allWorkspaceStatuses := []artifact.FileStatus{artifact.RegularFile, artifact.Link, artifact.Absent}
+	allWorkspaceStatuses := []artifact.FileStatus{
+		artifact.Absent,
+		artifact.RegularFile,
+		artifact.Link,
+	}
 	for _, workspaceStatus := range allWorkspaceStatuses {
 		if workspaceStatus != artifact.Absent {
 			out = append(

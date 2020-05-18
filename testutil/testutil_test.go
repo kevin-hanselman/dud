@@ -6,7 +6,7 @@ import (
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
@@ -47,40 +47,58 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		t.Fatal(err)
 	}
 
-	checksumEmpty := art.Checksum == ""
-	if checksumEmpty == status.HasChecksum {
+	// verify art.Checksum matches status.HasChecksum
+	artHasChecksum := art.Checksum != ""
+	if artHasChecksum != status.HasChecksum {
 		t.Errorf("artifact checksum %v", art.Checksum)
 	}
 
-	workPath := path.Join(dirs.WorkDir, art.Path)
+	// verify art.IsDir matches status.WorkspaceFileStatus
+	if art.IsDir != (status.WorkspaceFileStatus == artifact.Directory) {
+		t.Fatalf(
+			"artifact.IsDir = %v, but status.WorkspaceFileStatus = %v",
+			art.IsDir,
+			status.WorkspaceFileStatus,
+		)
+	}
+
+	// verify workPath existences matches status.WorkspaceFileStatus
+	workPath := filepath.Join(dirs.WorkDir, art.Path)
+	workPathExists, err := fsutil.Exists(workPath, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	shouldExist := status.WorkspaceFileStatus != artifact.Absent
+	if workPathExists != shouldExist {
+		t.Fatalf("Exists(%#v) = %#v", workPath, workPathExists)
+	}
+
+	// verify cachePath matches status.HasChecksum
 	ch, err := cache.NewLocalCache(dirs.CacheDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	exists, err := fsutil.Exists(workPath, false)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	shouldExist := status.WorkspaceFileStatus != artifact.Absent
-	if exists != shouldExist {
-		t.Fatalf("Exists(%#v) = %#v", workPath, exists)
-	}
-
 	cachePath, err := ch.PathForChecksum(art.Checksum)
-	if status.HasChecksum && (err != nil) {
-		t.Fatal(err)
+	foundValidChecksum := err == nil
+	if status.HasChecksum != foundValidChecksum {
+		t.Fatalf(
+			"art.Checksum = %#v, but status.HasChecksum = %#v",
+			art.Checksum,
+			status.HasChecksum,
+		)
 	}
 
-	exists, err = fsutil.Exists(cachePath, false)
+	// verify cachePath matches status.ChecksumInCache
+	cachePathExists, err := fsutil.Exists(cachePath, false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if exists != status.ChecksumInCache {
-		t.Fatalf("Exists(%#v) = %#v", cachePath, exists)
+	if cachePathExists != status.ChecksumInCache {
+		t.Fatalf("Exists(%#v) = %#v", cachePath, cachePathExists)
 	}
 
 	switch status.WorkspaceFileStatus {
+	// verify workPath is a link and matches status.ContentsMatch
 	case artifact.Link:
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {
@@ -88,16 +106,24 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		}
 		correctLink := linkDst == cachePath
 		if correctLink != status.ContentsMatch {
-			t.Errorf("%v links to %v", workPath, linkDst)
+			t.Fatalf("%#v links to %#v", workPath, linkDst)
 		}
+	// verify workPath is a regular file and matches status.ContentsMatch
 	case artifact.RegularFile:
+		isRegFile, err := fsutil.IsRegularFile(workPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !isRegFile {
+			t.Fatalf("expected %#v to be a regular file", workPath)
+		}
 		if status.ChecksumInCache {
 			same, err := fsutil.SameContents(workPath, cachePath)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if same != status.ContentsMatch {
-				t.Errorf("SameContents(%v, %v) = %v", workPath, cachePath, same)
+				t.Fatalf("SameContents(%v, %v) = %v", workPath, cachePath, same)
 			}
 		}
 	}
