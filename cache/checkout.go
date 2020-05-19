@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 // Checkout finds the artifact in the cache and adds a copy of/link to said
@@ -30,6 +31,9 @@ var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifac
 	}
 	if !status.ChecksumInCache {
 		return fmt.Errorf("%s: checksum %#v missing from cache", errorPrefix, art.Checksum)
+	}
+	if err := os.MkdirAll(filepath.Dir(workPath), 0755); err != nil {
+		return errors.Wrap(err, errorPrefix)
 	}
 	switch strat {
 	case strategy.CopyStrategy:

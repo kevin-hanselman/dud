@@ -4,7 +4,7 @@ import (
 	"github.com/kevlar1818/duc/artifact"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -117,15 +117,17 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 	}
 
 	fileContents := []byte("Hello, World!")
+	// Put the file in a sub-directory to test that full paths can be recreated with a checkout.
+	parentDir := "greet"
 
 	art = artifact.Artifact{
 		Checksum: "0a0a9f2a6772942557ab5355d76af442f8f65e01",
-		Path:     "hello.txt",
+		Path:     filepath.Join(parentDir, "hello.txt"),
 	}
 
-	fileCacheDir := path.Join(dirs.CacheDir, art.Checksum[:2])
-	fileCachePath := path.Join(fileCacheDir, art.Checksum[2:])
-	fileWorkspacePath := path.Join(dirs.WorkDir, art.Path)
+	fileCacheDir := filepath.Join(dirs.CacheDir, art.Checksum[:2])
+	fileCachePath := filepath.Join(fileCacheDir, art.Checksum[2:])
+	fileWorkspacePath := filepath.Join(dirs.WorkDir, art.Path)
 
 	if !status.HasChecksum {
 		art.Checksum = ""
@@ -136,6 +138,12 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 			return
 		}
 		if err = ioutil.WriteFile(fileCachePath, fileContents, 0444); err != nil {
+			return
+		}
+	}
+
+	if status.WorkspaceFileStatus != artifact.Absent {
+		if err = os.Mkdir(filepath.Join(dirs.WorkDir, parentDir), 0755); err != nil {
 			return
 		}
 	}
