@@ -13,6 +13,15 @@ import (
 )
 
 func TestCommitDirectory(t *testing.T) {
+	t.Run("non-recursive", func(t *testing.T) {
+		testCommitDirectoryNonRecursive(t)
+	})
+	t.Run("recursive", func(t *testing.T) {
+		testCommitDirectoryRecursive(t)
+	})
+}
+
+func testCommitDirectoryNonRecursive(t *testing.T) {
 	commitFileArtifactCalls := []commitArgs{}
 	commitFileArtifactOrig := commitFileArtifact
 	commitFileArtifact = func(args commitArgs) error {
@@ -51,12 +60,12 @@ func TestCommitDirectory(t *testing.T) {
 	}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
-	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy)
+	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy, false)
 	if commitErr != nil {
 		t.Fatal(commitErr)
 	}
 
-	expectedArtifacts := []*artifact.Artifact{
+	expectedFileArtifacts := []*artifact.Artifact{
 		{Checksum: "123456789", Path: "my_file1"},
 		{Checksum: "123456789", Path: "my_link"},
 		{Checksum: "123456789", Path: "my_file2"},
@@ -66,10 +75,10 @@ func TestCommitDirectory(t *testing.T) {
 
 	baseDir := filepath.Join("work_dir", "art_dir")
 
-	for i := range expectedArtifacts {
+	for i := range expectedFileArtifacts {
 		expectedCommitFileArtifactCalls = append(
 			expectedCommitFileArtifactCalls,
-			commitArgs{Cache: cache, WorkingDir: baseDir, Artifact: expectedArtifacts[i]},
+			commitArgs{Cache: cache, WorkingDir: baseDir, Artifact: expectedFileArtifacts[i]},
 		)
 	}
 
@@ -79,7 +88,7 @@ func TestCommitDirectory(t *testing.T) {
 
 	expectedManifest := directoryManifest{
 		Path:     baseDir,
-		Contents: expectedArtifacts,
+		Contents: expectedFileArtifacts,
 	}
 
 	if dirArt.Checksum != expectedChecksum {
@@ -94,6 +103,131 @@ func TestCommitDirectory(t *testing.T) {
 	//   etc.
 
 	if diff := cmp.Diff(expectedManifest, actualManifest); diff != "" {
+		t.Fatalf("directoryManifest -want +got:\n%s", diff)
+	}
+}
+
+func testCommitDirectoryRecursive(t *testing.T) {
+	commitFileArtifactCalls := []commitArgs{}
+	commitFileArtifactOrig := commitFileArtifact
+	commitFileArtifact = func(args commitArgs) error {
+		args.Artifact.Checksum = "123456789"
+		commitFileArtifactCalls = append(commitFileArtifactCalls, args)
+		return nil
+	}
+	defer func() { commitFileArtifact = commitFileArtifactOrig }()
+
+	mockFilesParent := []os.FileInfo{
+		testutil.MockFileInfo{MockName: "my_file1"},
+		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+		testutil.MockFileInfo{MockName: "my_file2"},
+		// NOTE: The order here will affect the expected order of commitFileArtifactcalls
+		testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+	}
+
+	mockFilesChild := []os.FileInfo{
+		testutil.MockFileInfo{MockName: "nested_file1"},
+		testutil.MockFileInfo{MockName: "nested_file2"},
+	}
+
+	readDirCallCount := 0
+	readDirOrig := readDir
+	readDir = func(dir string) ([]os.FileInfo, error) {
+		readDirCallCount++
+		if readDirCallCount == 1 {
+			return mockFilesParent, nil
+		} else if readDirCallCount == 2 {
+			return mockFilesChild, nil
+		} else {
+			t.Fatal("unexpected call to readDir")
+		}
+		return []os.FileInfo{}, nil
+	}
+	defer func() { readDir = readDirOrig }()
+
+	actualManifests := []directoryManifest{}
+	expectedChecksum := "deadbeef"
+	commitDirManifestOrig := commitDirManifest
+	commitDirManifest = func(ch *LocalCache, man *directoryManifest) (string, error) {
+		actualManifests = append(actualManifests, *man)
+		return expectedChecksum, nil
+	}
+	defer func() { commitDirManifest = commitDirManifestOrig }()
+
+	cache, err := NewLocalCache("/cache_root")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
+
+	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy, true)
+	if commitErr != nil {
+		t.Fatal(commitErr)
+	}
+
+	expectedFileArtifactsParent := []*artifact.Artifact{
+		{Checksum: "123456789", Path: "my_file1"},
+		{Checksum: "123456789", Path: "my_link"},
+		{Checksum: "123456789", Path: "my_file2"},
+	}
+	expectedFileArtifactsChild := []*artifact.Artifact{
+		{Checksum: "123456789", Path: "nested_file1"},
+		{Checksum: "123456789", Path: "nested_file2"},
+	}
+
+	expectedCommitFileArtifactCalls := []commitArgs{}
+
+	baseDir := filepath.Join("work_dir", "art_dir")
+	childDir := filepath.Join(baseDir, "my_dir")
+
+	for i := range expectedFileArtifactsParent {
+		expectedCommitFileArtifactCalls = append(
+			expectedCommitFileArtifactCalls,
+			commitArgs{
+				Cache:      cache,
+				WorkingDir: baseDir,
+				Artifact:   expectedFileArtifactsParent[i],
+				Recursive:  true,
+			},
+		)
+	}
+	for i := range expectedFileArtifactsChild {
+		expectedCommitFileArtifactCalls = append(
+			expectedCommitFileArtifactCalls,
+			commitArgs{
+				Cache:      cache,
+				WorkingDir: childDir,
+				Artifact:   expectedFileArtifactsChild[i],
+				Recursive:  true,
+			},
+		)
+	}
+
+	if diff := cmp.Diff(expectedCommitFileArtifactCalls, commitFileArtifactCalls); diff != "" {
+		t.Fatalf("commitFileArtifactCalls -want +got:\n%s", diff)
+	}
+
+	expectedManifestParent := directoryManifest{
+		Path: baseDir,
+		Contents: append(
+			expectedFileArtifactsParent,
+			&artifact.Artifact{Checksum: expectedChecksum, Path: "my_dir", IsDir: true},
+		),
+	}
+	expectedManifestChild := directoryManifest{
+		Path:     childDir,
+		Contents: expectedFileArtifactsChild,
+	}
+
+	if dirArt.Checksum != expectedChecksum {
+		t.Fatalf("artifact checksum want %#v, got %#v", expectedChecksum, dirArt.Checksum)
+	}
+
+	if diff := cmp.Diff(expectedManifestChild, actualManifests[0]); diff != "" {
+		t.Fatalf("directoryManifest -want +got:\n%s", diff)
+	}
+
+	if diff := cmp.Diff(expectedManifestParent, actualManifests[1]); diff != "" {
 		t.Fatalf("directoryManifest -want +got:\n%s", diff)
 	}
 }
@@ -123,7 +257,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 		t.Fatal(err)
 	}
 
-	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
+	commitErr := cache.Commit(dirs.WorkDir, &art, strat, false)
 
 	if statusStart.WorkspaceFileStatus == artifact.Absent {
 		if os.IsNotExist(errors.Cause(commitErr)) {

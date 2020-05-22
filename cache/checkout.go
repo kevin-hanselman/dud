@@ -77,7 +77,7 @@ func checkoutDir(ch *LocalCache, workingDir string, art *artifact.Artifact, stra
 		return fmt.Errorf("checkoutDir: checksum %v not found in cache", art.Checksum)
 	}
 	if !(status.WorkspaceFileStatus == artifact.Absent || status.WorkspaceFileStatus == artifact.Directory) {
-		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %v", status.WorkspaceFileStatus)
+		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %s", status.WorkspaceFileStatus)
 	}
 	man, err := readDirManifest(cachePath)
 	for _, fileArt := range man.Contents {

@@ -12,8 +12,8 @@ type mockCache struct {
 	mock.Mock
 }
 
-func (c *mockCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-	args := c.Called(workingDir, art, strat)
+func (c *mockCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy, recursive bool) error {
+	args := c.Called(workingDir, art, strat, recursive)
 	return args.Error(0)
 }
 
@@ -87,11 +87,13 @@ func TestSetChecksum(t *testing.T) {
 }
 
 func TestCommit(t *testing.T) {
-	t.Run("Copy", func(t *testing.T) { testCommit(strategy.CopyStrategy, t) })
-	t.Run("Link", func(t *testing.T) { testCommit(strategy.LinkStrategy, t) })
+	for _, recursive := range []bool{true, false} {
+		t.Run("Copy", func(t *testing.T) { testCommit(strategy.CopyStrategy, recursive, t) })
+		t.Run("Link", func(t *testing.T) { testCommit(strategy.LinkStrategy, recursive, t) })
+	}
 }
 
-func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
+func testCommit(strat strategy.CheckoutStrategy, recursive bool, t *testing.T) {
 	stg := Stage{
 		Checksum:   "",
 		WorkingDir: "workDir",
@@ -109,10 +111,10 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 
 	cache := mockCache{}
 	for i := range stg.Outputs {
-		cache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
+		cache.On("Commit", "workDir", &stg.Outputs[i], strat, recursive).Return(nil)
 	}
 
-	if err := stg.Commit(&cache, strat); err != nil {
+	if err := stg.Commit(&cache, strat, recursive); err != nil {
 		t.Fatal(err)
 	}
 

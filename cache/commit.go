@@ -16,13 +16,20 @@ import (
 )
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
-func (cache *LocalCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+func (cache *LocalCache) Commit(
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+	recursive bool,
+) error {
 	args := commitArgs{
 		WorkingDir: workingDir,
 		Cache:      cache,
 		Artifact:   art,
 		Strategy:   strat,
+		Recursive:  recursive,
 	}
+	// TODO: improve error reporting? avoid recursive wrapping
 	if art.IsDir {
 		return commitDirArtifact(args)
 	}
@@ -36,6 +43,7 @@ type commitArgs struct {
 	WorkingDir string
 	Artifact   *artifact.Artifact
 	Strategy   strategy.CheckoutStrategy
+	Recursive  bool
 }
 
 var commitFileArtifact = func(args commitArgs) error {
@@ -104,7 +112,7 @@ func (cache *LocalCache) commitBytes(reader io.Reader) (string, error) {
 
 var commitDirManifest = func(ch *LocalCache, manifest *directoryManifest) (string, error) {
 	// TODO: Consider using an io.Pipe() instead of a buffer.
-	// For large (nested) directories this is probably more important.
+	// For large directories this is probably more important.
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(manifest); err != nil {
 		return "", err
@@ -116,27 +124,36 @@ func commitDirArtifact(args commitArgs) error {
 	baseDir := filepath.Join(args.WorkingDir, args.Artifact.Path)
 	entries, err := readDir(baseDir)
 	if err != nil {
-		return errors.Wrap(err, "commitDir")
+		return err
 	}
 	manifest := directoryManifest{Path: baseDir}
 	for _, entry := range entries {
-		if !entry.Mode().IsDir() { // TODO: only proceed for reg files and links
-			fileArt := artifact.Artifact{Path: entry.Name()}
-			args := commitArgs{
-				Cache:      args.Cache,
-				WorkingDir: baseDir,
-				Artifact:   &fileArt,
-				Strategy:   args.Strategy,
-			}
-			if err := commitFileArtifact(args); err != nil {
-				return errors.Wrap(err, "commitDir")
-			}
-			manifest.Contents = append(manifest.Contents, &fileArt)
+		childArt := artifact.Artifact{Path: entry.Name()}
+		args := commitArgs{
+			Cache:      args.Cache,
+			WorkingDir: baseDir,
+			Strategy:   args.Strategy,
+			Recursive:  args.Recursive,
+			Artifact:   &childArt,
 		}
+		if entry.IsDir() {
+			if !args.Recursive {
+				continue
+			}
+			childArt.IsDir = true
+			if err := commitDirArtifact(args); err != nil {
+				return err
+			}
+		} else { // TODO: ensure regular file or symlink
+			if err := commitFileArtifact(args); err != nil {
+				return err
+			}
+		}
+		manifest.Contents = append(manifest.Contents, &childArt)
 	}
 	cksum, err := commitDirManifest(args.Cache, &manifest)
 	if err != nil {
-		return errors.Wrap(err, "commitDir")
+		return err
 	}
 	args.Artifact.Checksum = cksum
 	return nil
