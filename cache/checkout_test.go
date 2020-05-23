@@ -8,7 +8,7 @@ import (
 	"github.com/kevlar1818/duc/testutil"
 	"github.com/pkg/errors"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
@@ -84,6 +84,11 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 }
 
 func TestDirectoryCheckout(t *testing.T) {
+	t.Run("non-recursive", testDirectoryCheckoutNonRecursive)
+	t.Run("recursive", testDirectoryCheckoutRecursive)
+}
+
+func testDirectoryCheckoutNonRecursive(t *testing.T) {
 	dirQuickStatus := artifact.Status{
 		WorkspaceFileStatus: artifact.Absent,
 		HasChecksum:         true,
@@ -99,9 +104,13 @@ func TestDirectoryCheckout(t *testing.T) {
 	}
 
 	quickStatusOrig := quickStatus
-	quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, cachePath, workPath string, err error) {
+	quickStatus = func(
+		ch *LocalCache,
+		workingDir string,
+		art artifact.Artifact,
+	) (status artifact.Status, cachePath, workPath string, err error) {
 		status = dirQuickStatus
-		workPath = path.Join(workingDir, art.Path)
+		workPath = filepath.Join(workingDir, art.Path)
 		cachePath = "foobar"
 		return
 	}
@@ -109,7 +118,12 @@ func TestDirectoryCheckout(t *testing.T) {
 
 	checkoutFileOrig := checkoutFile
 	checkoutFileArtifacts := []*artifact.Artifact{}
-	checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	checkoutFile = func(
+		ch *LocalCache,
+		workingDir string,
+		art *artifact.Artifact,
+		strat strategy.CheckoutStrategy,
+	) error {
 		checkoutFileArtifacts = append(checkoutFileArtifacts, art)
 		return nil
 	}
@@ -137,6 +151,102 @@ func TestDirectoryCheckout(t *testing.T) {
 	}
 
 	if diff := cmp.Diff(fileArtifacts, checkoutFileArtifacts); diff != "" {
+		t.Fatalf("checkoutFileArtifacts -want +got:\n%s", diff)
+	}
+}
+
+func testDirectoryCheckoutRecursive(t *testing.T) {
+	dirQuickStatus := artifact.Status{
+		WorkspaceFileStatus: artifact.Absent,
+		HasChecksum:         true,
+		ChecksumInCache:     true,
+	}
+
+	strat := strategy.CopyStrategy
+
+	fileArtifactsParent := []*artifact.Artifact{
+		{Path: "dir1", IsDir: true},
+		{Path: "file1"},
+		{Path: "file2"},
+		{Path: "file3"},
+	}
+
+	fileArtifactsChild := []*artifact.Artifact{
+		{Path: "nested_file1"},
+		{Path: "nested_file2"},
+	}
+
+	expectedFileArtifacts := []*artifact.Artifact{}
+	for i := range fileArtifactsChild {
+		expectedFileArtifacts = append(expectedFileArtifacts, fileArtifactsChild[i])
+	}
+	for i := range fileArtifactsParent {
+		if fileArtifactsParent[i].IsDir {
+			continue
+		}
+		expectedFileArtifacts = append(expectedFileArtifacts, fileArtifactsParent[i])
+	}
+
+	quickStatusOrig := quickStatus
+	quickStatus = func(
+		ch *LocalCache,
+		workingDir string,
+		art artifact.Artifact,
+	) (status artifact.Status, cachePath, workPath string, err error) {
+		status = dirQuickStatus
+		workPath = filepath.Join(workingDir, art.Path)
+		cachePath = "foobar"
+		return
+	}
+	defer func() { quickStatus = quickStatusOrig }()
+
+	checkoutFileOrig := checkoutFile
+	checkoutFileArtifacts := []*artifact.Artifact{}
+	checkoutFile = func(
+		ch *LocalCache,
+		workingDir string,
+		art *artifact.Artifact,
+		strat strategy.CheckoutStrategy,
+	) error {
+		checkoutFileArtifacts = append(checkoutFileArtifacts, art)
+		return nil
+	}
+	defer func() { checkoutFile = checkoutFileOrig }()
+
+	readDirManCalls := 0
+	readDirManifestOrig := readDirManifest
+	readDirManifest = func(path string) (directoryManifest, error) {
+		var man directoryManifest
+		readDirManCalls++
+		if readDirManCalls == 1 {
+			man = directoryManifest{
+				Path:     "art_dir",
+				Contents: fileArtifactsParent,
+			}
+		} else if readDirManCalls == 2 {
+			man = directoryManifest{
+				Path:     "art_dir",
+				Contents: fileArtifactsChild,
+			}
+		} else {
+			t.Fatal("unexpected call to readDirManifest")
+		}
+		return man, nil
+	}
+	defer func() { readDirManifest = readDirManifestOrig }()
+
+	cache, err := NewLocalCache("/cache")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dirArt := artifact.Artifact{IsDir: true, Checksum: "dummy_checksum", Path: "art_dir"}
+
+	checkoutErr := cache.Checkout("work_dir", &dirArt, strat)
+	if checkoutErr != nil {
+		t.Fatal(checkoutErr)
+	}
+
+	if diff := cmp.Diff(expectedFileArtifacts, checkoutFileArtifacts); diff != "" {
 		t.Fatalf("checkoutFileArtifacts -want +got:\n%s", diff)
 	}
 }

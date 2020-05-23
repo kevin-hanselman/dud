@@ -20,14 +20,12 @@ func (cache *LocalCache) Commit(
 	workingDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-	recursive bool,
 ) error {
 	args := commitArgs{
 		WorkingDir: workingDir,
 		Cache:      cache,
 		Artifact:   art,
 		Strategy:   strat,
-		Recursive:  recursive,
 	}
 	// TODO: improve error reporting? avoid recursive wrapping
 	if art.IsDir {
@@ -43,7 +41,6 @@ type commitArgs struct {
 	WorkingDir string
 	Artifact   *artifact.Artifact
 	Strategy   strategy.CheckoutStrategy
-	Recursive  bool
 }
 
 var commitFileArtifact = func(args commitArgs) error {
@@ -129,23 +126,23 @@ func commitDirArtifact(args commitArgs) error {
 	manifest := directoryManifest{Path: baseDir}
 	for _, entry := range entries {
 		childArt := artifact.Artifact{Path: entry.Name()}
-		args := commitArgs{
+		childArgs := commitArgs{
 			Cache:      args.Cache,
 			WorkingDir: baseDir,
 			Strategy:   args.Strategy,
-			Recursive:  args.Recursive,
 			Artifact:   &childArt,
 		}
 		if entry.IsDir() {
-			if !args.Recursive {
+			if !args.Artifact.IsRecursive {
 				continue
 			}
 			childArt.IsDir = true
-			if err := commitDirArtifact(args); err != nil {
+			childArt.IsRecursive = true
+			if err := commitDirArtifact(childArgs); err != nil {
 				return err
 			}
 		} else { // TODO: ensure regular file or symlink
-			if err := commitFileArtifact(args); err != nil {
+			if err := commitFileArtifact(childArgs); err != nil {
 				return err
 			}
 		}

@@ -13,12 +13,8 @@ import (
 )
 
 func TestCommitDirectory(t *testing.T) {
-	t.Run("non-recursive", func(t *testing.T) {
-		testCommitDirectoryNonRecursive(t)
-	})
-	t.Run("recursive", func(t *testing.T) {
-		testCommitDirectoryRecursive(t)
-	})
+	t.Run("non-recursive", testCommitDirectoryNonRecursive)
+	t.Run("recursive", testCommitDirectoryRecursive)
 }
 
 func testCommitDirectoryNonRecursive(t *testing.T) {
@@ -33,7 +29,7 @@ func testCommitDirectoryNonRecursive(t *testing.T) {
 
 	mockFiles := []os.FileInfo{
 		testutil.MockFileInfo{MockName: "my_file1"},
-		testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+		testutil.MockFileInfo{MockName: "child_dir", MockMode: os.ModeDir},
 		// TODO: cover handling of symlinks (and other irregular files?)
 		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
 		testutil.MockFileInfo{MockName: "my_file2"},
@@ -60,7 +56,7 @@ func testCommitDirectoryNonRecursive(t *testing.T) {
 	}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
 
-	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy, false)
+	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy)
 	if commitErr != nil {
 		t.Fatal(commitErr)
 	}
@@ -122,7 +118,7 @@ func testCommitDirectoryRecursive(t *testing.T) {
 		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
 		testutil.MockFileInfo{MockName: "my_file2"},
 		// NOTE: The order here will affect the expected order of commitFileArtifactcalls
-		testutil.MockFileInfo{MockName: "my_dir", MockMode: os.ModeDir},
+		testutil.MockFileInfo{MockName: "child_dir", MockMode: os.ModeDir},
 	}
 
 	mockFilesChild := []os.FileInfo{
@@ -158,9 +154,9 @@ func testCommitDirectoryRecursive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dirArt := artifact.Artifact{IsDir: true, Checksum: "", Path: "art_dir"}
+	dirArt := artifact.Artifact{IsDir: true, IsRecursive: true, Checksum: "", Path: "art_dir"}
 
-	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy, true)
+	commitErr := cache.Commit("work_dir", &dirArt, strategy.LinkStrategy)
 	if commitErr != nil {
 		t.Fatal(commitErr)
 	}
@@ -178,7 +174,7 @@ func testCommitDirectoryRecursive(t *testing.T) {
 	expectedCommitFileArtifactCalls := []commitArgs{}
 
 	baseDir := filepath.Join("work_dir", "art_dir")
-	childDir := filepath.Join(baseDir, "my_dir")
+	childDir := filepath.Join(baseDir, "child_dir")
 
 	for i := range expectedFileArtifactsParent {
 		expectedCommitFileArtifactCalls = append(
@@ -187,7 +183,6 @@ func testCommitDirectoryRecursive(t *testing.T) {
 				Cache:      cache,
 				WorkingDir: baseDir,
 				Artifact:   expectedFileArtifactsParent[i],
-				Recursive:  true,
 			},
 		)
 	}
@@ -198,7 +193,6 @@ func testCommitDirectoryRecursive(t *testing.T) {
 				Cache:      cache,
 				WorkingDir: childDir,
 				Artifact:   expectedFileArtifactsChild[i],
-				Recursive:  true,
 			},
 		)
 	}
@@ -211,7 +205,12 @@ func testCommitDirectoryRecursive(t *testing.T) {
 		Path: baseDir,
 		Contents: append(
 			expectedFileArtifactsParent,
-			&artifact.Artifact{Checksum: expectedChecksum, Path: "my_dir", IsDir: true},
+			&artifact.Artifact{
+				Checksum:    expectedChecksum,
+				Path:        "child_dir",
+				IsDir:       true,
+				IsRecursive: true,
+			},
 		),
 	}
 	expectedManifestChild := directoryManifest{
@@ -224,11 +223,11 @@ func testCommitDirectoryRecursive(t *testing.T) {
 	}
 
 	if diff := cmp.Diff(expectedManifestChild, actualManifests[0]); diff != "" {
-		t.Fatalf("directoryManifest -want +got:\n%s", diff)
+		t.Fatalf("child directoryManifest -want +got:\n%s", diff)
 	}
 
 	if diff := cmp.Diff(expectedManifestParent, actualManifests[1]); diff != "" {
-		t.Fatalf("directoryManifest -want +got:\n%s", diff)
+		t.Fatalf("parent directoryManifest -want +got:\n%s", diff)
 	}
 }
 
@@ -257,7 +256,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 		t.Fatal(err)
 	}
 
-	commitErr := cache.Commit(dirs.WorkDir, &art, strat, false)
+	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 
 	if statusStart.WorkspaceFileStatus == artifact.Absent {
 		if os.IsNotExist(errors.Cause(commitErr)) {

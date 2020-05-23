@@ -13,14 +13,23 @@ import (
 
 // Checkout finds the artifact in the cache and adds a copy of/link to said
 // artifact in the working directory.
-func (cache *LocalCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+func (cache *LocalCache) Checkout(
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+) error {
 	if art.IsDir {
 		return checkoutDir(cache, workingDir, art, strat)
 	}
 	return checkoutFile(cache, workingDir, art, strat)
 }
 
-var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+var checkoutFile = func(
+	ch *LocalCache,
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+) error {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, *art)
 	errorPrefix := fmt.Sprintf("checkout %#v", workPath)
 	if err != nil {
@@ -65,7 +74,12 @@ var checkoutFile = func(ch *LocalCache, workingDir string, art *artifact.Artifac
 	return nil
 }
 
-func checkoutDir(ch *LocalCache, workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+func checkoutDir(
+	ch *LocalCache,
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+) error {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, *art)
 	if err != nil {
 		return errors.Wrap(err, "checkoutDir")
@@ -80,8 +94,8 @@ func checkoutDir(ch *LocalCache, workingDir string, art *artifact.Artifact, stra
 		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %s", status.WorkspaceFileStatus)
 	}
 	man, err := readDirManifest(cachePath)
-	for _, fileArt := range man.Contents {
-		if err := checkoutFile(ch, workPath, fileArt, strat); err != nil {
+	for _, childArt := range man.Contents {
+		if err := ch.Checkout(workPath, childArt, strat); err != nil {
 			// TODO: undo previous file checkouts?
 			return errors.Wrap(err, "checkoutDir")
 		}

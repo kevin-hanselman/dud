@@ -9,7 +9,7 @@ import (
 
 // A Cache provides a means to store Artifacts.
 type Cache interface {
-	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy, recursive bool) error
+	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	PathForChecksum(checksum string) (string, error)
 	Status(workingDir string, art artifact.Artifact) (artifact.Status, error)

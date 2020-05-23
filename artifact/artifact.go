@@ -2,9 +2,10 @@ package artifact
 
 // An Artifact is a file tracked by DUC
 type Artifact struct {
-	Checksum string `yaml:",omitempty"`
-	Path     string
-	IsDir    bool
+	Checksum    string `yaml:",omitempty"`
+	Path        string
+	IsDir       bool `yaml:",omitempty"`
+	IsRecursive bool `yaml:",omitempty"`
 }
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.

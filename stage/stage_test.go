@@ -12,12 +12,20 @@ type mockCache struct {
 	mock.Mock
 }
 
-func (c *mockCache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy, recursive bool) error {
-	args := c.Called(workingDir, art, strat, recursive)
+func (c *mockCache) Commit(
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+) error {
+	args := c.Called(workingDir, art, strat)
 	return args.Error(0)
 }
 
-func (c *mockCache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+func (c *mockCache) Checkout(
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+) error {
 	args := c.Called(workingDir, art, strat)
 	return args.Error(0)
 }
@@ -87,13 +95,11 @@ func TestSetChecksum(t *testing.T) {
 }
 
 func TestCommit(t *testing.T) {
-	for _, recursive := range []bool{true, false} {
-		t.Run("Copy", func(t *testing.T) { testCommit(strategy.CopyStrategy, recursive, t) })
-		t.Run("Link", func(t *testing.T) { testCommit(strategy.LinkStrategy, recursive, t) })
-	}
+	t.Run("Copy", func(t *testing.T) { testCommit(strategy.CopyStrategy, t) })
+	t.Run("Link", func(t *testing.T) { testCommit(strategy.LinkStrategy, t) })
 }
 
-func testCommit(strat strategy.CheckoutStrategy, recursive bool, t *testing.T) {
+func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	stg := Stage{
 		Checksum:   "",
 		WorkingDir: "workDir",
@@ -111,10 +117,10 @@ func testCommit(strat strategy.CheckoutStrategy, recursive bool, t *testing.T) {
 
 	cache := mockCache{}
 	for i := range stg.Outputs {
-		cache.On("Commit", "workDir", &stg.Outputs[i], strat, recursive).Return(nil)
+		cache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 
-	if err := stg.Commit(&cache, strat, recursive); err != nil {
+	if err := stg.Commit(&cache, strat); err != nil {
 		t.Fatal(err)
 	}
 
@@ -131,7 +137,7 @@ func TestCheckout(t *testing.T) {
 }
 
 func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
-	// TODO: test stage checksum? what does it mean if the checksum is invalid/empty?
+	// TODO: Test stage checksum? What does it mean if the checksum is invalid/empty?
 	stg := Stage{
 		Checksum:   "",
 		WorkingDir: "workDir",

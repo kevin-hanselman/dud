@@ -53,7 +53,7 @@ var commitCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 			// TODO: add recursive flag
-			if err := stg.Commit(ch, strat, false); err != nil {
+			if err := stg.Commit(ch, strat); err != nil {
 				log.Fatal(err)
 			}
 			if err := fsutil.ToYamlFile(path, stg); err != nil {

@@ -31,9 +31,9 @@ func (s *Stage) UpdateChecksum() error {
 }
 
 // Commit commits all Outputs of the Stage.
-func (s *Stage) Commit(cache cachePkg.Cache, strat strategy.CheckoutStrategy, recursive bool) error {
+func (s *Stage) Commit(cache cachePkg.Cache, strat strategy.CheckoutStrategy) error {
 	for i := range s.Outputs {
-		if err := cache.Commit(s.WorkingDir, &s.Outputs[i], strat, recursive); err != nil {
+		if err := cache.Commit(s.WorkingDir, &s.Outputs[i], strat); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage commit failed")
 		}
