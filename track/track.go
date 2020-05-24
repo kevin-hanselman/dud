@@ -7,14 +7,15 @@ import (
 	"github.com/kevlar1818/duc/stage"
 )
 
-var fileStatusFromPath = fsutil.FileStatusFromPath
+// FileStatusFromPath is the functin used to test file status
+var FileStatusFromPath = fsutil.FileStatusFromPath
 
 // Track creates a stage for tracking the given paths.
 func Track(paths ...string) (stage.Stage, error) {
 	outputs := make([]artifact.Artifact, len(paths))
 	var stg stage.Stage
 	for i, path := range paths {
-		status, err := fileStatusFromPath(path)
+		status, err := FileStatusFromPath(path)
 		if err != nil {
 			return stg, err
 		}
