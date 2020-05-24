@@ -35,7 +35,7 @@ fmt:
 	gofmt -s -w .
 
 clean:
-	rm -f *.out depgraph.png
+	rm -f *.out depgraph.png mockery
 	go clean ./...
 
 tidy:
@@ -59,4 +59,6 @@ depgraph:
 
 hyperfine: build 50mb_random.bin
 	hyperfine 'sha1sum 50mb_random.bin'
+	hyperfine 'md5sum 50mb_random.bin'
+	hyperfine 'sha256sum 50mb_random.bin'
 	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 './duc checksum -b{bufsize} 50mb_random.bin'

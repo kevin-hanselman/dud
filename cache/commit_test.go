@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"github.com/pkg/errors"
@@ -258,12 +259,12 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 
-	if statusStart.WorkspaceFileStatus == artifact.Absent {
+	if statusStart.WorkspaceFileStatus == fsutil.Absent {
 		if os.IsNotExist(errors.Cause(commitErr)) {
 			return // TODO: assert expected status
 		}
 		t.Fatalf("expected Commit to raise NotExist error, got %#v", commitErr)
-	} else if statusStart.WorkspaceFileStatus == artifact.Link {
+	} else if statusStart.WorkspaceFileStatus == fsutil.Link {
 		if commitErr != nil {
 			return // TODO: assert expected status
 		}
@@ -285,9 +286,9 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	}
 	switch strat {
 	case strategy.CopyStrategy:
-		statusWant.WorkspaceFileStatus = artifact.RegularFile
+		statusWant.WorkspaceFileStatus = fsutil.RegularFile
 	case strategy.LinkStrategy:
-		statusWant.WorkspaceFileStatus = artifact.Link
+		statusWant.WorkspaceFileStatus = fsutil.Link
 	}
 
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {

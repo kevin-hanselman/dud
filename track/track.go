@@ -18,16 +18,16 @@ func Track(paths ...string) (stage.Stage, error) {
 		if err != nil {
 			return stg, err
 		}
-		if status == artifact.Absent {
+		if status == fsutil.Absent {
 			return stg, fmt.Errorf("path %v does not exist", path)
 		}
-		if status == artifact.Other {
+		if status == fsutil.Other {
 			return stg, fmt.Errorf("unsupported file type for path %v", path)
 		}
 		outputs[i] = artifact.Artifact{
 			Checksum: "",
 			Path:     path,
-			IsDir:    status == artifact.Directory,
+			IsDir:    status == fsutil.Directory,
 		}
 	}
 	stg = stage.Stage{

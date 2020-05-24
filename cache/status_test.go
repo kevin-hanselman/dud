@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/testutil"
 	"os"
 	"path"
@@ -14,15 +15,15 @@ func TestDirectoryStatus(t *testing.T) {
 
 	t.Run("happy path: all files up to date", func(t *testing.T) {
 		dirQuickStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 		}
 
 		manifestFileStatuses := map[string]artifact.Status{
-			"my_file1": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file1": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_link":  {WorkspaceFileStatus: fsutil.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
 		}
 
 		workspaceFiles := []os.FileInfo{
@@ -34,7 +35,7 @@ func TestDirectoryStatus(t *testing.T) {
 		}
 
 		expectedDirStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       true,
@@ -45,15 +46,15 @@ func TestDirectoryStatus(t *testing.T) {
 
 	t.Run("file missing from workspace", func(t *testing.T) {
 		dirQuickStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 		}
 
 		manifestFileStatuses := map[string]artifact.Status{
-			"my_file1": {WorkspaceFileStatus: artifact.Absent},
-			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file1": {WorkspaceFileStatus: fsutil.Absent},
+			"my_link":  {WorkspaceFileStatus: fsutil.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
 		}
 
 		workspaceFiles := []os.FileInfo{
@@ -63,7 +64,7 @@ func TestDirectoryStatus(t *testing.T) {
 		}
 
 		expectedDirStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       false,
@@ -74,15 +75,15 @@ func TestDirectoryStatus(t *testing.T) {
 
 	t.Run("untracked file in dir", func(t *testing.T) {
 		dirQuickStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 		}
 
 		manifestFileStatuses := map[string]artifact.Status{
-			"my_file1": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file1": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_link":  {WorkspaceFileStatus: fsutil.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
 		}
 
 		workspaceFiles := []os.FileInfo{
@@ -94,7 +95,7 @@ func TestDirectoryStatus(t *testing.T) {
 		}
 
 		expectedDirStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       false,
@@ -105,15 +106,15 @@ func TestDirectoryStatus(t *testing.T) {
 
 	t.Run("file out of date", func(t *testing.T) {
 		dirQuickStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 		}
 
 		manifestFileStatuses := map[string]artifact.Status{
-			"my_file1": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-			"my_link":  {WorkspaceFileStatus: artifact.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
-			"my_file2": {WorkspaceFileStatus: artifact.RegularFile, HasChecksum: false},
+			"my_file1": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_link":  {WorkspaceFileStatus: fsutil.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			"my_file2": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: false},
 		}
 
 		workspaceFiles := []os.FileInfo{
@@ -124,7 +125,7 @@ func TestDirectoryStatus(t *testing.T) {
 		}
 
 		expectedDirStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       false,
@@ -135,7 +136,7 @@ func TestDirectoryStatus(t *testing.T) {
 
 	t.Run("shortcircuit on quickStatus results", func(t *testing.T) {
 		dirQuickStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     false,
 		}
@@ -145,7 +146,7 @@ func TestDirectoryStatus(t *testing.T) {
 		workspaceFiles := []os.FileInfo{}
 
 		expectedDirStatus := artifact.Status{
-			WorkspaceFileStatus: artifact.Directory,
+			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     false,
 			ContentsMatch:       false,

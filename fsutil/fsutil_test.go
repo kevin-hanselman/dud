@@ -2,7 +2,6 @@ package fsutil
 
 import (
 	"fmt"
-	"github.com/kevlar1818/duc/artifact"
 	"os"
 	"testing"
 )
@@ -136,11 +135,11 @@ func TestWorkspaceStatusFromPathIntegration(t *testing.T) {
 	}
 	defer os.Remove("fsutil.go.symlink")
 
-	tests := map[string]artifact.FileStatus{
-		"./fsutil_test.go":    artifact.RegularFile,
-		"./foobar.txt":        artifact.Absent,
-		"../fsutil":           artifact.Directory,
-		"./fsutil.go.symlink": artifact.Link,
+	tests := map[string]FileStatus{
+		"./fsutil_test.go":    RegularFile,
+		"./foobar.txt":        Absent,
+		"../fsutil":           Directory,
+		"./fsutil.go.symlink": Link,
 	}
 
 	for path, expectedWorkspaceStatus := range tests {

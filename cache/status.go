@@ -47,12 +47,12 @@ var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Ar
 	}
 
 	switch status.WorkspaceFileStatus {
-	case artifact.RegularFile:
+	case fsutil.RegularFile:
 		status.ContentsMatch, err = fsutil.SameContents(workPath, cachePath)
 		if err != nil {
 			return status, errors.Wrap(err, "fileStatus")
 		}
-	case artifact.Link:
+	case fsutil.Link:
 		// TODO: make this a helper function? (to remove os dep)
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {
@@ -73,7 +73,7 @@ func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact)
 		return status, nil
 	}
 
-	if status.WorkspaceFileStatus != artifact.Directory {
+	if status.WorkspaceFileStatus != fsutil.Directory {
 		return status, nil
 	}
 

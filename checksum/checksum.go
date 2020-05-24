@@ -1,17 +1,17 @@
 package checksum
 
 import (
-	"crypto/sha1"
 	"encoding/gob"
 	"encoding/hex"
 	"github.com/c2h5oh/datasize"
+	"github.com/zeebo/blake3"
 	"hash"
 	"io"
 )
 
 // ChecksumObject returns the checksum of an object's encoded bytes.
 func ChecksumObject(v interface{}) (string, error) {
-	h := sha1.New()
+	h := blake3.New()
 	enc := gob.NewEncoder(h)
 	if err := enc.Encode(v); err != nil {
 		return "", err
@@ -29,7 +29,7 @@ func Checksum(reader io.Reader, bufSize int64) (string, error) {
 	if bufSize <= 0 {
 		bufSize = int64(1 * datasize.MB)
 	}
-	h := sha1.New()
+	h := blake3.New()
 	buf := make([]byte, bufSize)
 	tee := io.TeeReader(reader, h)
 	for {

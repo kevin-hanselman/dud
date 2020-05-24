@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -69,13 +70,13 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 // AllTestCases returns a slice of all valid artifact.Status structs.
 // (See status.txt in the project root)
 func AllTestCases() (out []artifact.Status) {
-	allWorkspaceStatuses := []artifact.FileStatus{
-		artifact.Absent,
-		artifact.RegularFile,
-		artifact.Link,
+	allWorkspaceStatuses := []fsutil.FileStatus{
+		fsutil.Absent,
+		fsutil.RegularFile,
+		fsutil.Link,
 	}
 	for _, workspaceStatus := range allWorkspaceStatuses {
-		if workspaceStatus != artifact.Absent {
+		if workspaceStatus != fsutil.Absent {
 			out = append(
 				out,
 				artifact.Status{
@@ -121,7 +122,7 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 	parentDir := "greet"
 
 	art = artifact.Artifact{
-		Checksum: "0a0a9f2a6772942557ab5355d76af442f8f65e01",
+		Checksum: "288a86a79f20a3d6dccdca7713beaed178798296bdfa7913fa2a62d9727bf8f8",
 		Path:     filepath.Join(parentDir, "hello.txt"),
 	}
 
@@ -142,21 +143,21 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 		}
 	}
 
-	if status.WorkspaceFileStatus != artifact.Absent {
+	if status.WorkspaceFileStatus != fsutil.Absent {
 		if err = os.Mkdir(filepath.Join(dirs.WorkDir, parentDir), 0755); err != nil {
 			return
 		}
 	}
 
 	switch status.WorkspaceFileStatus {
-	case artifact.RegularFile:
+	case fsutil.RegularFile:
 		if !status.ContentsMatch {
 			fileContents = []byte("Not the same as in the cache")
 		}
 		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0644); err != nil {
 			return
 		}
-	case artifact.Link:
+	case fsutil.Link:
 		targetPath := fileCachePath
 		if !status.ContentsMatch {
 			targetPath = "foobar"

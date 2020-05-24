@@ -3,6 +3,7 @@ package track
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/stage"
 	"io/ioutil"
 	"os"
@@ -11,8 +12,8 @@ import (
 
 func TestTrackOnePath(t *testing.T) {
 	fileStatusFromPathOrig := fileStatusFromPath
-	fileStatusFromPath = func(path string) (artifact.FileStatus, error) {
-		return artifact.RegularFile, nil
+	fileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
+		return fsutil.RegularFile, nil
 	}
 	defer func() { fileStatusFromPath = fileStatusFromPathOrig }()
 	path := "foobar.txt"
@@ -38,8 +39,8 @@ func TestTrackOnePath(t *testing.T) {
 
 func TestTrackMultiplePaths(t *testing.T) {
 	fileStatusFromPathOrig := fileStatusFromPath
-	fileStatusFromPath = func(path string) (artifact.FileStatus, error) {
-		return artifact.RegularFile, nil
+	fileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
+		return fsutil.RegularFile, nil
 	}
 	defer func() { fileStatusFromPath = fileStatusFromPathOrig }()
 	paths := []string{"foo.txt", "bar.bin"}

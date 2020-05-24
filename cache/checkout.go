@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
 	"io"
@@ -90,7 +91,7 @@ func checkoutDir(
 	if !status.ChecksumInCache {
 		return fmt.Errorf("checkoutDir: checksum %v not found in cache", art.Checksum)
 	}
-	if !(status.WorkspaceFileStatus == artifact.Absent || status.WorkspaceFileStatus == artifact.Directory) {
+	if !(status.WorkspaceFileStatus == fsutil.Absent || status.WorkspaceFileStatus == fsutil.Directory) {
 		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %s", status.WorkspaceFileStatus)
 	}
 	man, err := readDirManifest(cachePath)

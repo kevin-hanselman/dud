@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"github.com/pkg/errors"
@@ -53,7 +54,7 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 		t.Fatal("expected Checkout to raise missing checksum in cache error")
 	}
 
-	if statusStart.WorkspaceFileStatus != artifact.Absent {
+	if statusStart.WorkspaceFileStatus != fsutil.Absent {
 		if os.IsExist(errors.Cause(checkoutErr)) {
 			return
 		}
@@ -73,9 +74,9 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 	}
 	switch strat {
 	case strategy.CopyStrategy:
-		statusWant.WorkspaceFileStatus = artifact.RegularFile
+		statusWant.WorkspaceFileStatus = fsutil.RegularFile
 	case strategy.LinkStrategy:
-		statusWant.WorkspaceFileStatus = artifact.Link
+		statusWant.WorkspaceFileStatus = fsutil.Link
 	}
 
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
@@ -90,7 +91,7 @@ func TestDirectoryCheckout(t *testing.T) {
 
 func testDirectoryCheckoutNonRecursive(t *testing.T) {
 	dirQuickStatus := artifact.Status{
-		WorkspaceFileStatus: artifact.Absent,
+		WorkspaceFileStatus: fsutil.Absent,
 		HasChecksum:         true,
 		ChecksumInCache:     true,
 	}
@@ -157,7 +158,7 @@ func testDirectoryCheckoutNonRecursive(t *testing.T) {
 
 func testDirectoryCheckoutRecursive(t *testing.T) {
 	dirQuickStatus := artifact.Status{
-		WorkspaceFileStatus: artifact.Absent,
+		WorkspaceFileStatus: fsutil.Absent,
 		HasChecksum:         true,
 		ChecksumInCache:     true,
 	}

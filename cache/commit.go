@@ -11,6 +11,7 @@ import (
 
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
 )
@@ -50,10 +51,10 @@ var commitFileArtifact = func(args commitArgs) error {
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
-	if status.WorkspaceFileStatus == artifact.Absent {
+	if status.WorkspaceFileStatus == fsutil.Absent {
 		return errors.Wrapf(os.ErrNotExist, "commitFile: %#v does not exist", workPath)
 	}
-	if status.WorkspaceFileStatus != artifact.RegularFile {
+	if status.WorkspaceFileStatus != fsutil.RegularFile {
 		return fmt.Errorf("%s: not a regular file", errorPrefix)
 	}
 	srcFile, err := os.Open(workPath)

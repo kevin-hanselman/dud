@@ -3,6 +3,7 @@ package stage
 import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -182,7 +183,7 @@ func TestStatus(t *testing.T) {
 	}
 
 	artStatus := artifact.Status{
-		WorkspaceFileStatus: artifact.RegularFile,
+		WorkspaceFileStatus: fsutil.RegularFile,
 		HasChecksum:         true,
 		ChecksumInCache:     true,
 		ContentsMatch:       true,

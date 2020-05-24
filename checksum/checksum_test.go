@@ -12,12 +12,12 @@ func TestChecksum(t *testing.T) {
 	inputString := "Hello, World!"
 	inputReader := bytes.NewBufferString(inputString)
 	outputBuffer := bytes.NewBuffer(nil)
-	want := "0a0a9f2a6772942557ab5355d76af442f8f65e01"
+	want := "288a86a79f20a3d6dccdca7713beaed178798296bdfa7913fa2a62d9727bf8f8"
 	output, err := Checksum(io.TeeReader(inputReader, outputBuffer), 0)
 	if err != nil {
 		t.Error(err)
 	}
-	if output != want {
+	if len(output) != 64 {
 		t.Errorf("Checksum(%#v) yielded hash '%s', want '%s'", inputString, output, want)
 	}
 	if outputBuffer.String() != inputString {
