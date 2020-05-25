@@ -2,11 +2,12 @@ package cache
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/pkg/errors"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 // Status reports the status of an Artifact in the Cache.
@@ -21,7 +22,7 @@ func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact
 // TODO: It may be worth exposing this version of status (bypassing the full
 // status check) using a CLI flag
 var quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, cachePath, workPath string, err error) {
-	workPath = path.Join(workingDir, art.Path)
+	workPath = filepath.Join(workingDir, art.Path)
 	cachePath, err = ch.PathForChecksum(art.Checksum)
 	if err != nil { // An error means the checksum is invalid
 		status.HasChecksum = false
@@ -66,7 +67,7 @@ var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Ar
 func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
 	if err != nil {
-		return status, errors.Wrap(err, "dirStatus")
+		return status, err
 	}
 
 	if !(status.HasChecksum && status.ChecksumInCache) {
@@ -74,22 +75,23 @@ func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact)
 	}
 
 	if status.WorkspaceFileStatus != fsutil.Directory {
-		return status, nil
+		// TODO: Should this be an error?
+		return status, fmt.Errorf("dir status: %#v is not a directory", workPath)
 	}
 
 	dirManifest, err := readDirManifest(cachePath)
 	if err != nil {
-		return status, errors.Wrap(err, "dirStatus")
+		return status, err
 	}
 
 	// first, ensure all artifacts in the directoryManifest are up-to-date;
 	// quit early if any are not.
-	manFilePaths := make(map[string]bool)
-	for _, fileArt := range dirManifest.Contents {
-		manFilePaths[fileArt.Path] = true
-		artStatus, err := fileArtifactStatus(ch, workPath, *fileArt)
+	manifestPaths := make(map[string]bool)
+	for _, art := range dirManifest.Contents {
+		manifestPaths[art.Path] = true
+		artStatus, err := ch.Status(workPath, *art)
 		if err != nil {
-			return status, errors.Wrap(err, "dirStatus")
+			return status, err
 		}
 		if !artStatus.ContentsMatch {
 			return status, nil
@@ -100,12 +102,22 @@ func dirArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact)
 	// quit early if any exist.
 	entries, err := readDir(workPath)
 	if err != nil {
-		return status, errors.Wrap(err, "dirStatus")
+		return status, err
 	}
 	for _, entry := range entries {
-		// TODO: only proceed for reg files and links
-		if !entry.IsDir() && !manFilePaths[entry.Name()] {
-			return status, nil
+		// only check entries that don't appear in the manifest
+		if !manifestPaths[entry.Name()] {
+			if entry.IsDir() {
+				// if the entry is a (untracked) directory,
+				// this is only a mismatch if the artifact is recursive
+				if art.IsRecursive {
+					return status, nil
+				}
+			} else {
+				// if the entry is a (untracked) file,
+				// this is always a mismatch
+				return status, nil
+			}
 		}
 	}
 	status.ContentsMatch = true

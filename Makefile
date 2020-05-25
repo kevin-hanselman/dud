@@ -1,8 +1,8 @@
-.PHONY: build docker_build test test-int %-test-cov bench fmt clean tidy loc mocks depgraph hyperfine
+.PHONY: docker_build test test-int %-test-cov bench fmt clean tidy loc mocks depgraph hyperfine
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 
-build: test
+duc: test
 	go build -o duc
 
 docker_build:
@@ -57,8 +57,8 @@ depgraph:
 50mb_random.bin:
 	dd if=/dev/urandom of=$@ bs=1M count=50
 
-hyperfine: build 50mb_random.bin
-	hyperfine 'sha1sum 50mb_random.bin'
-	hyperfine 'md5sum 50mb_random.bin'
-	hyperfine 'sha256sum 50mb_random.bin'
-	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 './duc checksum -b{bufsize} 50mb_random.bin'
+hyperfine: duc 50mb_random.bin
+	hyperfine -L cmd sha1sum,md5sum,sha256sum,b2sum,'./duc checksum' \
+		'{cmd} 50mb_random.bin'
+	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 \
+		'./duc checksum -b{bufsize} 50mb_random.bin'

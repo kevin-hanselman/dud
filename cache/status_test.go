@@ -7,7 +7,7 @@ import (
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/testutil"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
@@ -134,13 +134,14 @@ func TestDirectoryStatus(t *testing.T) {
 		testDirectoryStatus(dirQuickStatus, manifestFileStatuses, workspaceFiles, expectedDirStatus, t)
 	})
 
-	t.Run("shortcircuit on quickStatus results", func(t *testing.T) {
+	t.Run("short circuit on quickStatus results", func(t *testing.T) {
 		dirQuickStatus := artifact.Status{
 			WorkspaceFileStatus: fsutil.Directory,
 			HasChecksum:         true,
 			ChecksumInCache:     false,
 		}
 
+		// The code under test should return before reading the manifest.
 		manifestFileStatuses := map[string]artifact.Status{}
 
 		workspaceFiles := []os.FileInfo{}
@@ -167,7 +168,7 @@ func testDirectoryStatus(
 	fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, err error) {
 		status, ok := manifestFileStatuses[art.Path]
 		if !ok {
-			t.Errorf("fileArtifactStatus called with unexpected artifact: %+v", art)
+			t.Fatalf("fileArtifactStatus called with unexpected artifact: %+v", art)
 		}
 		return
 	}
@@ -195,9 +196,13 @@ func testDirectoryStatus(
 	defer func() { readDirManifest = readDirManifestOrig }()
 
 	quickStatusOrig := quickStatus
-	quickStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, cachePath, workPath string, err error) {
+	quickStatus = func(
+		ch *LocalCache,
+		workingDir string,
+		art artifact.Artifact,
+	) (status artifact.Status, cachePath, workPath string, err error) {
 		status = dirQuickStatus
-		workPath = path.Join(workingDir, art.Path)
+		workPath = filepath.Join(workingDir, art.Path)
 		cachePath = "foobar"
 		return
 	}
@@ -209,9 +214,145 @@ func testDirectoryStatus(
 	}
 	dirArt := artifact.Artifact{IsDir: true, Checksum: "dummy_checksum", Path: "art_dir"}
 
-	status, commitErr := cache.Status("work_dir", dirArt)
-	if commitErr != nil {
-		t.Fatal(commitErr)
+	status, err := cache.Status("work_dir", dirArt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(expectedDirStatus, status); diff != "" {
+		t.Fatalf("directory artifact.Status -want +got:\n%s", diff)
+	}
+}
+
+func TestDirectoryStatusRecursive(t *testing.T) {
+	t.Run("up-to-date", func(t *testing.T) { testDirectoryStatusRecursive(true, t) })
+	t.Run("out-of-date", func(t *testing.T) { testDirectoryStatusRecursive(false, t) })
+}
+
+func testDirectoryStatusRecursive(expectedContentsMatch bool, t *testing.T) {
+	dirQuickStatus := artifact.Status{
+		WorkspaceFileStatus: fsutil.Directory,
+		HasChecksum:         true,
+		ChecksumInCache:     true,
+	}
+
+	parentDirManifest := directoryManifest{
+		Path: "parent_dir",
+		Contents: []*artifact.Artifact{
+			{Path: "my_file1"},
+			{Path: "child_dir", IsDir: true, IsRecursive: true},
+			{Path: "my_file2"},
+			{Path: "my_link"},
+		},
+	}
+	childDirManifest := directoryManifest{
+		Path: "child_dir",
+		Contents: []*artifact.Artifact{
+			{Path: "nested_file1"},
+			{Path: "nested_file2"},
+		},
+	}
+
+	parentDirFileStatuses := map[string]artifact.Status{
+		"my_file1": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+		"my_link":  {WorkspaceFileStatus: fsutil.Link, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+		"my_file2": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+	}
+
+	childDirFileStatuses := map[string]artifact.Status{
+		"nested_file1": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+		"nested_file2": {WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+	}
+
+	parentDirListing := []os.FileInfo{
+		testutil.MockFileInfo{MockName: "my_file1"},
+		testutil.MockFileInfo{MockName: "child_dir", MockMode: os.ModeDir},
+		testutil.MockFileInfo{MockName: "my_link", MockMode: os.ModeSymlink},
+		testutil.MockFileInfo{MockName: "my_file2"},
+	}
+
+	childDirListing := []os.FileInfo{
+		testutil.MockFileInfo{MockName: "nested_file1"},
+		testutil.MockFileInfo{MockName: "nested_file2"},
+	}
+	if !expectedContentsMatch {
+		childDirListing = append(childDirListing, testutil.MockFileInfo{MockName: "another_dir", MockMode: os.ModeDir})
+	}
+
+	expectedDirStatus := artifact.Status{
+		WorkspaceFileStatus: fsutil.Directory,
+		HasChecksum:         true,
+		ChecksumInCache:     true,
+		ContentsMatch:       expectedContentsMatch,
+	}
+
+	fileArtifactStatusOrig := fileArtifactStatus
+	fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (status artifact.Status, err error) {
+		var ok bool
+		switch workingDir {
+		case filepath.Join("work_dir", "parent_dir"):
+			status, ok = parentDirFileStatuses[art.Path]
+		case filepath.Join("work_dir", "parent_dir", "child_dir"):
+			status, ok = childDirFileStatuses[art.Path]
+		default:
+			t.Fatalf("unexpected workingDir: %#v", workingDir)
+		}
+		if !ok {
+			t.Fatalf("unxpected fileArtifactStatus call: workingDir= %#v, artifact= %+v", workingDir, art)
+		}
+		return
+	}
+	defer func() { fileArtifactStatus = fileArtifactStatusOrig }()
+
+	readDirOrig := readDir
+	readDir = func(dir string) ([]os.FileInfo, error) {
+		switch dir {
+		case filepath.Join("work_dir", "parent_dir"):
+			return parentDirListing, nil
+		case filepath.Join("work_dir", "parent_dir", "child_dir"):
+			return childDirListing, nil
+		}
+		t.Fatalf("unexpected dir: %#v", dir)
+		return parentDirListing, nil // unreachable, but required
+	}
+	defer func() { readDir = readDirOrig }()
+
+	readDirManifestCallCount := 0
+	readDirManifestOrig := readDirManifest
+	readDirManifest = func(path string) (directoryManifest, error) {
+		readDirManifestCallCount++
+		if readDirManifestCallCount == 1 {
+			return parentDirManifest, nil
+		} else if readDirManifestCallCount == 2 {
+			return childDirManifest, nil
+		}
+		t.Fatal("unexpected call to readDirManifest")
+		return parentDirManifest, nil // unreachable, but required
+	}
+	defer func() { readDirManifest = readDirManifestOrig }()
+
+	quickStatusOrig := quickStatus
+	quickStatus = func(
+		ch *LocalCache,
+		workingDir string,
+		art artifact.Artifact,
+	) (status artifact.Status, cachePath, workPath string, err error) {
+		status = dirQuickStatus
+		workPath = filepath.Join(workingDir, art.Path)
+		cachePath = "foobar"
+		return
+	}
+	defer func() { quickStatus = quickStatusOrig }()
+
+	cache, err := NewLocalCache("/cache_root")
+	if err != nil {
+		t.Fatal(err)
+	}
+	dirArt := artifact.Artifact{IsDir: true, IsRecursive: true, Checksum: "dummy_checksum", Path: "parent_dir"}
+
+	status, err := cache.Status("work_dir", dirArt)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	if diff := cmp.Diff(expectedDirStatus, status); diff != "" {
