@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee
+	github.com/cheggaaa/pb/v3 v3.0.4
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/google/go-cmp v0.4.0
 	github.com/pkg/errors v0.9.1
