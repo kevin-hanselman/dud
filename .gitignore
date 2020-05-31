@@ -1,3 +1,4 @@
+
 *.png
 *.sh
 .tags
@@ -6,6 +7,7 @@ mockery
 
 # test files for benchmarking
 *.bin
+benchmarking/datasets/
 
 # Binaries for programs and plugins
 *.exe
