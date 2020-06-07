@@ -26,7 +26,7 @@ func TestTrackOnePath(t *testing.T) {
 		},
 	}
 
-	actualStage, err := Track(path)
+	actualStage, err := Track(false, path)
 
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,63 @@ func TestTrackMultiplePaths(t *testing.T) {
 		},
 	}
 
-	actualStage, err := Track(paths...)
+	actualStage, err := Track(false, paths...)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(expectedStage, actualStage); diff != "" {
+		t.Fatalf("Track() -want +got:\n%s", diff)
+	}
+}
+
+func TestRecursiveDirectory(t *testing.T) {
+	fileStatusFromPathOrig := FileStatusFromPath
+	FileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
+		return fsutil.Directory, nil
+	}
+	defer func() { FileStatusFromPath = fileStatusFromPathOrig }()
+	paths := []string{"foo/"}
+	expectedStage := stage.Stage{
+		Outputs: []artifact.Artifact{
+			{
+				Checksum:    "",
+				Path:        "foo/",
+				IsDir:       true,
+				IsRecursive: true,
+			},
+		},
+	}
+
+	actualStage, err := Track(true, paths...)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(expectedStage, actualStage); diff != "" {
+		t.Fatalf("Track() -want +got:\n%s", diff)
+	}
+}
+
+func TestRecursiveFileIsIgnored(t *testing.T) {
+	fileStatusFromPathOrig := FileStatusFromPath
+	FileStatusFromPath = func(path string) (fsutil.FileStatus, error) {
+		return fsutil.RegularFile, nil
+	}
+	defer func() { FileStatusFromPath = fileStatusFromPathOrig }()
+	paths := []string{"foo.txt"}
+	expectedStage := stage.Stage{
+		Outputs: []artifact.Artifact{
+			{
+				Checksum: "",
+				Path:     "foo.txt",
+			},
+		},
+	}
+
+	actualStage, err := Track(true, paths...)
 
 	if err != nil {
 		t.Fatal(err)
@@ -101,7 +157,7 @@ func TestTrackIntegration(t *testing.T) {
 		},
 	}
 
-	actualStage, err := Track(paths...)
+	actualStage, err := Track(false, paths...)
 
 	if err != nil {
 		t.Fatal(err)

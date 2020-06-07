@@ -62,3 +62,6 @@ hyperfine: duc 50mb_random.bin
 		'{cmd} 50mb_random.bin'
 	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 \
 		'./duc checksum -b{bufsize} 50mb_random.bin'
+
+build-benchmark:
+	docker build -t duc:benchmark -f benchmarking/Dockerfile .

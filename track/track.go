@@ -11,7 +11,7 @@ import (
 var FileStatusFromPath = fsutil.FileStatusFromPath
 
 // Track creates a stage for tracking the given paths.
-func Track(paths ...string) (stage.Stage, error) {
+func Track(isRecursive bool, paths ...string) (stage.Stage, error) {
 	outputs := make([]artifact.Artifact, len(paths))
 	var stg stage.Stage
 	for i, path := range paths {
@@ -25,10 +25,13 @@ func Track(paths ...string) (stage.Stage, error) {
 		if status == fsutil.Other {
 			return stg, fmt.Errorf("unsupported file type for path %v", path)
 		}
+
+		isDir := status == fsutil.Directory
 		outputs[i] = artifact.Artifact{
-			Checksum: "",
-			Path:     path,
-			IsDir:    status == fsutil.Directory,
+			Checksum:    "",
+			Path:        path,
+			IsDir:       isDir,
+			IsRecursive: isRecursive && isDir,
 		}
 	}
 	stg = stage.Stage{

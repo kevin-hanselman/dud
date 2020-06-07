@@ -84,7 +84,7 @@ func TestAddFiles(t *testing.T) {
 	t.Run("add new files", func(t *testing.T) {
 		idx := index.NewIndex()
 
-		if err := addFiles(files, idx, stagePath); err != nil {
+		if err := addArtifacts(files, idx, stagePath, false); err != nil {
 			t.Fatal(err)
 		}
 
@@ -135,7 +135,7 @@ func TestCheckAddTypes(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if pathType != fileType {
+		if pathType != artifactType {
 			t.Fatal("expected stageType")
 		}
 	})
