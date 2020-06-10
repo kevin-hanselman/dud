@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/spf13/cobra"
 	"log"
@@ -32,21 +31,14 @@ var checksumCmd = &cobra.Command{
 		}
 
 		for _, path := range args {
-			fileInfo, err := os.Stat(path)
-			if err != nil {
-				log.Fatal(err)
-			}
 			file, err := os.Open(path)
 			if err != nil {
 				log.Fatal(err)
 			}
-			bar := pb.Full.Start64(fileInfo.Size())
-			barReader := bar.NewProxyReader(file)
-			checksum, err := checksum.Checksum(barReader, bufSize)
+			checksum, err := checksum.Checksum(file, bufSize)
 			if err != nil {
 				log.Fatal(err)
 			}
-			bar.Finish()
 			fmt.Printf("%s  %s\n", checksum, path)
 		}
 	},
