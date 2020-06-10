@@ -2,6 +2,7 @@ package cache
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,39 +15,32 @@ import (
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
-func (cache *LocalCache) Commit(
+func (ch *LocalCache) Commit(
 	workingDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	args := commitArgs{
-		WorkingDir: workingDir,
-		Cache:      cache,
-		Artifact:   art,
-		Strategy:   strat,
-	}
 	// TODO: improve error reporting? avoid recursive wrapping
 	if art.IsDir {
-		return commitDirArtifact(args)
+		return commitDirArtifact(context.Background(), ch, workingDir, art, strat)
 	}
-	return commitFileArtifact(args)
+	return commitFileArtifact(ch, workingDir, art, strat)
 }
 
 var readDir = ioutil.ReadDir
 
-type commitArgs struct {
-	Cache      *LocalCache
-	WorkingDir string
-	Artifact   *artifact.Artifact
-	Strategy   strategy.CheckoutStrategy
-}
-
-var commitFileArtifact = func(args commitArgs) error {
+var commitFileArtifact = func(
+	ch *LocalCache,
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+) error {
 	// ignore cachePath because the artifact likely has a stale or empty checksum
-	status, _, workPath, err := quickStatus(args.Cache, args.WorkingDir, *args.Artifact)
+	status, _, workPath, err := quickStatus(ch, workingDir, *art)
 	errorPrefix := fmt.Sprintf("commit %#v", workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
@@ -63,35 +57,57 @@ var commitFileArtifact = func(args commitArgs) error {
 	}
 	defer srcFile.Close()
 
-	cksum, err := args.Cache.commitBytes(srcFile)
+	sameFs, err := fsutil.SameFilesystem(workPath, ch.Dir())
+	if err != nil {
+		return errors.Wrap(err, errorPrefix)
+	}
+	moveFile := ""
+	if sameFs && strat == strategy.LinkStrategy {
+		moveFile = workPath
+	}
 
-	args.Artifact.Checksum = cksum
+	cksum, err := ch.commitBytes(srcFile, moveFile)
+	if err != nil {
+		return errors.Wrap(err, errorPrefix)
+	}
+
+	art.Checksum = cksum
 	// There's no need to call Checkout if using CopyStrategy; the original file still exists.
-	if args.Strategy == strategy.LinkStrategy {
-		// TODO: add rm to checkout as "force" option
-		if err := os.Remove(workPath); err != nil {
+	if strat == strategy.LinkStrategy {
+		// TODO: add "force" option to cache.Checkout to replace this
+		exists, err := fsutil.Exists(workPath, false)
+		if err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}
-		return args.Cache.Checkout(args.WorkingDir, args.Artifact, args.Strategy)
+		if exists {
+			if err := os.Remove(workPath); err != nil {
+				return errors.Wrap(err, errorPrefix)
+			}
+		}
+		return ch.Checkout(workingDir, art, strat)
 	}
 	return nil
 }
 
 // commitBytes checksums and writes the bytes from reader to the cache.
-func (cache *LocalCache) commitBytes(reader io.Reader) (string, error) {
-	dstFile, err := ioutil.TempFile(cache.dir, "")
-	if err != nil {
-		return "", err
+func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, error) {
+	// If there's no file we can move, we need to copy the bytes from reader to
+	// the cache.
+	if moveFile == "" {
+		tempFile, err := ioutil.TempFile(ch.dir, "")
+		if err != nil {
+			return "", err
+		}
+		defer tempFile.Close()
+		reader = io.TeeReader(reader, tempFile)
+		moveFile = tempFile.Name()
 	}
-	defer dstFile.Close()
 
-	// TODO: only copy if the cache is on a different filesystem (os.Rename if possible)
-	// OR, if we're using CopyStrategy
-	cksum, err := checksum.Checksum(io.TeeReader(reader, dstFile), 0)
+	cksum, err := checksum.Checksum(reader, 0)
 	if err != nil {
 		return "", err
 	}
-	cachePath, err := cache.PathForChecksum(cksum)
+	cachePath, err := ch.PathForChecksum(cksum)
 	if err != nil {
 		return "", err
 	}
@@ -99,7 +115,7 @@ func (cache *LocalCache) commitBytes(reader io.Reader) (string, error) {
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
 		return "", err
 	}
-	if err = os.Rename(dstFile.Name(), cachePath); err != nil {
+	if err = os.Rename(moveFile, cachePath); err != nil {
 		return "", err
 	}
 	if err := os.Chmod(cachePath, 0444); err != nil {
@@ -115,44 +131,60 @@ var commitDirManifest = func(ch *LocalCache, manifest *directoryManifest) (strin
 	if err := json.NewEncoder(buf).Encode(manifest); err != nil {
 		return "", err
 	}
-	return ch.commitBytes(buf)
+	return ch.commitBytes(buf, "")
 }
 
-func commitDirArtifact(args commitArgs) error {
-	baseDir := filepath.Join(args.WorkingDir, args.Artifact.Path)
+func commitDirArtifact(
+	ctx context.Context,
+	ch *LocalCache,
+	workingDir string,
+	art *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+) error {
+	baseDir := filepath.Join(workingDir, art.Path)
 	entries, err := readDir(baseDir)
 	if err != nil {
 		return err
 	}
+	errGroup, childCtx := errgroup.WithContext(ctx)
+	childArtChan := make(chan *artifact.Artifact, len(entries))
 	manifest := directoryManifest{Path: baseDir}
-	for _, entry := range entries {
-		childArt := artifact.Artifact{Path: entry.Name()}
-		childArgs := commitArgs{
-			Cache:      args.Cache,
-			WorkingDir: baseDir,
-			Strategy:   args.Strategy,
-			Artifact:   &childArt,
-		}
-		if entry.IsDir() {
-			if !args.Artifact.IsRecursive {
-				continue
+	for i := range entries {
+		// This verbose declaration of entry is necessary to avoid capturing
+		// loop variables in the closure below.
+		// See: https://eli.thegreenplace.net/2019/go-internals-capturing-loop-variables-in-closures/
+		entry := entries[i]
+		errGroup.Go(func() error {
+			childArt := artifact.Artifact{Path: entry.Name()}
+			if entry.IsDir() {
+				if !art.IsRecursive {
+					return nil
+				}
+				childArt.IsDir = true
+				childArt.IsRecursive = true
+				if err := commitDirArtifact(childCtx, ch, baseDir, &childArt, strat); err != nil {
+					return err
+				}
+			} else { // TODO: ensure regular file or symlink
+				if err := commitFileArtifact(ch, baseDir, &childArt, strat); err != nil {
+					return err
+				}
 			}
-			childArt.IsDir = true
-			childArt.IsRecursive = true
-			if err := commitDirArtifact(childArgs); err != nil {
-				return err
-			}
-		} else { // TODO: ensure regular file or symlink
-			if err := commitFileArtifact(childArgs); err != nil {
-				return err
-			}
-		}
-		manifest.Contents = append(manifest.Contents, &childArt)
+			childArtChan <- &childArt
+			return nil
+		})
 	}
-	cksum, err := commitDirManifest(args.Cache, &manifest)
+	if err := errGroup.Wait(); err != nil {
+		return err
+	}
+	close(childArtChan)
+	for childArt := range childArtChan {
+		manifest.Contents = append(manifest.Contents, childArt)
+	}
+	cksum, err := commitDirManifest(ch, &manifest)
 	if err != nil {
 		return err
 	}
-	args.Artifact.Checksum = cksum
+	art.Checksum = cksum
 	return nil
 }

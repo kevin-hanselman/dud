@@ -57,7 +57,7 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		idx := index.NewIndex()
+		idx := index.New()
 		if err := fsutil.FromYamlFile(indexPath, idx); err != nil && err != io.EOF {
 			log.Fatal(err)
 		}

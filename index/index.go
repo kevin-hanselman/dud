@@ -13,8 +13,8 @@ type Index struct {
 // FromFile is the function used when reading a file
 var FromFile = fsutil.FromYamlFile
 
-// NewIndex initializes a new Index
-func NewIndex() *Index {
+// New initializes a new Index
+func New() *Index {
 	idx := new(Index)
 	idx.StageFiles = make(map[string]bool)
 	return idx

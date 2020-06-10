@@ -18,7 +18,7 @@ func TestAddStages(t *testing.T) {
 	stages := []string{"a.duc", "b.duc", "c.duc"}
 
 	t.Run("add new stages", func(t *testing.T) {
-		idx := index.NewIndex()
+		idx := index.New()
 
 		if err := addStages(stages, idx); err != nil {
 			t.Fatal(err)
@@ -36,7 +36,7 @@ func TestAddStages(t *testing.T) {
 	})
 
 	t.Run("add existing stages", func(t *testing.T) {
-		idx := index.NewIndex()
+		idx := index.New()
 
 		for _, stage := range stages {
 			idx.StageFiles[stage] = false
@@ -82,7 +82,7 @@ func TestAddFiles(t *testing.T) {
 	stagePath := "out.duc"
 
 	t.Run("add new files", func(t *testing.T) {
-		idx := index.NewIndex()
+		idx := index.New()
 
 		if err := addArtifacts(files, idx, stagePath, false); err != nil {
 			t.Fatal(err)

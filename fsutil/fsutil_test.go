@@ -2,7 +2,9 @@ package fsutil
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -157,4 +159,38 @@ func TestWorkspaceStatusFromPathIntegration(t *testing.T) {
 			)
 		}
 	}
+}
+
+func TestSameFilesystemIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+	t.Run("same fs", func(t *testing.T) {
+		pathA := filepath.Join("..", "README.md")
+		pathB := "fsutil.go"
+		sameFs, err := SameFilesystem(pathA, pathB)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !sameFs {
+			t.Fatalf("SameFilesystem(%#v, %#v) returned false", pathA, pathB)
+		}
+	})
+
+	t.Run("different fs", func(t *testing.T) {
+		tempFile, err := ioutil.TempFile("", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.Remove(tempFile.Name())
+		pathA := tempFile.Name()
+		pathB := "fsutil.go"
+		sameFs, err := SameFilesystem(pathA, pathB)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sameFs {
+			t.Fatalf("SameFilesystem(%#v, %#v) returned true", pathA, pathB)
+		}
+	})
 }

@@ -10,6 +10,9 @@ import (
 	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
 	"testing"
 )
 
@@ -19,11 +22,22 @@ func TestCommitDirectory(t *testing.T) {
 }
 
 func testCommitDirectoryNonRecursive(t *testing.T) {
-	commitFileArtifactCalls := []commitArgs{}
+	commitFileArtifactsThreadSafe := sync.Map{}
 	commitFileArtifactOrig := commitFileArtifact
-	commitFileArtifact = func(args commitArgs) error {
-		args.Artifact.Checksum = "123456789"
-		commitFileArtifactCalls = append(commitFileArtifactCalls, args)
+	commitFileArtifact = func(
+		ch *LocalCache,
+		workingDir string,
+		art *artifact.Artifact,
+		strat strategy.CheckoutStrategy,
+	) error {
+		art.Checksum = "123456789"
+		count, ok := commitFileArtifactsThreadSafe.Load(art.Path)
+		countInt := 0
+		if ok {
+			countInt = count.(int)
+		}
+		countInt++
+		commitFileArtifactsThreadSafe.Store(art.Path, countInt)
 		return nil
 	}
 	defer func() { commitFileArtifact = commitFileArtifactOrig }()
@@ -46,6 +60,7 @@ func testCommitDirectoryNonRecursive(t *testing.T) {
 	expectedChecksum := "deadbeef"
 	commitDirManifestOrig := commitDirManifest
 	commitDirManifest = func(ch *LocalCache, man *directoryManifest) (string, error) {
+		sort.Sort(byPath(man.Contents))
 		actualManifest = *man
 		return expectedChecksum, nil
 	}
@@ -68,16 +83,20 @@ func testCommitDirectoryNonRecursive(t *testing.T) {
 		{Checksum: "123456789", Path: "my_file2"},
 	}
 
-	expectedCommitFileArtifactCalls := []commitArgs{}
+	expectedCommitFileArtifactCalls := make(map[string]int)
 
 	baseDir := filepath.Join("work_dir", "art_dir")
 
 	for i := range expectedFileArtifacts {
-		expectedCommitFileArtifactCalls = append(
-			expectedCommitFileArtifactCalls,
-			commitArgs{Cache: cache, WorkingDir: baseDir, Artifact: expectedFileArtifacts[i]},
-		)
+		path := expectedFileArtifacts[i].Path
+		expectedCommitFileArtifactCalls[path] = 1
 	}
+
+	commitFileArtifactCalls := make(map[string]int)
+	commitFileArtifactsThreadSafe.Range(func(key, val interface{}) bool {
+		commitFileArtifactCalls[key.(string)] = val.(int)
+		return true
+	})
 
 	if diff := cmp.Diff(expectedCommitFileArtifactCalls, commitFileArtifactCalls); diff != "" {
 		t.Fatalf("commitFileArtifactCalls -want +got:\n%s", diff)
@@ -87,6 +106,7 @@ func testCommitDirectoryNonRecursive(t *testing.T) {
 		Path:     baseDir,
 		Contents: expectedFileArtifacts,
 	}
+	sort.Sort(byPath(expectedManifest.Contents))
 
 	if dirArt.Checksum != expectedChecksum {
 		t.Fatalf("artifact checksum want %#v, got %#v", expectedChecksum, dirArt.Checksum)
@@ -105,11 +125,22 @@ func testCommitDirectoryNonRecursive(t *testing.T) {
 }
 
 func testCommitDirectoryRecursive(t *testing.T) {
-	commitFileArtifactCalls := []commitArgs{}
+	commitFileArtifactsThreadSafe := sync.Map{} // switch to a simple mutex?
 	commitFileArtifactOrig := commitFileArtifact
-	commitFileArtifact = func(args commitArgs) error {
-		args.Artifact.Checksum = "123456789"
-		commitFileArtifactCalls = append(commitFileArtifactCalls, args)
+	commitFileArtifact = func(
+		ch *LocalCache,
+		workingDir string,
+		art *artifact.Artifact,
+		strat strategy.CheckoutStrategy,
+	) error {
+		art.Checksum = "123456789"
+		count, ok := commitFileArtifactsThreadSafe.Load(art.Path)
+		countInt := 0
+		if ok {
+			countInt = count.(int)
+		}
+		countInt++
+		commitFileArtifactsThreadSafe.Store(art.Path, countInt)
 		return nil
 	}
 	defer func() { commitFileArtifact = commitFileArtifactOrig }()
@@ -146,6 +177,7 @@ func testCommitDirectoryRecursive(t *testing.T) {
 	expectedChecksum := "deadbeef"
 	commitDirManifestOrig := commitDirManifest
 	commitDirManifest = func(ch *LocalCache, man *directoryManifest) (string, error) {
+		sort.Sort(byPath(man.Contents))
 		actualManifests = append(actualManifests, *man)
 		return expectedChecksum, nil
 	}
@@ -172,31 +204,25 @@ func testCommitDirectoryRecursive(t *testing.T) {
 		{Checksum: "123456789", Path: "nested_file2"},
 	}
 
-	expectedCommitFileArtifactCalls := []commitArgs{}
+	expectedCommitFileArtifactCalls := make(map[string]int)
 
 	baseDir := filepath.Join("work_dir", "art_dir")
 	childDir := filepath.Join(baseDir, "child_dir")
 
 	for i := range expectedFileArtifactsParent {
-		expectedCommitFileArtifactCalls = append(
-			expectedCommitFileArtifactCalls,
-			commitArgs{
-				Cache:      cache,
-				WorkingDir: baseDir,
-				Artifact:   expectedFileArtifactsParent[i],
-			},
-		)
+		path := expectedFileArtifactsParent[i].Path
+		expectedCommitFileArtifactCalls[path] = 1
 	}
 	for i := range expectedFileArtifactsChild {
-		expectedCommitFileArtifactCalls = append(
-			expectedCommitFileArtifactCalls,
-			commitArgs{
-				Cache:      cache,
-				WorkingDir: childDir,
-				Artifact:   expectedFileArtifactsChild[i],
-			},
-		)
+		path := expectedFileArtifactsChild[i].Path
+		expectedCommitFileArtifactCalls[path] = 1
 	}
+
+	commitFileArtifactCalls := make(map[string]int)
+	commitFileArtifactsThreadSafe.Range(func(key, _ interface{}) bool {
+		commitFileArtifactCalls[key.(string)] = 1
+		return true
+	})
 
 	if diff := cmp.Diff(expectedCommitFileArtifactCalls, commitFileArtifactCalls); diff != "" {
 		t.Fatalf("commitFileArtifactCalls -want +got:\n%s", diff)
@@ -214,10 +240,12 @@ func testCommitDirectoryRecursive(t *testing.T) {
 			},
 		),
 	}
+	sort.Sort(byPath(expectedManifestParent.Contents))
 	expectedManifestChild := directoryManifest{
 		Path:     childDir,
 		Contents: expectedFileArtifactsChild,
 	}
+	sort.Sort(byPath(expectedManifestChild.Contents))
 
 	if dirArt.Checksum != expectedChecksum {
 		t.Fatalf("artifact checksum want %#v, got %#v", expectedChecksum, dirArt.Checksum)
@@ -295,6 +323,12 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
 }
+
+type byPath []*artifact.Artifact
+
+func (a byPath) Len() int           { return len(a) }
+func (a byPath) Less(i, j int) bool { return strings.Compare(a[i].Path, a[j].Path) < 0 }
+func (a byPath) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 func testCachePermissions(cache *LocalCache, art artifact.Artifact, t *testing.T) {
 	fileCachePath, err := cache.PathForChecksum(art.Checksum)

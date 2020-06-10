@@ -20,7 +20,7 @@ func TestAdd(t *testing.T) {
 	defer func() { FromFile = fromFileOrig }()
 
 	t.Run("add new stage", func(t *testing.T) {
-		idx := NewIndex()
+		idx := New()
 		path := "foo/bar.duc"
 
 		if err := idx.Add(path); err != nil {
@@ -37,7 +37,7 @@ func TestAdd(t *testing.T) {
 	})
 
 	t.Run("add already tracked stage", func(t *testing.T) {
-		idx := NewIndex()
+		idx := New()
 		path := "foo/bar.duc"
 
 		idx.StageFiles[path] = false
@@ -56,7 +56,7 @@ func TestAdd(t *testing.T) {
 	})
 
 	t.Run("error if invalid stage", func(t *testing.T) {
-		idx := NewIndex()
+		idx := New()
 		path := "foo/bar.duc"
 
 		FromFile = func(path string, v interface{}) error {
