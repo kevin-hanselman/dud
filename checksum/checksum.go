@@ -31,13 +31,8 @@ func Checksum(reader io.Reader, bufSize int64) (string, error) {
 	}
 	h := blake3.New()
 	buf := make([]byte, bufSize)
-	tee := io.TeeReader(reader, h)
-	for {
-		if _, err := tee.Read(buf); err != nil {
-			if err == io.EOF {
-				return hashToHexString(h), nil
-			}
-			return "", err
-		}
+	if _, err := io.CopyBuffer(h, reader, buf); err != nil {
+		return "", err
 	}
+	return hashToHexString(h), nil
 }

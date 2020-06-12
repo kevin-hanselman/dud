@@ -112,7 +112,7 @@ func getFileDevice(path string) (uint64, error) {
 	}
 	sys := fileInfo.Sys()
 	if sys == nil {
-		return 0, fmt.Errorf("%#v Sys() returned nil", fileInfo)
+		return 0, fmt.Errorf("os.FileInfo.Sys() on %#v returned nil", path)
 	}
 	return sys.(*syscall.Stat_t).Dev, nil
 }
