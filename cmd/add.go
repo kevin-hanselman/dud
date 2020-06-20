@@ -57,12 +57,12 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		idx := index.New()
+		idx := make(index.Index)
 		if err := fsutil.FromYamlFile(indexPath, idx); err != nil && err != io.EOF {
 			log.Fatal(err)
 		}
 
-		if err := add(args, idx, ducfilePath, isRecursive); err != nil {
+		if err := add(args, &idx, ducfilePath, isRecursive); err != nil {
 			log.Fatal(err)
 		}
 

@@ -20,14 +20,14 @@ func TestAdd(t *testing.T) {
 	defer func() { FromFile = fromFileOrig }()
 
 	t.Run("add new stage", func(t *testing.T) {
-		idx := New()
+		idx := make(Index)
 		path := "foo/bar.duc"
 
 		if err := idx.Add(path); err != nil {
 			t.Fatal(err)
 		}
 
-		inCommitSet, added := idx.StageFiles[path]
+		inCommitSet, added := idx[path]
 		if !added {
 			t.Fatal("path wasn't added to the index")
 		}
@@ -37,16 +37,16 @@ func TestAdd(t *testing.T) {
 	})
 
 	t.Run("add already tracked stage", func(t *testing.T) {
-		idx := New()
+		idx := make(Index)
 		path := "foo/bar.duc"
 
-		idx.StageFiles[path] = false
+		idx[path] = false
 
 		if err := idx.Add(path); err != nil {
 			t.Fatal(err)
 		}
 
-		inCommitSet, added := idx.StageFiles[path]
+		inCommitSet, added := idx[path]
 		if !added {
 			t.Fatal("path wasn't added to the index")
 		}
@@ -56,7 +56,7 @@ func TestAdd(t *testing.T) {
 	})
 
 	t.Run("error if invalid stage", func(t *testing.T) {
-		idx := New()
+		idx := make(Index)
 		path := "foo/bar.duc"
 
 		FromFile = func(path string, v interface{}) error {
@@ -74,12 +74,10 @@ func TestCommitSet(t *testing.T) {
 
 	t.Run("get commit set", func(t *testing.T) {
 		idx := Index{
-			StageFiles: map[string]bool{
-				"a.duc": false,
-				"b.duc": true,
-				"c.duc": true,
-				"d.duc": false,
-			},
+			"a.duc": false,
+			"b.duc": true,
+			"c.duc": true,
+			"d.duc": false,
 		}
 
 		actualCommitSet := idx.CommitSet()
@@ -96,23 +94,19 @@ func TestCommitSet(t *testing.T) {
 
 	t.Run("clear commit set", func(t *testing.T) {
 		idx := Index{
-			StageFiles: map[string]bool{
-				"a.duc": false,
-				"b.duc": true,
-				"c.duc": true,
-				"d.duc": false,
-			},
+			"a.duc": false,
+			"b.duc": true,
+			"c.duc": true,
+			"d.duc": false,
 		}
 
 		idx.ClearCommitSet()
 
 		expectedIndex := Index{
-			StageFiles: map[string]bool{
-				"a.duc": false,
-				"b.duc": false,
-				"c.duc": false,
-				"d.duc": false,
-			},
+			"a.duc": false,
+			"b.duc": false,
+			"c.duc": false,
+			"d.duc": false,
 		}
 
 		if diff := cmp.Diff(expectedIndex, idx); diff != "" {

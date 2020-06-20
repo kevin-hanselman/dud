@@ -18,14 +18,14 @@ func TestAddStages(t *testing.T) {
 	stages := []string{"a.duc", "b.duc", "c.duc"}
 
 	t.Run("add new stages", func(t *testing.T) {
-		idx := index.New()
+		idx := make(index.Index)
 
-		if err := addStages(stages, idx); err != nil {
+		if err := addStages(stages, &idx); err != nil {
 			t.Fatal(err)
 		}
 
 		for _, stage := range stages {
-			inCommitList, added := idx.StageFiles[stage]
+			inCommitList, added := idx[stage]
 			if !added {
 				t.Fatal("path wasn't added to the index")
 			}
@@ -36,18 +36,18 @@ func TestAddStages(t *testing.T) {
 	})
 
 	t.Run("add existing stages", func(t *testing.T) {
-		idx := index.New()
+		idx := make(index.Index)
 
 		for _, stage := range stages {
-			idx.StageFiles[stage] = false
+			idx[stage] = false
 		}
 
-		if err := addStages(stages, idx); err != nil {
+		if err := addStages(stages, &idx); err != nil {
 			t.Fatal(err)
 		}
 
 		for _, stage := range stages {
-			inCommitList, added := idx.StageFiles[stage]
+			inCommitList, added := idx[stage]
 			if !added {
 				t.Fatal("path wasn't added to the index")
 			}
@@ -82,13 +82,13 @@ func TestAddFiles(t *testing.T) {
 	stagePath := "out.duc"
 
 	t.Run("add new files", func(t *testing.T) {
-		idx := index.New()
+		idx := make(index.Index)
 
-		if err := addArtifacts(files, idx, stagePath, false); err != nil {
+		if err := addArtifacts(files, &idx, stagePath, false); err != nil {
 			t.Fatal(err)
 		}
 
-		inCommitList, added := idx.StageFiles[stagePath]
+		inCommitList, added := idx[stagePath]
 		if !added {
 			t.Fatal("path wasn't added to index")
 		}

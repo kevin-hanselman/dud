@@ -50,21 +50,20 @@ var commitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		idx := new(index.Index)
-		if err := fsutil.FromYamlFile(indexPath, idx); err != nil {
+		idx := make(index.Index)
+		if err := fsutil.FromYamlFile(indexPath, &idx); err != nil {
 			log.Fatal(err)
 		}
 
-		for commitStage := range idx.CommitSet() {
+		for stagePath := range idx.CommitSet() {
 			stg := new(stage.Stage)
-			if err := fsutil.FromYamlFile(commitStage, stg); err != nil {
+			if err := fsutil.FromYamlFile(stagePath, stg); err != nil {
 				log.Fatal(err)
 			}
-			// TODO: add recursive flag
 			if err := stg.Commit(ch, strat); err != nil {
 				log.Fatal(err)
 			}
-			if err := fsutil.ToYamlFile(commitStage, stg); err != nil {
+			if err := fsutil.ToYamlFile(stagePath, stg); err != nil {
 				log.Fatal(err)
 			}
 		}
