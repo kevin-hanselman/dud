@@ -1,6 +1,9 @@
 package artifact
 
-import "github.com/kevlar1818/duc/fsutil"
+import (
+	"fmt"
+	"github.com/kevlar1818/duc/fsutil"
+)
 
 // An Artifact is a file tracked by DUC
 type Artifact struct {
@@ -66,4 +69,31 @@ func (stat Status) String() string {
 		return "invalid file type"
 	}
 	panic("exited switch unexpectedly")
+}
+
+var fileStatusFromPath = fsutil.FileStatusFromPath
+
+// FromPath returns a new Artifact tracking the given path.
+// TODO: When adding new files, the Index needs to be consulted to ensure
+// exactly one Artifact owns a given file, and that exactly one Stage owns
+// a given Artifact.
+func FromPath(path string, isRecursive bool) (art Artifact, err error) {
+	status, err := fileStatusFromPath(path)
+	if err != nil {
+		return
+	}
+	switch status {
+	case fsutil.Absent:
+		return art, fmt.Errorf("path %v does not exist", path)
+	case fsutil.Other, fsutil.Link:
+		return art, fmt.Errorf("unsupported file type for path %v", path)
+	}
+
+	isDir := status == fsutil.Directory
+	return Artifact{
+		Checksum:    "",
+		Path:        path,
+		IsDir:       isDir,
+		IsRecursive: isRecursive && isDir,
+	}, nil
 }

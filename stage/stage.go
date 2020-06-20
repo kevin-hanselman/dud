@@ -62,3 +62,16 @@ func (s *Stage) Status(cache cachePkg.Cache) (Status, error) {
 	}
 	return stat, nil
 }
+
+// FromPaths creates a Stage from one or more file paths.
+func FromPaths(isRecursive bool, paths ...string) (stg Stage, err error) {
+	stg.Outputs = make([]artifact.Artifact, len(paths))
+
+	for i, path := range paths {
+		stg.Outputs[i], err = artifact.FromPath(path, isRecursive)
+		if err != nil {
+			return
+		}
+	}
+	return
+}

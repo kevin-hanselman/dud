@@ -5,7 +5,6 @@ import (
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/index"
 	"github.com/kevlar1818/duc/stage"
-	"github.com/kevlar1818/duc/track"
 	"github.com/spf13/cobra"
 	"io"
 	"log"
@@ -37,6 +36,7 @@ var addCmd = &cobra.Command{
 		indexPath := filepath.Join(root, ".duc", "index")
 
 		// Create an index file if it doesn't exist
+		// TODO replace with fsutil.Exists
 		if _, err := os.Stat(indexPath); os.IsNotExist(err) {
 			_, err := os.Create(indexPath)
 			if err != nil {
@@ -44,14 +44,16 @@ var addCmd = &cobra.Command{
 			}
 		}
 
-		ducfilePath, err := cmd.Flags().GetString("output")
+		// TODO: replace with package var above
+		outputStagePath, err := cmd.Flags().GetString("output")
 		if err != nil {
 			log.Fatal(err)
 		}
-		if ducfilePath == "" {
-			ducfilePath = "Ducfile"
+		if outputStagePath == "" {
+			outputStagePath = "Ducfile"
 		}
 
+		// TODO: replace with package var above
 		isRecursive, err := cmd.Flags().GetBool("recursive")
 		if err != nil {
 			log.Fatal(err)
@@ -62,7 +64,7 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if err := add(args, &idx, ducfilePath, isRecursive); err != nil {
+		if err := add(args, &idx, outputStagePath, isRecursive); err != nil {
 			log.Fatal(err)
 		}
 
@@ -85,21 +87,28 @@ func (addtype addType) String() string {
 
 // add will add new artifacts to a stage and the new stage to the index and the commit list,
 // or will add existing stages to the commit list
-func add(paths []string, idx *index.Index, ducfilePath string, isRecursive bool) error {
+func add(paths []string, idx *index.Index, outputStagePath string, isRecursive bool) error {
 
 	pathTypes, err := checkAddTypes(paths)
 
 	if err != nil {
-		return nil
+		return err
 	}
 
 	switch pathTypes {
 	case stageType:
-		if err := addStages(paths, idx); err != nil {
+		if err := idx.Add(paths...); err != nil {
 			return err
 		}
 	case artifactType:
-		if err := addArtifacts(paths, idx, ducfilePath, isRecursive); err != nil {
+		stg, err := stage.FromPaths(isRecursive, paths...)
+		if err != nil {
+			return err
+		}
+		if err := fsutil.ToYamlFile(outputStagePath, stg); err != nil {
+			return err
+		}
+		if err := idx.Add(outputStagePath); err != nil {
 			return err
 		}
 	}
@@ -109,14 +118,12 @@ func add(paths []string, idx *index.Index, ducfilePath string, isRecursive bool)
 
 func checkAddTypes(paths []string) (addType, error) {
 	var firstPathType addType
-	var err error
 
 	for idx, path := range paths {
 		if idx == 0 {
 			firstPathType = checkAddType(path)
 		} else if pathType := checkAddType(path); pathType != firstPathType {
-			err = errors.New("cannot mix artifacts and stages")
-			return 0, err
+			return 0, errors.New("cannot mix artifacts and stages")
 		}
 	}
 	return firstPathType, nil
@@ -132,35 +139,4 @@ func checkAddType(path string) addType {
 	}
 
 	return stageType
-}
-
-func addArtifacts(artifactPaths []string, idx *index.Index, stagePath string, isRecursive bool) error {
-
-	_, err := os.Stat(stagePath)
-
-	// TODO: allow a --force flag to overwrite
-	if !os.IsNotExist(err) {
-		return errors.New("stage file already exists")
-	}
-
-	stg, err := track.Track(isRecursive, artifactPaths...)
-	if err != nil {
-		return err
-	}
-	toFile(stagePath, stg)
-
-	if err := idx.Add(stagePath); err != nil {
-		return err
-	}
-	return nil
-}
-
-func addStages(stages []string, idx *index.Index) error {
-	for _, stage := range stages {
-		if err := idx.Add(stage); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

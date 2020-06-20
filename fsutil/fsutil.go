@@ -114,5 +114,6 @@ func getFileDevice(path string) (uint64, error) {
 	if sys == nil {
 		return 0, fmt.Errorf("os.FileInfo.Sys() on %#v returned nil", path)
 	}
+	// TODO: instead of panicing, check the type assertion and return an error
 	return sys.(*syscall.Stat_t).Dev, nil
 }
