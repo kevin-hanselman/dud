@@ -202,3 +202,12 @@ func TestStatus(t *testing.T) {
 
 	cache.AssertExpectations(t)
 }
+
+func TestFilePathForLock(t *testing.T) {
+	input := "foo/bar.yaml"
+	want := "foo/bar.yaml.lock"
+	got := FilePathForLock(input)
+	if got != want {
+		t.Fatalf("FilePathForLock(%#v) = %#v, want %#v", input, got, want)
+	}
+}

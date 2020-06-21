@@ -6,6 +6,7 @@ import (
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
@@ -74,4 +75,13 @@ func FromPaths(isRecursive bool, paths ...string) (stg Stage, err error) {
 		}
 	}
 	return
+}
+
+// FilePathForLock returns the lock-file path given a stage file path.
+func FilePathForLock(stagePath string) string {
+	var str strings.Builder
+	// TODO: check for valid YAML, or at least .y(a)ml extension?
+	str.WriteString(stagePath)
+	str.WriteString(".lock")
+	return str.String()
 }

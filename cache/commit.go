@@ -89,7 +89,11 @@ var commitFileArtifact = func(
 	return nil
 }
 
-// commitBytes checksums and writes the bytes from reader to the cache.
+// commitBytes checksums the bytes from reader and results in said bytes being
+// present in the cache. If moveFile is empty, commitBytes will copy from
+// reader to the cache while checksumming. If moveFile is not empty, the file
+// path it references is moved (i.e. renamed) to the cache after checksumming,
+// thus eliminating unnecessary file IO.
 func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, error) {
 	// If there's no file we can move, we need to copy the bytes from reader to
 	// the cache.
