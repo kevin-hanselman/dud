@@ -10,7 +10,7 @@ import (
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
-// build blocking of DUC pipelines.
+// building block of DUC pipelines.
 type Stage struct {
 	Checksum   string `yaml:",omitempty"`
 	WorkingDir string
@@ -22,8 +22,15 @@ type Status map[string]string
 
 // UpdateChecksum updates the Checksum field of the Stage.
 func (s *Stage) UpdateChecksum() (err error) {
-	s.Checksum = ""
-	s.Checksum, err = checksum.ChecksumObject(s)
+	cleanStage := Stage{
+		WorkingDir: s.WorkingDir,
+		Outputs: make([]artifact.Artifact, len(s.Outputs)),
+	}
+	for i, art := range s.Outputs {
+		art.Checksum = ""
+		cleanStage.Outputs[i] = art
+	}
+	s.Checksum, err = checksum.ChecksumObject(cleanStage)
 	return
 }
 

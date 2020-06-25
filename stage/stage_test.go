@@ -42,57 +42,97 @@ func (c *mockCache) Status(workingDir string, art artifact.Artifact) (artifact.S
 }
 
 func TestSetChecksum(t *testing.T) {
-	s := Stage{
-		Checksum:   "",
-		WorkingDir: "foo",
-		Outputs: []artifact.Artifact{
-			{
-				Checksum: "abc",
-				Path:     "bar.txt",
+
+	newStage := func() Stage {
+		return Stage{
+			Checksum:   "",
+			WorkingDir: "dir",
+			Outputs: []artifact.Artifact{
+				{Path: "foo.txt"},
+				{Path: "bar.txt"},
 			},
-		},
+		}
 	}
 
-	if err := s.UpdateChecksum(); err != nil {
-		t.Fatal(err)
-	}
+	t.Run("checksum gets populated", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+		if stg.Checksum == "" {
+			t.Fatal("stage.SetChecksum() didn't change (empty) checksum")
+		}
+	})
 
-	if s.Checksum == "" {
-		t.Fatal("stage.SetChecksum() didn't change (empty) checksum")
-	}
+	t.Run("stage checksum should not affect checksum", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+		expected := stg
 
-	expected := s
+		stg.Checksum = "this should not affect the checksum"
 
-	s.Checksum = "this should not affect the checksum"
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
 
-	if err := s.UpdateChecksum(); err != nil {
-		t.Fatal(err)
-	}
+		if diff := cmp.Diff(expected, stg); diff != "" {
+			t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
+		}
+	})
 
-	if diff := cmp.Diff(expected, s); diff != "" {
-		t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
-	}
+	t.Run("stage workdir should affect checksum", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
 
-	origChecksum := s.Checksum
-	s.WorkingDir = "this should affect the checksum"
+		origChecksum := stg.Checksum
+		stg.WorkingDir = "this/should/affect/the/checksum"
 
-	if err := s.UpdateChecksum(); err != nil {
-		t.Fatal(err)
-	}
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
 
-	if s.Checksum == origChecksum {
-		t.Fatal("changing stage.WorkingDir should have affected checksum")
-	}
+		if stg.Checksum == origChecksum {
+			t.Fatal("changing stage.WorkingDir should have affected checksum")
+		}
+	})
 
-	origChecksum = s.Checksum
-	s.Outputs[0].Path = "cat.png"
+	t.Run("output artifact path should affect checksum", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
 
-	if err := s.UpdateChecksum(); err != nil {
-		t.Fatal(err)
-	}
-	if s.Checksum == origChecksum {
-		t.Fatal("changing stage.Outputs should have affected checksum")
-	}
+		origChecksum := stg.Checksum
+		stg.Outputs[0].Path = "cat.png"
+
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+		if stg.Checksum == origChecksum {
+			t.Fatal("changing stage.Outputs should have affected checksum")
+		}
+	})
+
+	t.Run("output artifact checksums should not affect checksum", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+
+		expected := stg
+		stg.Outputs[0].Checksum = "123456789"
+
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(expected, stg); diff != "" {
+			t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
+		}
+	})
 }
 
 func TestCommit(t *testing.T) {
