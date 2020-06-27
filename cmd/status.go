@@ -17,9 +17,9 @@ func init() {
 
 func printStageStatus(stagePath string, status stage.Status) error {
 	fmt.Println(stagePath)
-	for path, artStatusStr := range status {
+	for path, artStatus := range status {
 		// TODO: use test/tabwriter?
-		if _, err := fmt.Printf("  %s  %s\n", path, artStatusStr); err != nil {
+		if _, err := fmt.Printf("  %s  %s\n", path, artStatus); err != nil {
 			return err
 		}
 	}

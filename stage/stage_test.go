@@ -4,42 +4,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevlar1818/duc/mocks"
 	"github.com/kevlar1818/duc/strategy"
-	"github.com/stretchr/testify/mock"
 	"testing"
 )
-
-type mockCache struct {
-	mock.Mock
-}
-
-func (c *mockCache) Commit(
-	workingDir string,
-	art *artifact.Artifact,
-	strat strategy.CheckoutStrategy,
-) error {
-	args := c.Called(workingDir, art, strat)
-	return args.Error(0)
-}
-
-func (c *mockCache) Checkout(
-	workingDir string,
-	art *artifact.Artifact,
-	strat strategy.CheckoutStrategy,
-) error {
-	args := c.Called(workingDir, art, strat)
-	return args.Error(0)
-}
-
-func (c *mockCache) PathForChecksum(checksum string) (string, error) {
-	args := c.Called(checksum)
-	return args.String(0), args.Error(1)
-}
-
-func (c *mockCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
-	args := c.Called(workingDir, art)
-	return args.Get(0).(artifact.Status), args.Error(1)
-}
 
 func TestSetChecksum(t *testing.T) {
 
@@ -156,16 +124,16 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 		},
 	}
 
-	cache := mockCache{}
+	mockCache := mocks.Cache{}
 	for i := range stg.Outputs {
-		cache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
+		mockCache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 
-	if err := stg.Commit(&cache, strat); err != nil {
+	if err := stg.Commit(&mockCache, strat); err != nil {
 		t.Fatal(err)
 	}
 
-	cache.AssertExpectations(t)
+	mockCache.AssertExpectations(t)
 
 	if stg.Checksum == "" {
 		t.Error("expected stage checksum to be set")
@@ -194,16 +162,16 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 		},
 	}
 
-	cache := mockCache{}
+	mockCache := mocks.Cache{}
 	for i := range stg.Outputs {
-		cache.On("Checkout", "workDir", &stg.Outputs[i], strat).Return(nil)
+		mockCache.On("Checkout", "workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 
-	if err := stg.Checkout(&cache, strat); err != nil {
+	if err := stg.Checkout(&mockCache, strat); err != nil {
 		t.Fatal(err)
 	}
 
-	cache.AssertExpectations(t)
+	mockCache.AssertExpectations(t)
 }
 
 func TestStatus(t *testing.T) {
@@ -211,14 +179,8 @@ func TestStatus(t *testing.T) {
 		Checksum:   "",
 		WorkingDir: "workDir",
 		Outputs: []artifact.Artifact{
-			{
-				Checksum: "",
-				Path:     "foo.txt",
-			},
-			{
-				Checksum: "",
-				Path:     "bar.txt",
-			},
+			{Path: "foo.txt"},
+			{Path: "bar.txt"},
 		},
 	}
 
@@ -229,18 +191,131 @@ func TestStatus(t *testing.T) {
 		ContentsMatch:       true,
 	}
 
-	cache := mockCache{}
+	mockCache := mocks.Cache{}
 	for _, art := range stg.Outputs {
-		cache.On("Status", "workDir", art).Return(artStatus, nil)
+		mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 	}
 
-	// TODO: check output (i.e. test stage.Status.String())
-	_, err := stg.Status(&cache)
+	expectedStageStatus := Status{
+		"foo.txt": artStatus,
+		"bar.txt": artStatus,
+	}
+
+	stageStatus, err := stg.Status(&mockCache)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cache.AssertExpectations(t)
+	mockCache.AssertExpectations(t)
+
+	if diff := cmp.Diff(expectedStageStatus, stageStatus); diff != "" {
+		t.Fatalf("stage.Status() -want +got:\n%s", diff)
+	}
+
+}
+
+func TestRun(t *testing.T) {
+
+	var runCommandCalledWith string
+	runCommandOrig := runCommand
+	runCommand = func(command string) error {
+		runCommandCalledWith = command
+		return nil
+	}
+	defer func() { runCommand = runCommandOrig }()
+
+	t.Run("error if no command", func(t *testing.T) {
+		stg := Stage{
+			Command:    "",
+			WorkingDir: "workDir",
+			Outputs: []artifact.Artifact{
+				{Path: "foo.txt"},
+				{Path: "bar.txt"},
+			},
+		}
+		mockCache := mocks.Cache{}
+
+		if _, err := stg.Run(&mockCache); err == nil {
+			t.Fatal("expected Stage.Run() to return an error")
+		}
+
+		mockCache.AssertNotCalled(t, "Status")
+	})
+
+	t.Run("will NOT run if artifacts up to date", func(t *testing.T) {
+		stg := Stage{
+			Command:    "echo 'hello world'",
+			WorkingDir: "workDir",
+			Outputs: []artifact.Artifact{
+				{Path: "foo.txt"},
+				{Path: "bar.txt"},
+			},
+		}
+		mockCache := mocks.Cache{}
+
+		artStatus := artifact.Status{
+			WorkspaceFileStatus: fsutil.RegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
+
+		for _, art := range stg.Outputs {
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+		}
+
+		ran, err := stg.Run(&mockCache)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if ran {
+			t.Fatal("expected Stage.Run() to return ran = false")
+		}
+	})
+
+	t.Run("will run if artifacts NOT up to date", func(t *testing.T) {
+		runCommandCalledWith = ""
+		stg := Stage{
+			Command:    "echo 'hello world'",
+			WorkingDir: "workDir",
+			Outputs: []artifact.Artifact{
+				{Path: "foo.txt"},
+				{Path: "bar.txt"},
+			},
+		}
+		mockCache := mocks.Cache{}
+
+		artStatus := artifact.Status{
+			WorkspaceFileStatus: fsutil.RegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       false,
+		}
+
+		for _, art := range stg.Outputs {
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+		}
+
+		ran, err := stg.Run(&mockCache)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if !ran {
+			t.Fatal("expected Stage.Run() to return ran = true")
+		}
+
+		if runCommandCalledWith == "" {
+			t.Fatal("runCommand not called")
+		} else if runCommandCalledWith != stg.Command {
+			t.Fatalf("runCommand called with %#v, want %#v", runCommandCalledWith, stg.Command)
+		}
+	})
 }
 
 func TestFilePathForLock(t *testing.T) {

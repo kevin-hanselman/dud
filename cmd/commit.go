@@ -51,6 +51,8 @@ var commitCmd = &cobra.Command{
 
 		for stagePath := range idx.CommitSet() {
 			stg := new(stage.Stage)
+			// TODO: try to load the lock file first (to enable early-quit if
+			// any artifacts already committed)
 			if err := fsutil.FromYamlFile(stagePath, stg); err != nil {
 				log.Fatal(err)
 			}
