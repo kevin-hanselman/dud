@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/cache"
+	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"os"
 	"path/filepath"
@@ -39,7 +40,7 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 	}
 }
 
-func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T) {
+func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t *testing.T) {
 	dirs, art, err := CreateArtifactTestCase(status)
 	defer os.RemoveAll(dirs.WorkDir)
 	defer os.RemoveAll(dirs.CacheDir)
@@ -60,6 +61,14 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 			art.IsDir,
 			status.WorkspaceFileStatus,
 		)
+	}
+
+	// verify output Artifact carries over important fields from ArtifactWithStatus
+	if status.IsDir != art.IsDir {
+		t.Fatalf("Output Artifact.IsDir (%v) != ArtWithStatus.IsDir (%v)", art.IsDir, status.IsDir)
+	}
+	if status.SkipCache != art.SkipCache {
+		t.Fatalf("Output Artifact.SkipCache (%v) != ArtWithStatus.SkipCache (%v)", art.SkipCache, status.SkipCache)
 	}
 
 	// verify workPath existences matches status.WorkspaceFileStatus
@@ -100,6 +109,9 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 	switch status.WorkspaceFileStatus {
 	// verify workPath is a link and matches status.ContentsMatch
 	case fsutil.Link:
+		if status.SkipCache {
+			t.Fatal("WorkspaceFileStatus is Link, but SkipCache is true")
+		}
 		linkDst, err := os.Readlink(workPath)
 		if err != nil {
 			t.Fatal(err)
@@ -117,13 +129,28 @@ func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T)
 		if !isRegFile {
 			t.Fatalf("expected %#v to be a regular file", workPath)
 		}
-		if status.ChecksumInCache {
-			same, err := fsutil.SameContents(workPath, cachePath)
+		if status.SkipCache {
+			fileReader, err := os.Open(workPath)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if same != status.ContentsMatch {
-				t.Fatalf("SameContents(%v, %v) = %v", workPath, cachePath, same)
+			workspaceFileChecksum, err := checksum.Checksum(fileReader, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			sameChecksum := workspaceFileChecksum == art.Checksum
+			if sameChecksum != status.ContentsMatch {
+				t.Fatalf("Checksum match = %v, but ContentsMatch = %v", sameChecksum, status.ContentsMatch)
+			}
+		} else {
+			if status.ChecksumInCache {
+				same, err := fsutil.SameContents(workPath, cachePath)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if same != status.ContentsMatch {
+					t.Fatalf("SameContents(%v, %v) = %v", workPath, cachePath, same)
+				}
 			}
 		}
 	}

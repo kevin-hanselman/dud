@@ -69,7 +69,8 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 
 // AllTestCases returns a slice of all valid artifact.Status structs.
 // (See status.txt in the project root)
-func AllTestCases() (out []artifact.Status) {
+func AllTestCases() (out []artifact.ArtifactWithStatus) {
+	allArtifactStatuses := []artifact.Status{}
 	allWorkspaceStatuses := []fsutil.FileStatus{
 		fsutil.Absent,
 		fsutil.RegularFile,
@@ -77,8 +78,8 @@ func AllTestCases() (out []artifact.Status) {
 	}
 	for _, workspaceStatus := range allWorkspaceStatuses {
 		if workspaceStatus != fsutil.Absent {
-			out = append(
-				out,
+			allArtifactStatuses = append(
+				allArtifactStatuses,
 				artifact.Status{
 					WorkspaceFileStatus: workspaceStatus,
 					HasChecksum:         true,
@@ -87,8 +88,8 @@ func AllTestCases() (out []artifact.Status) {
 				},
 			)
 		}
-		out = append(
-			out,
+		allArtifactStatuses = append(
+			allArtifactStatuses,
 			artifact.Status{
 				WorkspaceFileStatus: workspaceStatus,
 				HasChecksum:         true,
@@ -106,12 +107,29 @@ func AllTestCases() (out []artifact.Status) {
 			},
 		)
 	}
+	// Promote Status structs to ArtifactWithStatus.
+	for _, artStatus := range allArtifactStatuses {
+		artWithStatus := artifact.ArtifactWithStatus{
+			Artifact: artifact.Artifact{SkipCache: false},
+			Status:   artStatus,
+		}
+		switch artStatus.WorkspaceFileStatus {
+		case fsutil.RegularFile:
+			// Add another set of cases where an Artifact doesn't use the cache.
+			artWithStatus.SkipCache = true
+			out = append(out, artWithStatus)
+			artWithStatus.SkipCache = false
+		case fsutil.Directory:
+			artWithStatus.IsDir = true
+		}
+		out = append(out, artWithStatus)
+	}
 	return
 }
 
 // CreateArtifactTestCase sets up an integration test environment with a single
 // artifact that complies with the provided artifact.Status.
-func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact.Artifact, err error) {
+func CreateArtifactTestCase(status artifact.ArtifactWithStatus) (dirs TempDirs, art artifact.Artifact, err error) {
 	dirs, err = CreateTempDirs()
 	if err != nil {
 		return
@@ -121,10 +139,9 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 	// Put the file in a sub-directory to test that full paths can be recreated with a checkout.
 	parentDir := "greet"
 
-	art = artifact.Artifact{
-		Checksum: "288a86a79f20a3d6dccdca7713beaed178798296bdfa7913fa2a62d9727bf8f8",
-		Path:     filepath.Join(parentDir, "hello.txt"),
-	}
+	art = status.Artifact
+	art.Checksum = "288a86a79f20a3d6dccdca7713beaed178798296bdfa7913fa2a62d9727bf8f8"
+	art.Path = filepath.Join(parentDir, "hello.txt")
 
 	fileCacheDir := filepath.Join(dirs.CacheDir, art.Checksum[:2])
 	fileCachePath := filepath.Join(fileCacheDir, art.Checksum[2:])

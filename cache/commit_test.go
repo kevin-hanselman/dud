@@ -273,7 +273,7 @@ func TestCommitIntegration(t *testing.T) {
 	}
 }
 
-func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact.Status, t *testing.T) {
+func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact.ArtifactWithStatus, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(statusStart)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)

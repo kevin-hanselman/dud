@@ -22,7 +22,7 @@ type Stage struct {
 }
 
 // Status holds a map of artifact names to statuses
-type Status map[string]artifact.Status
+type Status map[string]artifact.ArtifactWithStatus
 
 // UpdateChecksum updates the Checksum field of the Stage.
 func (s *Stage) UpdateChecksum() (err error) {
@@ -50,7 +50,6 @@ func (s *Stage) Commit(cache cachePkg.Cache, strat strategy.CheckoutStrategy) er
 }
 
 // Checkout checks out all Outputs of the Stage.
-// TODO: will eventually checkout all inputs as well
 func (s *Stage) Checkout(cache cachePkg.Cache, strat strategy.CheckoutStrategy) error {
 	for i := range s.Outputs {
 		if err := cache.Checkout(s.WorkingDir, &s.Outputs[i], strat); err != nil {
@@ -62,7 +61,6 @@ func (s *Stage) Checkout(cache cachePkg.Cache, strat strategy.CheckoutStrategy) 
 }
 
 // Status checks the status of all Outputs of the Stage.
-// TODO: eventually report status of inputs as well
 func (s *Stage) Status(cache cachePkg.Cache) (Status, error) {
 	stat := make(Status)
 	for _, art := range s.Outputs {
@@ -70,7 +68,10 @@ func (s *Stage) Status(cache cachePkg.Cache) (Status, error) {
 		if err != nil {
 			return stat, errors.Wrap(err, "stage status failed")
 		}
-		stat[art.Path] = artStatus
+		stat[art.Path] = artifact.ArtifactWithStatus{
+			Artifact: art,
+			Status:   artStatus,
+		}
 	}
 	return stat, nil
 }

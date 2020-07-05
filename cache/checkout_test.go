@@ -26,7 +26,7 @@ func TestFileCheckoutIntegration(t *testing.T) {
 	}
 }
 
-func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifact.Status, t *testing.T) {
+func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart artifact.ArtifactWithStatus, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(statusStart)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
@@ -52,6 +52,16 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 			return
 		}
 		t.Fatal("expected Checkout to raise missing checksum in cache error")
+	}
+
+	t.Log("checking SkipCache")
+	if art.SkipCache {
+		t.Log("SkipCache set")
+		if checkoutErr != nil {
+			t.Logf("error thrown as expected: %v", checkoutErr)
+			return
+		}
+		t.Fatal("expected Checkout to raise error due to SkipCache = true")
 	}
 
 	if statusStart.WorkspaceFileStatus != fsutil.Absent {

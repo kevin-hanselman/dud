@@ -3,14 +3,16 @@ package artifact
 import (
 	"fmt"
 	"github.com/kevlar1818/duc/fsutil"
+	"strings"
 )
 
-// An Artifact is a file tracked by DUC
+// An Artifact is a file or directory that is tracked by DUC.
 type Artifact struct {
 	Checksum    string `yaml:",omitempty"`
 	Path        string
 	IsDir       bool `yaml:",omitempty"`
 	IsRecursive bool `yaml:",omitempty"`
+	SkipCache   bool
 }
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.
@@ -19,7 +21,7 @@ type Status struct {
 	// TODO: We need some way to identify a "bad" workspace file status.
 	// Replace and/or augment this with a boolean?
 	WorkspaceFileStatus fsutil.FileStatus
-	// HasChecksum is true if the Artifact has a valid Checksum member, false otherwise.
+	// HasChecksum is true if the Artifact has a valid Checksum field, false otherwise.
 	HasChecksum bool
 	// ChecksumInCache is true if a cache entry exists for the given checksum, false otherwise.
 	ChecksumInCache bool
@@ -30,7 +32,21 @@ type Status struct {
 	ContentsMatch bool
 }
 
-func (stat Status) String() string {
+// ArtifactWithStatus is an Artifact with a matched Status.
+type ArtifactWithStatus struct {
+	Artifact
+	Status
+}
+
+func (stat ArtifactWithStatus) String() string {
+	isDir := stat.WorkspaceFileStatus == fsutil.Directory
+	if isDir != stat.IsDir {
+		return fmt.Sprintf("incorrect file type: %s", stat.WorkspaceFileStatus)
+	}
+	isRegularFile := stat.WorkspaceFileStatus == fsutil.RegularFile
+	if stat.SkipCache && !isRegularFile {
+		return fmt.Sprintf("incorrect file type: %s (not cached)", stat.WorkspaceFileStatus)
+	}
 	switch stat.WorkspaceFileStatus {
 	case fsutil.Absent:
 		if stat.HasChecksum {
@@ -42,22 +58,30 @@ func (stat Status) String() string {
 		return "unknown artifact"
 
 	case fsutil.RegularFile, fsutil.Directory:
+		var out strings.Builder
 		if stat.HasChecksum {
-			if stat.ChecksumInCache {
+			if stat.ChecksumInCache || stat.SkipCache {
 				if stat.ContentsMatch {
-					return "up-to-date"
+					out.WriteString("up-to-date")
+				} else {
+					out.WriteString("modified")
 				}
-				return "modified"
+			} else {
+				out.WriteString("missing from cache")
 			}
-			return "missing from cache"
+		} else {
+			out.WriteString("uncommitted")
 		}
-		return "uncommitted"
+		if stat.SkipCache {
+			out.WriteString(" (not cached)")
+		}
+		return out.String()
 
 	case fsutil.Link:
 		if stat.HasChecksum {
 			if stat.ChecksumInCache {
 				if stat.ContentsMatch {
-					return "linked to cache"
+					return "up-to-date (link)"
 				}
 				return "incorrect link"
 			}
