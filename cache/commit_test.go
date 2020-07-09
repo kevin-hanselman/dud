@@ -287,6 +287,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 
+	// TODO: TDD for #14 (skip/don't error on up-to-date files)
 	if statusStart.WorkspaceFileStatus == fsutil.Absent {
 		if os.IsNotExist(errors.Cause(commitErr)) {
 			return // TODO: assert expected status

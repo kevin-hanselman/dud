@@ -40,32 +40,31 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 
 	checkoutErr := cache.Checkout(dirs.WorkDir, &art, strat)
 
+	causeErr := errors.Cause(checkoutErr)
+
+	// TODO: TDD for #16 (checkout --copy fails when wspace file is a link)
+	// TODO: instead of returning early in all the cases below, we should still
+	// assert the cache.Status matches statusStart
+	if statusStart.SkipCache && checkoutErr == nil {
+		return
+	}
+
 	if !statusStart.HasChecksum {
-		if checkoutErr != nil {
+		if _, ok := causeErr.(InvalidChecksumError); ok {
 			return
 		}
-		t.Fatal("expected Checkout to raise invalid checksum error")
+		t.Fatalf("expected Checkout to return InvalidChecksumError, got %v", causeErr)
 	}
 
 	if !statusStart.ChecksumInCache {
-		if checkoutErr != nil {
+		if _, ok := causeErr.(MissingFromCacheError); ok {
 			return
 		}
-		t.Fatal("expected Checkout to raise missing checksum in cache error")
-	}
-
-	t.Log("checking SkipCache")
-	if art.SkipCache {
-		t.Log("SkipCache set")
-		if checkoutErr != nil {
-			t.Logf("error thrown as expected: %v", checkoutErr)
-			return
-		}
-		t.Fatal("expected Checkout to raise error due to SkipCache = true")
+		t.Fatalf("expected Checkout to return MissingFromCacheError, got %v", causeErr)
 	}
 
 	if statusStart.WorkspaceFileStatus != fsutil.Absent {
-		if os.IsExist(errors.Cause(checkoutErr)) {
+		if os.IsExist(causeErr) {
 			return
 		}
 		t.Fatalf("expected Checkout to raise Exist error, got %#v", checkoutErr)

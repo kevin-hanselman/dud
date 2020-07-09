@@ -25,6 +25,26 @@ func (cache *LocalCache) Checkout(
 	return checkoutFile(cache, workingDir, art, strat)
 }
 
+// InvalidChecksumError represents a error case where a valid checksum was expected
+// but not found.
+type InvalidChecksumError struct {
+	invalidChecksum string
+}
+
+func (err InvalidChecksumError) Error() string {
+	return fmt.Sprintf("invalid checksum: %#v", err.invalidChecksum)
+}
+
+// MissingFromCacheError represents an error case where the cache file was
+// expected but not found.
+type MissingFromCacheError struct {
+	checksum string
+}
+
+func (err MissingFromCacheError) Error() string {
+	return fmt.Sprintf("file missing from cache: %#v", err.checksum)
+}
+
 var checkoutFile = func(
 	ch *LocalCache,
 	workingDir string,
@@ -36,11 +56,14 @@ var checkoutFile = func(
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
+	if art.SkipCache {
+		return nil
+	}
 	if !status.HasChecksum {
-		return fmt.Errorf("%s: artifact has invalid checksum %#v", errorPrefix, art.Checksum)
+		return errors.Wrap(InvalidChecksumError{art.Checksum}, errorPrefix)
 	}
 	if !status.ChecksumInCache {
-		return fmt.Errorf("%s: checksum %#v missing from cache", errorPrefix, art.Checksum)
+		return errors.Wrap(MissingFromCacheError{art.Checksum}, errorPrefix)
 	}
 	if err := os.MkdirAll(filepath.Dir(workPath), 0755); err != nil {
 		return errors.Wrap(err, errorPrefix)
