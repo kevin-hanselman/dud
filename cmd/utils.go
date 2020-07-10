@@ -15,7 +15,7 @@ func getRoot() (string, error) {
 		return "", err
 	}
 
-	for true {
+	for {
 
 		ducFolderExists, err := hasDucFolder(dirname)
 		if err != nil {
@@ -32,8 +32,6 @@ func getRoot() (string, error) {
 			return "", errors.New("no root")
 		}
 	}
-
-	return "", nil
 }
 
 func getIndexPath() (string, error) {

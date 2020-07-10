@@ -119,6 +119,9 @@ func checkoutDir(
 		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %s", status.WorkspaceFileStatus)
 	}
 	man, err := readDirManifest(cachePath)
+	if err != nil {
+		return errors.Wrap(err, "checkoutDir")
+	}
 	for _, childArt := range man.Contents {
 		if err := ch.Checkout(workPath, childArt, strat); err != nil {
 			// TODO: undo previous file checkouts?
