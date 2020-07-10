@@ -2,15 +2,16 @@ package cache
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/kevlar1818/duc/testutil"
 	"github.com/pkg/errors"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 func TestFileCheckoutIntegration(t *testing.T) {

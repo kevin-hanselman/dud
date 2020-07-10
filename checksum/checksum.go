@@ -3,10 +3,11 @@ package checksum
 import (
 	"encoding/gob"
 	"encoding/hex"
-	"github.com/c2h5oh/datasize"
-	"github.com/zeebo/blake3"
 	"hash"
 	"io"
+
+	"github.com/c2h5oh/datasize"
+	"github.com/zeebo/blake3"
 )
 
 // ChecksumObject returns the checksum of an object's encoded bytes.

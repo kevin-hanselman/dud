@@ -2,13 +2,14 @@ package cache
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/testutil"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 func TestDirectoryStatus(t *testing.T) {

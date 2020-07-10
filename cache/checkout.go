@@ -2,14 +2,15 @@ package cache
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
-	"io"
-	"os"
-	"path/filepath"
 )
 
 // Checkout finds the artifact in the cache and adds a copy of/link to said

@@ -2,9 +2,10 @@ package cache
 
 import (
 	"fmt"
+	"path/filepath"
+
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/strategy"
-	"path/filepath"
 )
 
 // A Cache provides a means to store Artifacts.

@@ -1,8 +1,9 @@
 package fsutil
 
 import (
-	"github.com/go-yaml/yaml"
 	"os"
+
+	"github.com/go-yaml/yaml"
 )
 
 // ToYamlFile saves a struct to a YAML file.

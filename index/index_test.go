@@ -1,10 +1,11 @@
 package index
 
 import (
-	"github.com/google/go-cmp/cmp"
-	"github.com/kevlar1818/duc/stage"
 	"os"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/kevlar1818/duc/stage"
 )
 
 func TestAdd(t *testing.T) {

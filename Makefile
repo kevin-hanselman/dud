@@ -47,6 +47,7 @@ integration-tests: integration-image duc
 	duc_integration python /integration/run_tests.py
 
 fmt:
+	goimports -w .
 	gofmt -s -w .
 
 clean:

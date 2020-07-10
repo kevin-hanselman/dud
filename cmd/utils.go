@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"errors"
-	"github.com/kevlar1818/duc/fsutil"
 	"os"
 	"path/filepath"
+
+	"github.com/kevlar1818/duc/fsutil"
 )
 
 func getRoot() (string, error) {

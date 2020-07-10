@@ -1,9 +1,10 @@
 package artifact
 
 import (
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/fsutil"
-	"testing"
 )
 
 func TestFromPath(t *testing.T) {

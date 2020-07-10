@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/index"
@@ -8,7 +10,6 @@ import (
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
 )
 
 func init() {

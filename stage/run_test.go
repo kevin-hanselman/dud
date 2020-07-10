@@ -1,10 +1,11 @@
 package stage
 
 import (
+	"testing"
+
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/mocks"
-	"testing"
 )
 
 func TestRun(t *testing.T) {

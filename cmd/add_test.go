@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/go-yaml/yaml"
 	"testing"
+
+	"github.com/go-yaml/yaml"
 )
 
 func TestCheckAddTypes(t *testing.T) {

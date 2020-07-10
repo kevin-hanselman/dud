@@ -2,18 +2,19 @@ package cache
 
 import (
 	"fmt"
-	"github.com/google/go-cmp/cmp"
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/fsutil"
-	"github.com/kevlar1818/duc/strategy"
-	"github.com/kevlar1818/duc/testutil"
-	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevlar1818/duc/strategy"
+	"github.com/kevlar1818/duc/testutil"
+	"github.com/pkg/errors"
 )
 
 func TestCommitDirectory(t *testing.T) {

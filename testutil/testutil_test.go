@@ -2,13 +2,14 @@ package testutil
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"testing"
+
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
-	"os"
-	"path/filepath"
-	"testing"
 )
 
 func TestCreateTempDirsIntegration(t *testing.T) {

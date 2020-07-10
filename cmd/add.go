@@ -2,14 +2,15 @@ package cmd
 
 import (
 	"errors"
-	"github.com/kevlar1818/duc/fsutil"
-	"github.com/kevlar1818/duc/index"
-	"github.com/kevlar1818/duc/stage"
-	"github.com/spf13/cobra"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevlar1818/duc/index"
+	"github.com/kevlar1818/duc/stage"
+	"github.com/spf13/cobra"
 )
 
 func init() {

@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/kevlar1818/duc/checksum"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
+
+	"github.com/kevlar1818/duc/checksum"
+	"github.com/spf13/cobra"
 )
 
 func init() {

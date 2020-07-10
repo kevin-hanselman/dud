@@ -3,11 +3,12 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/pkg/errors"
-	"os"
-	"path/filepath"
 )
 
 // Status reports the status of an Artifact in the Cache.

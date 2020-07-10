@@ -2,8 +2,9 @@ package artifact
 
 import (
 	"fmt"
-	"github.com/kevlar1818/duc/fsutil"
 	"strings"
+
+	"github.com/kevlar1818/duc/fsutil"
 )
 
 // An Artifact is a file or directory that is tracked by DUC.

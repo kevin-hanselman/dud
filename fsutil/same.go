@@ -2,10 +2,11 @@ package fsutil
 
 import (
 	"bytes"
-	"github.com/c2h5oh/datasize"
-	"github.com/pkg/errors"
 	"io"
 	"os"
+
+	"github.com/c2h5oh/datasize"
+	"github.com/pkg/errors"
 )
 
 // SameFile wraps os.SameFile and handles calling os.Stat on both paths.

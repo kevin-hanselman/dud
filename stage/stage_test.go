@@ -1,12 +1,13 @@
 package stage
 
 import (
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/mocks"
 	"github.com/kevlar1818/duc/strategy"
-	"testing"
 )
 
 func TestSetChecksum(t *testing.T) {

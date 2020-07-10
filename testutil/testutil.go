@@ -1,12 +1,13 @@
 package testutil
 
 import (
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/fsutil"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/fsutil"
 )
 
 // MockFileInfo mocks os.FileInfo

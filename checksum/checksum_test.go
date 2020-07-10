@@ -2,10 +2,11 @@ package checksum
 
 import (
 	"bytes"
-	"github.com/c2h5oh/datasize"
 	"io"
 	"math/rand"
 	"testing"
+
+	"github.com/c2h5oh/datasize"
 )
 
 func TestChecksum(t *testing.T) {
