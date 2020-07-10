@@ -12,7 +12,7 @@ type Artifact struct {
 	Path        string
 	IsDir       bool `yaml:",omitempty"`
 	IsRecursive bool `yaml:",omitempty"`
-	SkipCache   bool
+	SkipCache   bool `yaml:",omitempty"`
 }
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.

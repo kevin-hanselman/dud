@@ -42,50 +42,47 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 
 	causeErr := errors.Cause(checkoutErr)
 
-	// TODO: TDD for #16 (checkout --copy fails when wspace file is a link)
-	// TODO: instead of returning early in all the cases below, we should still
-	// assert the cache.Status matches statusStart
-	if statusStart.SkipCache && checkoutErr == nil {
-		return
-	}
+	statusWant := statusStart.Status // By default we expect nothing to change.
 
-	if !statusStart.HasChecksum {
-		if _, ok := causeErr.(InvalidChecksumError); ok {
-			return
+	// SkipCache is checked first because HasChecksum and ChecksumInCache are
+	// likely false when skipping the cache, but we don't expect any errors in this case.
+	if statusStart.SkipCache {
+		if checkoutErr != nil {
+			t.Fatalf("expected Checkout to return no error, got %v", checkoutErr)
 		}
-		t.Fatalf("expected Checkout to return InvalidChecksumError, got %v", causeErr)
-	}
-
-	if !statusStart.ChecksumInCache {
-		if _, ok := causeErr.(MissingFromCacheError); ok {
-			return
+	} else if !statusStart.HasChecksum {
+		if _, ok := causeErr.(InvalidChecksumError); !ok {
+			t.Fatalf("expected Checkout to return InvalidChecksumError, got %v", causeErr)
 		}
-		t.Fatalf("expected Checkout to return MissingFromCacheError, got %v", causeErr)
-	}
-
-	if statusStart.WorkspaceFileStatus != fsutil.Absent {
-		if os.IsExist(causeErr) {
-			return
+	} else if !statusStart.ChecksumInCache {
+		if _, ok := causeErr.(MissingFromCacheError); !ok {
+			t.Fatalf("expected Checkout to return MissingFromCacheError, got %v", causeErr)
 		}
-		t.Fatalf("expected Checkout to raise Exist error, got %#v", checkoutErr)
+	} else if statusStart.WorkspaceFileStatus != fsutil.Absent {
+		if !os.IsExist(causeErr) {
+			t.Fatalf("expected Checkout to return Exist error, got %#v", checkoutErr)
+		}
 	} else if checkoutErr != nil {
-		t.Fatal(checkoutErr)
+		t.Fatalf("expected Checkout to return no error, got %v", checkoutErr)
+	} else {
+		// If none of the above conditions are met, we expect Checkout to have
+		// done it's job.
+		statusWant = artifact.Status{
+			HasChecksum:     true,
+			ChecksumInCache: true,
+			ContentsMatch:   true,
+		}
+		switch strat {
+		case strategy.CopyStrategy:
+			statusWant.WorkspaceFileStatus = fsutil.RegularFile
+		case strategy.LinkStrategy:
+			statusWant.WorkspaceFileStatus = fsutil.Link
+		}
 	}
 
 	statusGot, err := cache.Status(dirs.WorkDir, art)
 	if err != nil {
 		t.Fatal(err)
-	}
-	statusWant := artifact.Status{
-		HasChecksum:     true,
-		ChecksumInCache: true,
-		ContentsMatch:   true,
-	}
-	switch strat {
-	case strategy.CopyStrategy:
-		statusWant.WorkspaceFileStatus = fsutil.RegularFile
-	case strategy.LinkStrategy:
-		statusWant.WorkspaceFileStatus = fsutil.Link
 	}
 
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {

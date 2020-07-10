@@ -19,9 +19,12 @@ func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact
 }
 
 // quickStatus populates all artifact.Status fields except for ContentsMatch.
-// TODO: It may be worth exposing this version of status (bypassing the full
-// status check) using a CLI flag
+// However, this function will set ContentsMatch if the workspace file is
+// a link and the other status booleans are true; checking to see if a link
+// points to the cache is, as this function suggests, quick.
 var quickStatus = func(
+	// TODO: It may be worth exposing this version of status (bypassing the full
+	// status check) using a CLI flag
 	ch *LocalCache,
 	workingDir string,
 	art artifact.Artifact,
@@ -38,6 +41,17 @@ var quickStatus = func(
 		}
 	}
 	status.WorkspaceFileStatus, err = fsutil.FileStatusFromPath(workPath)
+	if err != nil {
+		return
+	}
+	if status.HasChecksum && status.ChecksumInCache && status.WorkspaceFileStatus == fsutil.Link {
+		var linkDst string
+		linkDst, err = os.Readlink(workPath)
+		if err != nil {
+			return
+		}
+		status.ContentsMatch = linkDst == cachePath
+	}
 	return
 }
 
@@ -51,19 +65,11 @@ var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Ar
 		return status, nil
 	}
 
-	switch status.WorkspaceFileStatus {
-	case fsutil.RegularFile:
+	if status.WorkspaceFileStatus == fsutil.RegularFile {
 		status.ContentsMatch, err = fsutil.SameContents(workPath, cachePath)
 		if err != nil {
 			return status, errors.Wrap(err, "fileStatus")
 		}
-	case fsutil.Link:
-		// TODO: make this a helper function? (to remove os dep)
-		linkDst, err := os.Readlink(workPath)
-		if err != nil {
-			return status, errors.Wrap(err, "fileStatus")
-		}
-		status.ContentsMatch = linkDst == cachePath
 	}
 	return status, nil
 }
