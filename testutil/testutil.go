@@ -114,17 +114,18 @@ func AllTestCases() (out []artifact.ArtifactWithStatus) {
 			Artifact: artifact.Artifact{SkipCache: false},
 			Status:   artStatus,
 		}
-		switch artStatus.WorkspaceFileStatus {
-		case fsutil.RegularFile:
-			// Add another set of cases where an Artifact doesn't use the cache.
-			artWithStatus.SkipCache = true
-			out = append(out, artWithStatus)
-			artWithStatus.SkipCache = false
-		case fsutil.Directory:
-			artWithStatus.IsDir = true
-		}
 		out = append(out, artWithStatus)
 	}
+
+	artWithStatus := artifact.ArtifactWithStatus{
+		Artifact: artifact.Artifact{SkipCache: true},
+		Status:   artifact.Status{WorkspaceFileStatus: fsutil.RegularFile},
+	}
+	out = append(out, artWithStatus)
+	artWithStatus.HasChecksum = true
+	out = append(out, artWithStatus)
+	artWithStatus.ContentsMatch = true
+	out = append(out, artWithStatus)
 	return
 }
 

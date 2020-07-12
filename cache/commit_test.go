@@ -287,42 +287,47 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	}
 
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
+	causeErr := errors.Cause(commitErr)
+	statusWant := statusStart.Status // By default we expect nothing to change.
 
-	// TODO: TDD for #14 (skip/don't error on up-to-date files)
+	// TODO: TDD for #14 (skip/don't error on up-to-date links)
 	if statusStart.WorkspaceFileStatus == fsutil.Absent {
-		if os.IsNotExist(errors.Cause(commitErr)) {
-			return // TODO: assert expected status
+		if !os.IsNotExist(causeErr) {
+			t.Fatalf("expected Commit to return a NotExist error, got %#v", causeErr)
 		}
-		t.Fatalf("expected Commit to raise NotExist error, got %#v", commitErr)
-	} else if statusStart.WorkspaceFileStatus == fsutil.Link {
-		if commitErr != nil {
-			return // TODO: assert expected status
+	} else if statusStart.WorkspaceFileStatus != fsutil.RegularFile {
+		if causeErr == nil {
+			t.Fatal("expected Commit to return an error")
 		}
-		t.Fatal("expected Commit to raise error")
 	} else if commitErr != nil {
 		t.Fatalf("unexpected error: %v", commitErr)
+	} else {
+		statusWant.HasChecksum = true
+		statusWant.ContentsMatch = true
+		// Artifact.SkipCache will not modify the cache or the workspace file, so we retain
+		// the starting values for ChecksumInCache and WorkspaceFileStatus.
+		if !art.SkipCache {
+			statusWant.ChecksumInCache = true
+			switch strat {
+			case strategy.CopyStrategy:
+				statusWant.WorkspaceFileStatus = fsutil.RegularFile
+			case strategy.LinkStrategy:
+				statusWant.WorkspaceFileStatus = fsutil.Link
+			}
+		}
 	}
-
-	testCachePermissions(cache, art, t)
 
 	statusGot, err := cache.Status(dirs.WorkDir, art)
 	if err != nil {
 		t.Fatal(err)
 	}
-	statusWant := artifact.Status{
-		HasChecksum:     true,
-		ChecksumInCache: true,
-		ContentsMatch:   true,
-	}
-	switch strat {
-	case strategy.CopyStrategy:
-		statusWant.WorkspaceFileStatus = fsutil.RegularFile
-	case strategy.LinkStrategy:
-		statusWant.WorkspaceFileStatus = fsutil.Link
-	}
 
 	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
+	}
+
+	if statusWant.ChecksumInCache {
+		testCachePermissions(cache, art, t)
 	}
 }
 

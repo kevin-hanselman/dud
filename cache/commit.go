@@ -46,7 +46,7 @@ var commitFileArtifact = func(
 		return errors.Wrap(err, errorPrefix)
 	}
 	if status.WorkspaceFileStatus == fsutil.Absent {
-		return errors.Wrapf(os.ErrNotExist, "commitFile: %#v does not exist", workPath)
+		return errors.Wrapf(os.ErrNotExist, "%s: %#v does not exist", errorPrefix, workPath)
 	}
 	if status.WorkspaceFileStatus != fsutil.RegularFile {
 		return fmt.Errorf("%s: not a regular file", errorPrefix)
@@ -56,6 +56,15 @@ var commitFileArtifact = func(
 		return errors.Wrap(err, errorPrefix)
 	}
 	defer srcFile.Close()
+
+	if art.SkipCache {
+		cksum, err := checksum.Checksum(srcFile, 0)
+		if err != nil {
+			return errors.Wrap(err, errorPrefix)
+		}
+		art.Checksum = cksum
+		return nil
+	}
 
 	sameFs, err := fsutil.SameFilesystem(workPath, ch.Dir())
 	if err != nil {

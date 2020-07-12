@@ -71,7 +71,6 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 	if status.SkipCache != art.SkipCache {
 		t.Fatalf("Output Artifact.SkipCache (%v) != ArtWithStatus.SkipCache (%v)", art.SkipCache, status.SkipCache)
 	}
-	// TODO: assert: when skipcache set, contentsmatch means file matches checksum
 
 	// verify workPath existences matches status.WorkspaceFileStatus
 	workPath := filepath.Join(dirs.WorkDir, art.Path)

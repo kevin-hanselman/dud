@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/kevlar1818/duc/artifact"
+	"github.com/kevlar1818/duc/checksum"
 	"github.com/kevlar1818/duc/fsutil"
 	"github.com/pkg/errors"
 )
@@ -58,18 +59,35 @@ var quickStatus = func(
 
 var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
+	errorPrefix := "file status"
 	if err != nil {
-		return status, errors.Wrap(err, "fileStatus")
+		return status, errors.Wrap(err, errorPrefix)
 	}
 
-	if !status.ChecksumInCache {
+	if status.WorkspaceFileStatus != fsutil.RegularFile {
 		return status, nil
 	}
 
-	if status.WorkspaceFileStatus == fsutil.RegularFile {
+	if art.SkipCache {
+		if !status.HasChecksum {
+			return status, nil
+		}
+		fileReader, err := os.Open(workPath)
+		if err != nil {
+			return status, errors.Wrap(err, errorPrefix)
+		}
+		workspaceFileChecksum, err := checksum.Checksum(fileReader, 0)
+		if err != nil {
+			return status, errors.Wrap(err, errorPrefix)
+		}
+		status.ContentsMatch = workspaceFileChecksum == art.Checksum
+	} else {
+		if !status.ChecksumInCache {
+			return status, nil
+		}
 		status.ContentsMatch, err = fsutil.SameContents(workPath, cachePath)
 		if err != nil {
-			return status, errors.Wrap(err, "fileStatus")
+			return status, errors.Wrap(err, errorPrefix)
 		}
 	}
 	return status, nil
