@@ -16,7 +16,7 @@ import (
 // building block of DUC pipelines.
 type Stage struct {
 	Checksum   string `yaml:",omitempty"`
-	Command    string
+	Command    string `yaml:",omitempty"`
 	WorkingDir string
 	Outputs    []artifact.Artifact
 }

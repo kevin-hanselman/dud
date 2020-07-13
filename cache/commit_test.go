@@ -288,14 +288,15 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 
 	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
 	causeErr := errors.Cause(commitErr)
-	statusWant := statusStart.Status // By default we expect nothing to change.
 
-	// TODO: TDD for #14 (skip/don't error on up-to-date links)
+	// By default, expect commit to fail and leave the workspace/cache untouched.
+	statusWant := statusStart.Status
+
 	if statusStart.WorkspaceFileStatus == fsutil.Absent {
 		if !os.IsNotExist(causeErr) {
 			t.Fatalf("expected Commit to return a NotExist error, got %#v", causeErr)
 		}
-	} else if statusStart.WorkspaceFileStatus != fsutil.RegularFile {
+	} else if statusStart.WorkspaceFileStatus != fsutil.RegularFile && !statusStart.ContentsMatch {
 		if causeErr == nil {
 			t.Fatal("expected Commit to return an error")
 		}
@@ -304,8 +305,9 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	} else {
 		statusWant.HasChecksum = true
 		statusWant.ContentsMatch = true
-		// Artifact.SkipCache will not modify the cache or the workspace file, so we retain
-		// the starting values for ChecksumInCache and WorkspaceFileStatus.
+		// If Artifact.SkipCache is true, commit will not modify the cache or
+		// the workspace file, so we retain the starting values for
+		// ChecksumInCache and WorkspaceFileStatus.
 		if !art.SkipCache {
 			statusWant.ChecksumInCache = true
 			switch strat {
@@ -313,6 +315,10 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 				statusWant.WorkspaceFileStatus = fsutil.RegularFile
 			case strategy.LinkStrategy:
 				statusWant.WorkspaceFileStatus = fsutil.Link
+			}
+			// If we started out up-to-date, we shouldn't change workspace state.
+			if statusStart.WorkspaceFileStatus == fsutil.Link && statusStart.ContentsMatch {
+				statusWant.WorkspaceFileStatus = statusStart.WorkspaceFileStatus
 			}
 		}
 	}

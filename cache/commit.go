@@ -41,15 +41,18 @@ var commitFileArtifact = func(
 ) error {
 	// ignore cachePath because the artifact likely has a stale or empty checksum
 	status, _, workPath, err := quickStatus(ch, workingDir, *art)
-	errorPrefix := fmt.Sprintf("commit %#v", workPath)
+	errorPrefix := fmt.Sprintf("commit %s", workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
 	if status.WorkspaceFileStatus == fsutil.Absent {
-		return errors.Wrapf(os.ErrNotExist, "%s: %#v does not exist", errorPrefix, workPath)
+		return errors.Wrap(errors.Wrap(os.ErrNotExist, workPath), errorPrefix)
+	}
+	if status.ContentsMatch {
+		return nil
 	}
 	if status.WorkspaceFileStatus != fsutil.RegularFile {
-		return fmt.Errorf("%s: not a regular file", errorPrefix)
+		return errors.Wrap(errors.New("not a regular file"), errorPrefix)
 	}
 	srcFile, err := os.Open(workPath)
 	if err != nil {
@@ -154,6 +157,8 @@ func commitDirArtifact(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
+	// TODO: for all cache-/wspace-modifying calls, add boolean output to
+	// signal if any changes were made
 	baseDir := filepath.Join(workingDir, art.Path)
 	entries, err := readDir(baseDir)
 	if err != nil {
@@ -161,6 +166,8 @@ func commitDirArtifact(
 	}
 	errGroup, childCtx := errgroup.WithContext(ctx)
 	childArtChan := make(chan *artifact.Artifact, len(entries))
+	// TODO: for #14, run some version of dirArtifactStatus (that quits early if any non-links?)
+	// get dir manifest from that call?
 	manifest := directoryManifest{Path: baseDir}
 	for i := range entries {
 		// This verbose declaration of entry is necessary to avoid capturing
