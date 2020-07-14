@@ -24,7 +24,7 @@ type Status map[string]string
 func (s *Stage) UpdateChecksum() (err error) {
 	cleanStage := Stage{
 		WorkingDir: s.WorkingDir,
-		Outputs: make([]artifact.Artifact, len(s.Outputs)),
+		Outputs:    make([]artifact.Artifact, len(s.Outputs)),
 	}
 	for i, art := range s.Outputs {
 		art.Checksum = ""

@@ -1,12 +1,9 @@
-.PHONY: docker_build test test-int %-test-cov bench fmt clean tidy loc mocks depgraph hyperfine
+.PHONY: test test-int %-test-cov bench fmt clean tidy loc mocks depgraph hyperfine integration-%
 
 DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
 
-duc: test
+duc:
 	go build -o duc
-
-docker_build:
-	docker build -t go_dev .
 
 test: fmt
 	go vet ./...
@@ -31,6 +28,15 @@ int-test-cov.out:
 all-test-cov.out:
 	go test ./... -coverprofile=$@
 
+integration-image:
+	docker build -t duc_integration ./integration/
+
+integration-env: integration-image duc
+	docker run --rm -it -v $(shell pwd)/duc:/usr/bin/duc duc_integration
+
+integration-tests: integration-image duc
+	docker run --rm -v $(shell pwd)/duc:/usr/bin/duc duc_integration duc --help
+
 fmt:
 	gofmt -s -w .
 
@@ -46,7 +52,8 @@ loc:
 	tokei --sort lines --exclude "*_test.go"
 
 mockery:
-	curl -L https://github.com/vektra/mockery/releases/download/v1.1.2/mockery_1.1.2_Linux_x86_64.tar.gz | tar -zxvf - mockery
+	curl -L https://github.com/vektra/mockery/releases/download/v1.1.2/mockery_1.1.2_Linux_x86_64.tar.gz \
+		| tar -zxvf - mockery
 
 mocks: mockery
 	./mockery -all
