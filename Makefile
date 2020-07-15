@@ -32,10 +32,19 @@ integration-image:
 	docker build -t duc_integration ./integration/
 
 integration-env: integration-image duc
-	docker run --rm -it -v $(shell pwd)/duc:/usr/bin/duc duc_integration
+	docker run \
+		--rm \
+		-it \
+		-v $(shell pwd)/duc:/usr/bin/duc \
+		-v $(shell pwd)/integration:/integration:ro \
+	duc_integration
 
 integration-tests: integration-image duc
-	docker run --rm -v $(shell pwd)/duc:/usr/bin/duc duc_integration duc --help
+	docker run \
+		--rm \
+		-v $(shell pwd)/duc:/usr/bin/duc \
+		-v $(shell pwd)/integration:/integration:ro \
+	duc_integration python /integration/run_tests.py
 
 fmt:
 	gofmt -s -w .
