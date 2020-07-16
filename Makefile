@@ -36,14 +36,14 @@ integration-env: integration-image duc
 		--rm \
 		-it \
 		-v $(shell pwd)/duc:/usr/bin/duc \
-		-v $(shell pwd)/integration:/integration:ro \
+		-v $(shell pwd)/integration:/integration \
 	duc_integration
 
 integration-tests: integration-image duc
 	docker run \
 		--rm \
 		-v $(shell pwd)/duc:/usr/bin/duc \
-		-v $(shell pwd)/integration:/integration:ro \
+		-v $(shell pwd)/integration:/integration \
 	duc_integration python /integration/run_tests.py
 
 fmt:
