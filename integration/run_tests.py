@@ -77,12 +77,13 @@ def run_tests(test_def_dir):
     output_width = 60
     sub_dirs = _normalize_paths(glob.glob(os.path.join(test_def_dir, '*', '')))
     has_sub_dirs = len(sub_dirs) > 0
-    if not has_sub_dirs:
-        sub_dirs = [test_def_dir]
 
-    print(f'{os.path.basename(test_def_dir):.<{output_width}}', end='')
+    test_name = os.path.basename(test_def_dir)
     if has_sub_dirs:
-        print()
+        print(test_name)
+    else:
+        print(f'{test_name:.<{output_width}}', end='')
+        sub_dirs = [test_def_dir]
 
     for sub_dir in sub_dirs:
         if has_sub_dirs:
@@ -94,7 +95,7 @@ def run_tests(test_def_dir):
             )
             print('OK')
         except subprocess.CalledProcessError as proc:
-            print('FAIL')
+            print('FAIL\n')
             print(proc)
             if proc.stdout:
                 print('-STDOUT-')
@@ -102,7 +103,8 @@ def run_tests(test_def_dir):
             if proc.stderr:
                 print('-STDERR-')
                 print(proc.stderr.decode())
-            break  # stop running sub-tests on a failure
+            return False  # stop running sub-tests on a failure
+    return True
 
 
 if __name__ == '__main__':
@@ -114,6 +116,9 @@ if __name__ == '__main__':
         # is key when using os.path.join.
         test_dirs = sys.argv[1:]
 
+    all_successful = True
     for test_def_dir in _normalize_paths(test_dirs):
         repo_dir = set_up(test_def_dir)
-        run_tests(test_def_dir)
+        all_successful &= run_tests(test_def_dir)
+
+    sys.exit(0 if all_successful else 1)
