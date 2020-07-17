@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 	"testing"
 
@@ -336,12 +335,6 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 		testCachePermissions(cache, art, t)
 	}
 }
-
-type byPath []*artifact.Artifact
-
-func (a byPath) Len() int           { return len(a) }
-func (a byPath) Less(i, j int) bool { return strings.Compare(a[i].Path, a[j].Path) < 0 }
-func (a byPath) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 func testCachePermissions(cache *LocalCache, art artifact.Artifact, t *testing.T) {
 	fileCachePath, err := cache.PathForChecksum(art.Checksum)

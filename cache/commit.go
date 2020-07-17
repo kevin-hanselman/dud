@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
@@ -201,6 +203,9 @@ func commitDirArtifact(
 	for childArt := range childArtChan {
 		manifest.Contents = append(manifest.Contents, childArt)
 	}
+	// Because we commit the child artifacts concurrently, they will arrive
+	// here in any order. We sort the array to keep the manifest deterministic.
+	sort.Sort(byPath(manifest.Contents))
 	cksum, err := commitDirManifest(ch, &manifest)
 	if err != nil {
 		return err
@@ -208,3 +213,8 @@ func commitDirArtifact(
 	art.Checksum = cksum
 	return nil
 }
+
+type byPath []*artifact.Artifact
+func (a byPath) Len() int           { return len(a) }
+func (a byPath) Less(i, j int) bool { return strings.Compare(a[i].Path, a[j].Path) < 0 }
+func (a byPath) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

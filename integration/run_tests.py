@@ -72,6 +72,7 @@ def set_up(test_def_dir):
 def _normalize_paths(paths):
     return sorted(os.path.normpath(path) for path in paths)
 
+
 def run_tests(test_def_dir):
     output_width = 60
     sub_dirs = _normalize_paths(glob.glob(os.path.join(test_def_dir, '*', '')))
