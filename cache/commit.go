@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/checksum"
@@ -43,7 +44,7 @@ var commitFileArtifact = func(
 ) error {
 	// ignore cachePath because the artifact likely has a stale or empty checksum
 	status, _, workPath, err := quickStatus(ch, workingDir, *art)
-	errorPrefix := fmt.Sprintf("commit %s", workPath)
+	errorPrefix := fmt.Sprintf("commit file %s", workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
@@ -161,6 +162,24 @@ func commitDirArtifact(
 ) error {
 	// TODO: for all cache-/wspace-modifying calls, add boolean output to
 	// signal if any changes were made
+
+	// TODO: don't bother checking if regular files are up-to-date
+	// TODO: return readdir output for use here?
+	status, oldManifest, err := dirArtifactStatus(ch, workingDir, *art)
+	if err != nil {
+		return err
+	}
+	if status.ContentsMatch {
+		return nil
+	}
+
+	var manifestPaths sync.Map
+	for i := range oldManifest.Contents {
+		// TODO: Consider storing manifest contents as a map of this form.
+		// We do this same O(n) transformation in dirArtifactStatus.
+		manifestPaths.Store(oldManifest.Contents[i].Path, oldManifest.Contents[i])
+	}
+
 	baseDir := filepath.Join(workingDir, art.Path)
 	entries, err := readDir(baseDir)
 	if err != nil {
@@ -168,31 +187,36 @@ func commitDirArtifact(
 	}
 	errGroup, childCtx := errgroup.WithContext(ctx)
 	childArtChan := make(chan *artifact.Artifact, len(entries))
-	// TODO: for #14, run some version of dirArtifactStatus (that quits early if any non-links?)
-	// get dir manifest from that call?
-	manifest := directoryManifest{Path: baseDir}
+	newManifest := directoryManifest{Path: baseDir}
 	for i := range entries {
 		// This verbose declaration of entry is necessary to avoid capturing
 		// loop variables in the closure below.
 		// See: https://eli.thegreenplace.net/2019/go-internals-capturing-loop-variables-in-closures/
 		entry := entries[i]
 		errGroup.Go(func() error {
-			childArt := artifact.Artifact{Path: entry.Name()}
+			path := entry.Name()
+			// See if we can recover a sub-artifact from an existing dirManifest. This
+			// is important for skipping up-to-date artifacts.
+			childArt := &artifact.Artifact{Path: path}
+			mapVal, ok := manifestPaths.Load(path)
+			if ok {
+				childArt = mapVal.(*artifact.Artifact)
+			}
 			if entry.IsDir() {
 				if !art.IsRecursive {
 					return nil
 				}
 				childArt.IsDir = true
 				childArt.IsRecursive = true
-				if err := commitDirArtifact(childCtx, ch, baseDir, &childArt, strat); err != nil {
+				if err := commitDirArtifact(childCtx, ch, baseDir, childArt, strat); err != nil {
 					return err
 				}
 			} else { // TODO: ensure regular file or symlink
-				if err := commitFileArtifact(ch, baseDir, &childArt, strat); err != nil {
+				if err := commitFileArtifact(ch, baseDir, childArt, strat); err != nil {
 					return err
 				}
 			}
-			childArtChan <- &childArt
+			childArtChan <- childArt
 			return nil
 		})
 	}
@@ -201,12 +225,12 @@ func commitDirArtifact(
 	}
 	close(childArtChan)
 	for childArt := range childArtChan {
-		manifest.Contents = append(manifest.Contents, childArt)
+		newManifest.Contents = append(newManifest.Contents, childArt)
 	}
 	// Because we commit the child artifacts concurrently, they will arrive
 	// here in any order. We sort the array to keep the manifest deterministic.
-	sort.Sort(byPath(manifest.Contents))
-	cksum, err := commitDirManifest(ch, &manifest)
+	sort.Sort(byPath(newManifest.Contents))
+	cksum, err := commitDirManifest(ch, &newManifest)
 	if err != nil {
 		return err
 	}
@@ -215,6 +239,7 @@ func commitDirArtifact(
 }
 
 type byPath []*artifact.Artifact
+
 func (a byPath) Len() int           { return len(a) }
 func (a byPath) Less(i, j int) bool { return strings.Compare(a[i].Path, a[j].Path) < 0 }
 func (a byPath) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

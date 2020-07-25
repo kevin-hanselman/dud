@@ -264,7 +264,7 @@ func TestCommitIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	for _, testCase := range testutil.AllTestCases() {
+	for _, testCase := range testutil.AllFileTestCases() {
 		for _, strat := range []strategy.CheckoutStrategy{strategy.CopyStrategy, strategy.LinkStrategy} {
 			t.Run(fmt.Sprintf("%s %+v", strat, testCase), func(t *testing.T) {
 				testCommitIntegration(strat, testCase, t)

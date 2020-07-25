@@ -91,7 +91,6 @@ var checkoutFile = func(
 			return fmt.Errorf("%s: found checksum %#v, expected %#v", errorPrefix, checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
-		// TODO: hardlink when possible?
 		if err := os.Symlink(cachePath, workPath); err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}

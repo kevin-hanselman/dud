@@ -34,7 +34,7 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	for _, status := range AllTestCases() {
+	for _, status := range AllFileTestCases() {
 		t.Run(fmt.Sprintf("%+v", status), func(t *testing.T) {
 			testCreateArtifactTestCaseIntegration(status, t)
 		})

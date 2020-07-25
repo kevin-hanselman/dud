@@ -68,9 +68,9 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 	return
 }
 
-// AllTestCases returns a slice of all valid artifact.Status structs.
+// AllFileTestCases returns a slice of all valid artifact.Status structs.
 // (See status.txt in the project root)
-func AllTestCases() (out []artifact.ArtifactWithStatus) {
+func AllFileTestCases() (out []artifact.ArtifactWithStatus) {
 	allArtifactStatuses := []artifact.Status{}
 	allWorkspaceStatuses := []fsutil.FileStatus{
 		fsutil.Absent,
