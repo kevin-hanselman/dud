@@ -1,57 +1,39 @@
-.PHONY: test test-int %-test-cov bench fmt clean tidy loc mocks depgraph hyperfine integration-%
+.PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine build-benchmark
 
-DOCKER = docker run --rm -v '$(shell pwd):/src' go_dev
-
-duc:
+duc: test-all
 	go build -o duc
-
-test: fmt
-	go vet ./...
-	go test -race -short ./...
-	golint ./...
-
-test-all: test
-	go test -race -run Integration ./...
-
-bench: test
-	go test ./... -benchmem -bench .
-
-%-test-cov: %-test-cov.out
-	go tool cover -html=$<
-
-unit-test-cov.out:
-	go test -short ./... -coverprofile=$@
-
-int-test-cov.out:
-	go test -run Integration ./... -coverprofile=$@
-
-all-test-cov.out:
-	go test ./... -coverprofile=$@
-
-integration-image:
-	docker build -t duc_integration ./integration/
-
-integration-env: integration-image duc
-	docker run \
-		--rm \
-		-it \
-		-v $(shell pwd)/duc:/usr/bin/duc \
-		-v $(shell pwd)/integration:/integration \
-	duc_integration
-
-integration-tests: integration-image duc
-	docker run \
-		--rm \
-		-v $(shell pwd)/duc:/usr/bin/duc \
-		-v $(shell pwd)/integration:/integration \
-	duc_integration python /integration/run_tests.py
 
 fmt:
 	goimports -w .
 	gofmt -s -w .
 
+lint:
+	go vet ./...
+	golint ./...
+
+test: fmt lint
+	go test -race -short ./...
+
+test-all: fmt lint
+	go test -race ./...
+
+bench: test
+	go test ./... -benchmem -bench .
+
+%-test-cov: %-test.coverage
+	go tool cover -html=$<
+
+unit-test.coverage:
+	go test -short ./... -coverprofile=$@
+
+int-test.coverage:
+	go test -run Integration ./... -coverprofile=$@
+
+all-test.coverage:
+	go test ./... -coverprofile=$@
+
 clean:
-	rm -f *.out depgraph.png mockery
+	rm -f *.coverage *.bin depgraph.png mockery
 	go clean ./...
 
 tidy:
@@ -68,17 +50,20 @@ mockery:
 mocks: mockery
 	./mockery -all
 
-depgraph:
-	godepgraph -nostdlib $(wildcard **/*.go) | dot -Tpng -o depgraph.png
+# The awk command removes all graph edge definitions that don't include duc
+depgraph.png:
+	godepgraph -nostdlib . \
+		| awk '/^[^"]/ || /duc/ {print;}' \
+		| dot -Tpng -o $@
 
-50mb_random.bin:
-	dd if=/dev/urandom of=$@ bs=1M count=50
+%mb_random.bin:
+	dd if=/dev/urandom of=$@ bs=1M count=$(patsubst %mb_random.bin,%,$@)
 
-hyperfine: duc 50mb_random.bin
+hyperfine: 50mb_random.bin duc
 	hyperfine -L cmd sha1sum,md5sum,sha256sum,b2sum,'./duc checksum' \
-		'{cmd} 50mb_random.bin'
+		'{cmd} $<'
 	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 \
-		'./duc checksum -b{bufsize} 50mb_random.bin'
+		'./duc checksum -b{bufsize} $<'
 
 build-benchmark:
 	docker build -t duc:benchmark -f benchmarking/Dockerfile .
