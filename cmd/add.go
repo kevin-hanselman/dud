@@ -86,8 +86,8 @@ func (addtype addType) String() string {
 	return [...]string{"stageType", "artifactType"}[addtype]
 }
 
-// add will add new artifacts to a stage and the new stage to the index and the commit list,
-// or will add existing stages to the commit list
+// add will add new artifacts to a stage and the new stage to the Index (and
+// the commit list), or will add existing stages to the Index.
 func add(paths []string, idx *index.Index, outputStagePath string, isRecursive bool) error {
 
 	pathTypes, err := checkAddTypes(paths)

@@ -5,12 +5,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/mocks"
 	"github.com/kevlar1818/duc/strategy"
 )
 
-func TestSetChecksum(t *testing.T) {
+func TestUpdateChecksum(t *testing.T) {
 
 	newStage := func() Stage {
 		return Stage{
@@ -19,6 +18,9 @@ func TestSetChecksum(t *testing.T) {
 			Outputs: []artifact.Artifact{
 				{Path: "foo.txt"},
 				{Path: "bar.txt"},
+			},
+			Dependencies: []artifact.Artifact{
+				{Path: "b", IsDir: true},
 			},
 		}
 	}
@@ -69,6 +71,24 @@ func TestSetChecksum(t *testing.T) {
 		}
 	})
 
+	t.Run("stage command should affect checksum", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+
+		origChecksum := stg.Checksum
+		stg.Command = "ls this/should/affect/the/checksum"
+
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+
+		if stg.Checksum == origChecksum {
+			t.Fatal("changing stage.Command should have affected checksum")
+		}
+	})
+
 	t.Run("output artifact path should affect checksum", func(t *testing.T) {
 		stg := newStage()
 		if err := stg.UpdateChecksum(); err != nil {
@@ -94,6 +114,40 @@ func TestSetChecksum(t *testing.T) {
 
 		expected := stg
 		stg.Outputs[0].Checksum = "123456789"
+
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+		if diff := cmp.Diff(expected, stg); diff != "" {
+			t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("dependency artifact path should affect checksum", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+
+		origChecksum := stg.Checksum
+		stg.Dependencies[0].Path = "cat.png"
+
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+		if stg.Checksum == origChecksum {
+			t.Fatal("changing stage.Dependencies should have affected checksum")
+		}
+	})
+
+	t.Run("dependency artifact checksums should not affect checksum", func(t *testing.T) {
+		stg := newStage()
+		if err := stg.UpdateChecksum(); err != nil {
+			t.Fatal(err)
+		}
+
+		expected := stg
+		stg.Dependencies[0].Checksum = "123456789"
 
 		if err := stg.UpdateChecksum(); err != nil {
 			t.Fatal(err)
@@ -173,46 +227,6 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	mockCache.AssertExpectations(t)
-}
-
-func TestStatus(t *testing.T) {
-	stg := Stage{
-		Checksum:   "",
-		WorkingDir: "workDir",
-		Outputs: []artifact.Artifact{
-			{Path: "foo.txt"},
-			{Path: "bar.txt"},
-		},
-	}
-
-	artStatus := artifact.Status{
-		WorkspaceFileStatus: fsutil.RegularFile,
-		HasChecksum:         true,
-		ChecksumInCache:     true,
-		ContentsMatch:       true,
-	}
-
-	mockCache := mocks.Cache{}
-	expectedStageStatus := Status{}
-	for _, art := range stg.Outputs {
-		mockCache.On("Status", "workDir", art).Return(artStatus, nil)
-		expectedStageStatus[art.Path] = artifact.ArtifactWithStatus{
-			Artifact: art,
-			Status:   artStatus,
-		}
-	}
-
-	stageStatus, err := stg.Status(&mockCache)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	mockCache.AssertExpectations(t)
-
-	if diff := cmp.Diff(expectedStageStatus, stageStatus); diff != "" {
-		t.Fatalf("stage.Status() -want +got:\n%s", diff)
-	}
-
 }
 
 func TestFilePathForLock(t *testing.T) {

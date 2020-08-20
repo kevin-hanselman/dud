@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TODO: Remove these in favor of cleaner, simpler integration tests.
 func TestCommitDirectory(t *testing.T) {
 	t.Run("non-recursive", testCommitDirectoryNonRecursive)
 	t.Run("recursive", testCommitDirectoryRecursive)

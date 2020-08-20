@@ -10,15 +10,22 @@ import (
 
 func TestRun(t *testing.T) {
 
+	var runCommandCalled bool
 	var runCommandCalledWith string
+	var resetRunCommandMock = func() {
+		runCommandCalled = false
+		runCommandCalledWith = ""
+	}
 	runCommandOrig := runCommand
 	runCommand = func(command string) error {
+		runCommandCalled = true
 		runCommandCalledWith = command
 		return nil
 	}
 	defer func() { runCommand = runCommandOrig }()
 
-	t.Run("error if no command", func(t *testing.T) {
+	t.Run("run reports up-to-date even if no command", func(t *testing.T) {
+		defer resetRunCommandMock()
 		stg := Stage{
 			Command:    "",
 			WorkingDir: "workDir",
@@ -29,14 +36,68 @@ func TestRun(t *testing.T) {
 		}
 		mockCache := mocks.Cache{}
 
-		if _, err := stg.Run(&mockCache); err == nil {
-			t.Fatal("expected Stage.Run() to return an error")
+		artStatus := artifact.Status{
+			WorkspaceFileStatus: fsutil.RegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
 		}
 
-		mockCache.AssertNotCalled(t, "Status")
+		for _, art := range stg.Outputs {
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+		}
+
+		upToDate, err := stg.Run(&mockCache)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !upToDate {
+			t.Fatal("expected Run() to return upToDate = true")
+		}
+		if runCommandCalled {
+			t.Fatal("runCommand unexpectedly called")
+		}
+		mockCache.AssertExpectations(t)
 	})
 
-	t.Run("will NOT run if artifacts up to date", func(t *testing.T) {
+	t.Run("run reports out-of-date even if no command", func(t *testing.T) {
+		defer resetRunCommandMock()
+		stg := Stage{
+			Command:    "",
+			WorkingDir: "workDir",
+			Outputs: []artifact.Artifact{
+				{Path: "foo.txt"},
+				{Path: "bar.txt"},
+			},
+		}
+		mockCache := mocks.Cache{}
+
+		artStatus := artifact.Status{
+			WorkspaceFileStatus: fsutil.RegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     false,
+			ContentsMatch:       false,
+		}
+
+		for _, art := range stg.Outputs {
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+		}
+
+		upToDate, err := stg.Run(&mockCache)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if upToDate {
+			t.Fatal("expected Run() to return upToDate = false")
+		}
+		if runCommandCalled {
+			t.Fatal("runCommand unexpectedly called")
+		}
+		mockCache.AssertExpectations(t)
+	})
+
+	t.Run("run is no-op if artifacts up-to-date", func(t *testing.T) {
+		defer resetRunCommandMock()
 		stg := Stage{
 			Command:    "echo 'hello world'",
 			WorkingDir: "workDir",
@@ -58,20 +119,21 @@ func TestRun(t *testing.T) {
 			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		ran, err := stg.Run(&mockCache)
+		upToDate, err := stg.Run(&mockCache)
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		mockCache.AssertExpectations(t)
-
-		if ran {
-			t.Fatal("expected Stage.Run() to return ran = false")
+		if !upToDate {
+			t.Fatal("expected Run() to return upToDate = true")
 		}
+		if runCommandCalled {
+			t.Fatal("runCommand unexpectedly called")
+		}
+		mockCache.AssertExpectations(t)
 	})
 
-	t.Run("will run if artifacts NOT up to date", func(t *testing.T) {
-		runCommandCalledWith = ""
+	t.Run("run executes if outputs out-of-date", func(t *testing.T) {
+		defer resetRunCommandMock()
 		stg := Stage{
 			Command:    "echo 'hello world'",
 			WorkingDir: "workDir",
@@ -93,21 +155,23 @@ func TestRun(t *testing.T) {
 			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		ran, err := stg.Run(&mockCache)
+		upToDate, err := stg.Run(&mockCache)
 		if err != nil {
 			t.Fatal(err)
 		}
-
-		mockCache.AssertExpectations(t)
-
-		if !ran {
-			t.Fatal("expected Stage.Run() to return ran = true")
+		if upToDate {
+			t.Fatal("expected Run() to return upToDate = false")
 		}
-
-		if runCommandCalledWith == "" {
+		if !runCommandCalled {
 			t.Fatal("runCommand not called")
-		} else if runCommandCalledWith != stg.Command {
+		}
+		if runCommandCalledWith != stg.Command {
 			t.Fatalf("runCommand called with %#v, want %#v", runCommandCalledWith, stg.Command)
 		}
+		mockCache.AssertExpectations(t)
+	})
+
+	t.Run("run executes if dependencies out-of-date", func(t *testing.T) {
+		t.Fatal("TODO")
 	})
 }

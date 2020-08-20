@@ -1,12 +1,11 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/kevlar1818/duc/cache"
-	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/index"
-	"github.com/kevlar1818/duc/stage"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,24 +39,24 @@ var checkoutCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		idx := make(index.Index)
-		if err := fsutil.FromYamlFile(indexPath, &idx); err != nil {
+		idx, err := index.FromFile(indexPath)
+		if err != nil {
 			log.Fatal(err)
 		}
 
-		if len(args) == 0 { // By default, checkout everything in the Index.
+		// By default, checkout everything in the Index.
+		if len(args) == 0 {
 			for path := range idx {
 				args = append(args, path)
 			}
 		}
 
-		// TODO: ensure stage is in the Index before trying to checkout?
 		for _, path := range args {
-			stg := new(stage.Stage)
-			if err := fsutil.FromYamlFile(stage.FilePathForLock(path), stg); err != nil {
-				log.Fatal(err)
+			entry, ok := idx[path]
+			if !ok {
+				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}
-			if err := stg.Checkout(ch, strat); err != nil {
+			if err := entry.Stage.Checkout(ch, strat); err != nil {
 				log.Fatal(err)
 			}
 		}
