@@ -54,19 +54,10 @@ var commitCmd = &cobra.Command{
 			if !entry.ToCommit {
 				continue
 			}
-			// Try to load the lock file first (to enable early-quit if any
-			// artifacts are already committed).
-			lockPath := stage.FilePathForLock(stagePath)
-			lockPathExists, err := fsutil.Exists(lockPath, false)
-			if err != nil {
-				log.Fatal(err)
-			}
-			if lockPathExists {
-				stagePath = lockPath
-			}
 			if err := entry.Stage.Commit(ch, strat); err != nil {
 				log.Fatal(err)
 			}
+			lockPath := stage.FilePathForLock(stagePath)
 			if err := fsutil.ToYamlFile(lockPath, entry.Stage); err != nil {
 				log.Fatal(err)
 			}

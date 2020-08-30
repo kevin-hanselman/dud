@@ -11,6 +11,7 @@ import (
 )
 
 // ChecksumObject returns the checksum of an object's encoded bytes.
+// TODO: currently unused; delete?
 func ChecksumObject(v interface{}) (string, error) {
 	h := blake3.New()
 	enc := gob.NewEncoder(h)

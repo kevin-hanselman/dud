@@ -5,23 +5,20 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/jinzhu/copier"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/cache"
-	"github.com/kevlar1818/duc/checksum"
+	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/strategy"
 	"github.com/pkg/errors"
 )
 
+var fromYamlFile = fsutil.FromYamlFile
+
 // A Stage holds all information required to reproduce data. It is the primary
 // building block of Duc pipelines.
 type Stage struct {
-	// TODO: The Checksum field is probably unnecessary. If we have a stage
-	// file and a paired lock file, just load both Stages and compare the
-	// pertinent fields in an Equals method; this alternative is about the same
-	// amount of work as loading one and checksumming it, and it avoids adding
-	// another field to the lock file.
-	Checksum     string `yaml:",omitempty"`
 	Command      string `yaml:",omitempty"`
 	WorkingDir   string
 	Dependencies []artifact.Artifact `yaml:",omitempty"`
@@ -31,22 +28,54 @@ type Stage struct {
 // Status holds a map of artifact names to statuses
 type Status map[string]artifact.ArtifactWithStatus
 
-// UpdateChecksum updates the Checksum field of the Stage.
-func (s *Stage) UpdateChecksum() (err error) {
-	var cleanStage Stage
-	if err = copier.Copy(&cleanStage, s); err != nil {
-		return
+// IsEquivalent return true if the two Stage objects are deeply equal in all
+// fields besides Artifact Checksum fields.
+func (s *Stage) IsEquivalent(other Stage) (bool, error) {
+	var selfClean, otherClean Stage
+	if err := copier.Copy(&selfClean, s); err != nil {
+		return false, err
 	}
-	// Remove Stage checksum and all artifact checksums
-	cleanStage.Checksum = ""
-	for i := range cleanStage.Outputs {
-		cleanStage.Outputs[i].Checksum = ""
+	if err := copier.Copy(&otherClean, other); err != nil {
+		return false, err
 	}
-	for i := range cleanStage.Dependencies {
-		cleanStage.Dependencies[i].Checksum = ""
+	// Remove all artifact checksums
+	for i := range selfClean.Outputs {
+		selfClean.Outputs[i].Checksum = ""
 	}
-	s.Checksum, err = checksum.ChecksumObject(cleanStage)
-	return
+	for i := range selfClean.Dependencies {
+		selfClean.Dependencies[i].Checksum = ""
+	}
+	for i := range otherClean.Outputs {
+		otherClean.Outputs[i].Checksum = ""
+	}
+	for i := range otherClean.Dependencies {
+		otherClean.Dependencies[i].Checksum = ""
+	}
+	return cmp.Equal(selfClean, otherClean), nil
+}
+
+// FromFile loads a Stage from a file. If a lock file exists and is equivalent
+// (see stage.IsEquivalent), it loads the Stage's locked version.
+var FromFile = func(stagePath string) (Stage, bool, error) {
+	var stg, locked Stage
+	if err := fromYamlFile(stagePath, &stg); err != nil {
+		return stg, false, err
+	}
+	lockPath := FilePathForLock(stagePath)
+	err := fromYamlFile(lockPath, &locked)
+	if os.IsNotExist(err) {
+		return stg, false, nil
+	} else if err != nil {
+		return locked, false, err
+	}
+	isEquiv, err := locked.IsEquivalent(stg)
+	if err != nil {
+		return stg, false, err
+	}
+	if isEquiv {
+		return locked, true, nil
+	}
+	return stg, false, nil
 }
 
 // Commit commits all Outputs of the Stage.
@@ -57,7 +86,7 @@ func (s *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error {
 			return errors.Wrap(err, "stage commit failed")
 		}
 	}
-	return s.UpdateChecksum()
+	return nil
 }
 
 // Checkout checks out all Outputs of the Stage.
@@ -103,6 +132,7 @@ func (s *Stage) Run(ch cache.Cache) (upToDate bool, err error) {
 }
 
 // FromPaths creates a Stage from one or more file paths.
+// TODO: rename or delete (to differentiate from FromFile)
 func FromPaths(isRecursive bool, paths ...string) (stg Stage, err error) {
 	stg.Outputs = make([]artifact.Artifact, len(paths))
 
@@ -115,9 +145,7 @@ func FromPaths(isRecursive bool, paths ...string) (stg Stage, err error) {
 	return
 }
 
-// FilePathForLock returns the lock-file path given a stage file path.
-// TODO: expand this to stage.FromFile to abstract choosing between lock and
-// non-lock files.
+// FilePathForLock returns the lock file path given a Stage path.
 func FilePathForLock(stagePath string) string {
 	var str strings.Builder
 	// TODO: check for valid YAML, or at least .y(a)ml extension?

@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"errors"
+	"os"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -9,11 +11,10 @@ import (
 	"github.com/kevlar1818/duc/strategy"
 )
 
-func TestUpdateChecksum(t *testing.T) {
+func TestEquivalency(t *testing.T) {
 
 	newStage := func() Stage {
 		return Stage{
-			Checksum:   "",
 			WorkingDir: "dir",
 			Outputs: []artifact.Artifact{
 				{Path: "foo.txt"},
@@ -25,135 +26,213 @@ func TestUpdateChecksum(t *testing.T) {
 		}
 	}
 
-	t.Run("checksum gets populated", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
+	t.Run("identical stages are equivalent", func(t *testing.T) {
+		a, b := newStage(), newStage()
+		isEq, err := a.IsEquivalent(b)
+		if err != nil {
 			t.Fatal(err)
 		}
-		if stg.Checksum == "" {
-			t.Fatal("stage.SetChecksum() didn't change (empty) checksum")
+		if !isEq {
+			t.Fatal("stage.IsEquivalent() returned false")
 		}
 	})
 
-	t.Run("stage checksum should not affect checksum", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
+	t.Run("differing WorkingDir not equivalent", func(t *testing.T) {
+		a, b := newStage(), newStage()
+		b.WorkingDir = "different/dir"
+
+		isEq, err := a.IsEquivalent(b)
+		if err != nil {
 			t.Fatal(err)
 		}
-		expected := stg
-
-		stg.Checksum = "this should not affect the checksum"
-
-		if err := stg.UpdateChecksum(); err != nil {
-			t.Fatal(err)
-		}
-
-		if diff := cmp.Diff(expected, stg); diff != "" {
-			t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
+		if isEq {
+			t.Fatal("stage.IsEquivalent() returned true")
 		}
 	})
 
-	t.Run("stage workdir should affect checksum", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
+	t.Run("differing Command not equivalent", func(t *testing.T) {
+		a, b := newStage(), newStage()
+		b.Command = "echo 'foo'"
+
+		isEq, err := a.IsEquivalent(b)
+		if err != nil {
 			t.Fatal(err)
 		}
-
-		origChecksum := stg.Checksum
-		stg.WorkingDir = "this/should/affect/the/checksum"
-
-		if err := stg.UpdateChecksum(); err != nil {
-			t.Fatal(err)
-		}
-
-		if stg.Checksum == origChecksum {
-			t.Fatal("changing stage.WorkingDir should have affected checksum")
+		if isEq {
+			t.Fatal("stage.IsEquivalent() returned true")
 		}
 	})
 
-	t.Run("stage command should affect checksum", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
+	t.Run("differing paths in Outputs not equivalent", func(t *testing.T) {
+		a, b := newStage(), newStage()
+		b.Outputs[0].Path = "fizz.buzz"
+
+		isEq, err := a.IsEquivalent(b)
+		if err != nil {
 			t.Fatal(err)
 		}
-
-		origChecksum := stg.Checksum
-		stg.Command = "ls this/should/affect/the/checksum"
-
-		if err := stg.UpdateChecksum(); err != nil {
-			t.Fatal(err)
-		}
-
-		if stg.Checksum == origChecksum {
-			t.Fatal("changing stage.Command should have affected checksum")
+		if isEq {
+			t.Fatal("stage.IsEquivalent() returned true")
 		}
 	})
 
-	t.Run("output artifact path should affect checksum", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
+	t.Run("differing checksums in Outputs are equivalent", func(t *testing.T) {
+		a, b := newStage(), newStage()
+		b.Outputs[0].Checksum = "doesn't matter"
+
+		isEq, err := a.IsEquivalent(b)
+		if err != nil {
 			t.Fatal(err)
 		}
-
-		origChecksum := stg.Checksum
-		stg.Outputs[0].Path = "cat.png"
-
-		if err := stg.UpdateChecksum(); err != nil {
-			t.Fatal(err)
-		}
-		if stg.Checksum == origChecksum {
-			t.Fatal("changing stage.Outputs should have affected checksum")
+		if !isEq {
+			t.Fatal("stage.IsEquivalent() returned false")
 		}
 	})
 
-	t.Run("output artifact checksums should not affect checksum", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
+	t.Run("differing IsDir in Dependencies not equivalent", func(t *testing.T) {
+		a, b := newStage(), newStage()
+		b.Dependencies[0].IsDir = false
+
+		isEq, err := a.IsEquivalent(b)
+		if err != nil {
 			t.Fatal(err)
 		}
-
-		expected := stg
-		stg.Outputs[0].Checksum = "123456789"
-
-		if err := stg.UpdateChecksum(); err != nil {
-			t.Fatal(err)
-		}
-		if diff := cmp.Diff(expected, stg); diff != "" {
-			t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
+		if isEq {
+			t.Fatal("stage.IsEquivalent() returned true")
 		}
 	})
 
-	t.Run("dependency artifact path should affect checksum", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
+	t.Run("differing checksums in Dependencies are equivalent", func(t *testing.T) {
+		a, b := newStage(), newStage()
+		b.Dependencies[0].Checksum = "doesn't matter"
+
+		isEq, err := a.IsEquivalent(b)
+		if err != nil {
 			t.Fatal(err)
 		}
-
-		origChecksum := stg.Checksum
-		stg.Dependencies[0].Path = "cat.png"
-
-		if err := stg.UpdateChecksum(); err != nil {
-			t.Fatal(err)
-		}
-		if stg.Checksum == origChecksum {
-			t.Fatal("changing stage.Dependencies should have affected checksum")
+		if !isEq {
+			t.Fatal("stage.IsEquivalent() returned false")
 		}
 	})
 
-	t.Run("dependency artifact checksums should not affect checksum", func(t *testing.T) {
-		stg := newStage()
-		if err := stg.UpdateChecksum(); err != nil {
-			t.Fatal(err)
+	// TODO: test both Stages are not modified by call to IsEquivalent
+}
+
+func TestFromFile(t *testing.T) {
+
+	fromYamlFileOrig := fromYamlFile
+	fromYamlFile = func(path string, v interface{}) error {
+		return errors.New("Mock not implemented")
+	}
+	var resetFromYamlFileMock = func() { fromYamlFile = fromYamlFileOrig }
+
+	t.Run("loads stage file if no lock file found", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		expectedStage := Stage{WorkingDir: "foo", Command: "echo 'bar'"}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*Stage)
+			if path == "stage.yaml" {
+				*output = expectedStage
+				return nil
+			}
+			return os.ErrNotExist
 		}
 
-		expected := stg
-		stg.Dependencies[0].Checksum = "123456789"
-
-		if err := stg.UpdateChecksum(); err != nil {
+		outputStage, isLock, err := FromFile("stage.yaml")
+		if err != nil {
 			t.Fatal(err)
 		}
-		if diff := cmp.Diff(expected, stg); diff != "" {
-			t.Fatalf("checksum.Update(*Stage) -want +got:\n%s", diff)
+		if isLock {
+			t.Fatal("FromFile returned isLock = true")
+		}
+		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
+			t.Fatalf("Stage -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("loads stage file if lock file found but not equivalent", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		expectedStage := Stage{
+			WorkingDir: "foo",
+			Command:    "echo 'bar'",
+			Outputs: []artifact.Artifact{
+				{Path: "bar.txt"},
+			},
+		}
+		lockedStage := Stage{
+			WorkingDir: "foo",
+			Command:    "echo 'bar'",
+			Outputs: []artifact.Artifact{
+				{
+					Checksum: "abcdef",
+					Path:     "bar.txt",
+				},
+				{
+					Checksum: "ghijkl",
+					Path:     "inequivalent.txt",
+				},
+			},
+		}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*Stage)
+			if path == "stage.yaml" {
+				*output = expectedStage
+			} else {
+				*output = lockedStage
+			}
+			return nil
+		}
+
+		outputStage, isLock, err := FromFile("stage.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isLock {
+			t.Fatal("FromFile returned isLock = true")
+		}
+		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
+			t.Fatalf("Stage -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("loads lock file if lock file found and equivalent", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stg := Stage{
+			WorkingDir: "foo",
+			Command:    "echo 'bar'",
+			Outputs: []artifact.Artifact{
+				{Path: "bar.txt"},
+			},
+		}
+		lockedStage := Stage{
+			WorkingDir: "foo",
+			Command:    "echo 'bar'",
+			Outputs: []artifact.Artifact{
+				{
+					Checksum: "abcdef",
+					Path:     "bar.txt",
+				},
+			},
+		}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*Stage)
+			if path == "stage.yaml" {
+				*output = stg
+			} else {
+				*output = lockedStage
+			}
+			return nil
+		}
+
+		outputStage, isLock, err := FromFile("stage.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !isLock {
+			t.Fatal("FromFile returned isLock = false")
+		}
+		if diff := cmp.Diff(lockedStage, outputStage); diff != "" {
+			t.Fatalf("Stage -want +got:\n%s", diff)
 		}
 	})
 }
@@ -165,7 +244,6 @@ func TestCommit(t *testing.T) {
 
 func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	stg := Stage{
-		Checksum:   "",
 		WorkingDir: "workDir",
 		Outputs: []artifact.Artifact{
 			{
@@ -189,10 +267,7 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	mockCache.AssertExpectations(t)
-
-	if stg.Checksum == "" {
-		t.Error("expected stage checksum to be set")
-	}
+	// TODO: test artifact checksums set
 }
 
 func TestCheckout(t *testing.T) {
@@ -201,9 +276,7 @@ func TestCheckout(t *testing.T) {
 }
 
 func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
-	// TODO: Test stage checksum? What does it mean if the checksum is invalid/empty?
 	stg := Stage{
-		Checksum:   "",
 		WorkingDir: "workDir",
 		Outputs: []artifact.Artifact{
 			{

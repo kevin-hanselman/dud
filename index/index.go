@@ -6,11 +6,18 @@ import (
 )
 
 type entry struct {
+	// ToCommit is true if the stage is marked for commit
 	ToCommit bool
+	// IsLocked is true if the Stage in this entry is a locked version; i.e. it
+	// has checksummed dependencies and outputs.
+	IsLocked bool
 	Stage    stage.Stage
 }
 
 // fileFormat stores Stage paths and their ToCommit status
+// TODO: ToCommit should be separated from the Index file format at some
+// point. The index should be tracked by Git, but the commit status should not
+// be; it only makes sense on a per-clone basis.
 type fileFormat map[string]bool
 
 // An Index holds an exhaustive set of Stages for a repository.
@@ -19,16 +26,18 @@ type Index map[string]*entry
 
 var fromYamlFile = fsutil.FromYamlFile
 
-// Add adds a Stage at the given path to the Index. Add returns an error if the
-// path is invalid.
-func (idx *Index) Add(paths ...string) error {
+// AddStagesFromPaths adds the Stages at the given paths to the Index.
+func (idx *Index) AddStagesFromPaths(paths ...string) error {
 	for _, path := range paths {
-		stg := new(stage.Stage)
-		// TODO: create and use function to pick between stage and lock file
-		if err := fromYamlFile(path, stg); err != nil {
+		stg, isLock, err := stage.FromFile(path)
+		if err != nil {
 			return err
 		}
-		(*idx)[path] = &entry{ToCommit: true, Stage: *stg}
+		(*idx)[path] = &entry{
+			ToCommit: true,
+			IsLocked: isLock,
+			Stage:    stg,
+		}
 	}
 	return nil
 }
@@ -52,31 +61,23 @@ func (idx *Index) ToFile(path string) error {
 // TODO Add a "full/bare" flag to enable only loading the fileFormat struct?
 //      This would be a nice optimization not to load the whole Index when we
 //      just want to check if a path is in the Index.
-func FromFile(path string) (idx Index, err error) {
+func FromFile(path string) (Index, error) {
+	var idx Index
 	indexFile := make(fileFormat)
-	if err = fromYamlFile(path, indexFile); err != nil {
-		return
+	if err := fromYamlFile(path, indexFile); err != nil {
+		return idx, err
 	}
 	idx = make(Index)
 	for path, toCommit := range indexFile {
-		stg := new(stage.Stage)
-
-		// Try to load the lock file first.
-		lockPath := stage.FilePathForLock(path)
-
-		var lockPathExists bool
-		lockPathExists, err = fsutil.Exists(lockPath, false)
+		stg, isLock, err := stage.FromFile(path)
 		if err != nil {
-			return
+			return idx, err
 		}
-		if lockPathExists {
-			path = lockPath
+		idx[path] = &entry{
+			ToCommit: toCommit,
+			IsLocked: isLock,
+			Stage:    stg,
 		}
-
-		if err = fromYamlFile(path, stg); err != nil {
-			return
-		}
-		idx[path] = &entry{ToCommit: toCommit, Stage: *stg}
 	}
-	return
+	return idx, nil
 }

@@ -56,14 +56,11 @@ var statusCmd = &cobra.Command{
 		}
 
 		for _, path := range args {
-			stg := new(stage.Stage)
-			// TODO: We shouldn't error-out if a lockfile isn't found.
-			// A missing lockfile is essentially another state a Stage can be
-			// in. Should this be handled in Stage.Status()?
-			if err := fsutil.FromYamlFile(stage.FilePathForLock(path), stg); err != nil {
-				log.Fatal(err)
+			entry, ok := idx[path]
+			if !ok {
+				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}
-			status, err := stg.Status(ch)
+			status, err := entry.Stage.Status(ch)
 			if err != nil {
 				log.Fatal(err)
 			}

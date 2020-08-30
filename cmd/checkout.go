@@ -53,6 +53,8 @@ var checkoutCmd = &cobra.Command{
 
 		for _, path := range args {
 			entry, ok := idx[path]
+			// TODO: --force flag will need to always load the locked version
+			// of the stage.
 			if !ok {
 				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}

@@ -9,21 +9,17 @@ import (
 
 func TestAdd(t *testing.T) {
 
-	fromYamlFileOrig := fromYamlFile
-	fromYamlFile = func(path string, v interface{}) error {
-		stg, ok := v.(*stage.Stage)
-		if ok {
-			stg.WorkingDir = "."
-		}
-		return nil
+	stageFromFileOrig := stage.FromFile
+	stage.FromFile = func(path string) (stage.Stage, bool, error) {
+		return stage.Stage{}, false, nil
 	}
-	defer func() { fromYamlFile = fromYamlFileOrig }()
+	defer func() { stage.FromFile = stageFromFileOrig }()
 
 	t.Run("add new stage", func(t *testing.T) {
 		idx := make(Index)
 		path := "foo/bar.duc"
 
-		if err := idx.Add(path); err != nil {
+		if err := idx.AddStagesFromPaths(path); err != nil {
 			t.Fatal(err)
 		}
 
@@ -43,7 +39,7 @@ func TestAdd(t *testing.T) {
 		var stg stage.Stage
 		idx[path] = &entry{ToCommit: false, Stage: stg}
 
-		if err := idx.Add(path); err != nil {
+		if err := idx.AddStagesFromPaths(path); err != nil {
 			t.Fatal(err)
 		}
 
@@ -60,11 +56,11 @@ func TestAdd(t *testing.T) {
 		idx := make(Index)
 		path := "foo/bar.duc"
 
-		fromYamlFile = func(path string, v interface{}) error {
-			return os.ErrNotExist
+		stage.FromFile = func(path string) (stage.Stage, bool, error) {
+			return stage.Stage{}, false, os.ErrNotExist
 		}
 
-		err := idx.Add(path)
+		err := idx.AddStagesFromPaths(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}

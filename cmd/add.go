@@ -98,7 +98,7 @@ func add(paths []string, idx *index.Index, outputStagePath string, isRecursive b
 
 	switch pathTypes {
 	case stageType:
-		if err := idx.Add(paths...); err != nil {
+		if err := idx.AddStagesFromPaths(paths...); err != nil {
 			return err
 		}
 	case artifactType:
@@ -109,7 +109,7 @@ func add(paths []string, idx *index.Index, outputStagePath string, isRecursive b
 		if err := fsutil.ToYamlFile(outputStagePath, stg); err != nil {
 			return err
 		}
-		if err := idx.Add(outputStagePath); err != nil {
+		if err := idx.AddStagesFromPaths(outputStagePath); err != nil {
 			return err
 		}
 	}
