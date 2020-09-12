@@ -3,10 +3,9 @@ package stage
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/jinzhu/copier"
 	"github.com/kevlar1818/duc/artifact"
 	"github.com/kevlar1818/duc/cache"
 	"github.com/kevlar1818/duc/fsutil"
@@ -14,13 +13,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-var fromYamlFile = fsutil.FromYamlFile
-
 // A Stage holds all information required to reproduce data. It is the primary
 // building block of Duc pipelines.
 type Stage struct {
-	Command      string `yaml:",omitempty"`
-	WorkingDir   string
+	Command string `yaml:",omitempty"`
+	// WorkingDir is a directory path relative to Duc root directory. An empty
+	// value means the Stage's working directory _is_ the project root
+	// directory. All outputs and dependencies of the Stage are themselves
+	// relative to WorkingDir. The Stage's Command is executed in WorkingDir.
+	WorkingDir   string              `yaml:",omitempty"`
 	Dependencies []artifact.Artifact `yaml:",omitempty"`
 	Outputs      []artifact.Artifact
 }
@@ -28,31 +29,37 @@ type Stage struct {
 // Status holds a map of artifact names to statuses
 type Status map[string]artifact.ArtifactWithStatus
 
-// IsEquivalent return true if the two Stage objects are deeply equal in all
-// fields besides Artifact Checksum fields.
-func (s *Stage) IsEquivalent(other Stage) (bool, error) {
-	var selfClean, otherClean Stage
-	if err := copier.Copy(&selfClean, s); err != nil {
-		return false, err
+// IsEquivalent return true if the two Stage objects are identical besides
+// Artifact Checksum fields.
+func (stg *Stage) IsEquivalent(other Stage) bool {
+	if stg.Command != other.Command {
+		return false
 	}
-	if err := copier.Copy(&otherClean, other); err != nil {
-		return false, err
+	if stg.WorkingDir != other.WorkingDir {
+		return false
 	}
-	// Remove all artifact checksums
-	for i := range selfClean.Outputs {
-		selfClean.Outputs[i].Checksum = ""
+	if len(stg.Outputs) != len(other.Outputs) {
+		return false
 	}
-	for i := range selfClean.Dependencies {
-		selfClean.Dependencies[i].Checksum = ""
+	if len(stg.Dependencies) != len(other.Dependencies) {
+		return false
 	}
-	for i := range otherClean.Outputs {
-		otherClean.Outputs[i].Checksum = ""
+	// TODO: order of Outputs and Deps shouldn't matter
+	for i := range stg.Outputs {
+		if !stg.Outputs[i].IsEquivalent(other.Outputs[i]) {
+			return false
+		}
 	}
-	for i := range otherClean.Dependencies {
-		otherClean.Dependencies[i].Checksum = ""
+	for i := range stg.Dependencies {
+		if !stg.Dependencies[i].IsEquivalent(other.Dependencies[i]) {
+			return false
+		}
 	}
-	return cmp.Equal(selfClean, otherClean), nil
+	return true
 }
+
+// for mocking
+var fromYamlFile = fsutil.FromYamlFile
 
 // FromFile loads a Stage from a file. If a lock file exists and is equivalent
 // (see stage.IsEquivalent), it loads the Stage's locked version.
@@ -68,20 +75,16 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 	} else if err != nil {
 		return locked, false, err
 	}
-	isEquiv, err := locked.IsEquivalent(stg)
-	if err != nil {
-		return stg, false, err
-	}
-	if isEquiv {
+	if locked.IsEquivalent(stg) {
 		return locked, true, nil
 	}
 	return stg, false, nil
 }
 
 // Commit commits all Outputs of the Stage.
-func (s *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error {
-	for i := range s.Outputs {
-		if err := ch.Commit(s.WorkingDir, &s.Outputs[i], strat); err != nil {
+func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error {
+	for i := range stg.Outputs {
+		if err := ch.Commit(stg.WorkingDir, &stg.Outputs[i], strat); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage commit failed")
 		}
@@ -90,9 +93,9 @@ func (s *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error {
 }
 
 // Checkout checks out all Outputs of the Stage.
-func (s *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) error {
-	for i := range s.Outputs {
-		if err := ch.Checkout(s.WorkingDir, &s.Outputs[i], strat); err != nil {
+func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) error {
+	for i := range stg.Outputs {
+		if err := ch.Checkout(stg.WorkingDir, &stg.Outputs[i], strat); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage checkout failed")
 		}
@@ -100,11 +103,19 @@ func (s *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) error 
 	return nil
 }
 
-// Status checks the status of all Outputs of the Stage.
-func (s *Stage) Status(ch cache.Cache) (Status, error) {
+// Status checks the statuses of a subset of Artifacts owned by the Stage. If
+// checkDependencies is true, the statuses of all Dependencies are returned,
+// otherwise the statuses of all Outputs are returned.
+func (stg *Stage) Status(ch cache.Cache, checkDependencies bool) (Status, error) {
 	stat := make(Status)
-	for _, art := range s.Outputs {
-		artStatus, err := ch.Status(s.WorkingDir, art)
+	var artifacts []artifact.Artifact
+	if checkDependencies {
+		artifacts = stg.Dependencies
+	} else {
+		artifacts = stg.Outputs
+	}
+	for _, art := range artifacts {
+		artStatus, err := ch.Status(stg.WorkingDir, art)
 		if err != nil {
 			return stat, errors.Wrap(err, "stage status failed")
 		}
@@ -116,19 +127,30 @@ func (s *Stage) Status(ch cache.Cache) (Status, error) {
 	return stat, nil
 }
 
-// Run runs the Stage's command unless the Stage is up-to-date.
-func (s *Stage) Run(ch cache.Cache) (upToDate bool, err error) {
-	status, err := s.Status(ch)
+// Run runs the Stage's command unless the Stage is up-to-date. rootDir is the
+// project's root directory.
+func (stg *Stage) Run(ch cache.Cache, rootDir string) (upToDate bool, err error) {
+	outStatus, err := stg.Status(ch, false)
 	if err != nil {
 		return false, err
 	}
-	if isUpToDate(status) {
+	outputsUpToDate := isUpToDate(outStatus)
+
+	depStatus, err := stg.Status(ch, true)
+	if err != nil {
+		return false, err
+	}
+	depsUpToDate := isUpToDate(depStatus)
+
+	if outputsUpToDate && depsUpToDate {
 		return true, nil
 	}
-	if s.Command == "" {
+
+	if stg.Command == "" {
 		return false, nil
 	}
-	return false, runCommand(s.Command)
+
+	return false, runCommand(stg.createCommand(rootDir))
 }
 
 // FromPaths creates a Stage from one or more file paths.
@@ -164,17 +186,19 @@ func isUpToDate(status Status) bool {
 	return true
 }
 
-var runCommand = func(command string) error {
+func (stg Stage) createCommand(rootDir string) *exec.Cmd {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "sh"
 	}
-	cmd := exec.Command(shell, "-c", command)
-	// TODO: Set cmd.Dir appropriately. This could be tricky, as Stage working
-	// dirs are relative and need to be resolved to full paths for cmd.Dir to
-	// be set correctly. We'll probably have to look up a Stage in the Index to
-	// get its path, then concatenate the WorkingDir and resolve the path.
+	cmd := exec.Command(shell, "-c", stg.Command)
+	cmd.Dir = filepath.Join(rootDir, stg.WorkingDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	return cmd
+}
+
+// for mocking
+var runCommand = func(cmd *exec.Cmd) error {
 	return cmd.Run()
 }

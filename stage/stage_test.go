@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"errors"
 	"os"
 	"testing"
 
@@ -28,12 +27,8 @@ func TestEquivalency(t *testing.T) {
 
 	t.Run("identical stages are equivalent", func(t *testing.T) {
 		a, b := newStage(), newStage()
-		isEq, err := a.IsEquivalent(b)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !isEq {
-			t.Fatal("stage.IsEquivalent() returned false")
+		if !a.IsEquivalent(b) {
+			t.Fatal("Stages are not equivalent")
 		}
 	})
 
@@ -41,12 +36,8 @@ func TestEquivalency(t *testing.T) {
 		a, b := newStage(), newStage()
 		b.WorkingDir = "different/dir"
 
-		isEq, err := a.IsEquivalent(b)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if isEq {
-			t.Fatal("stage.IsEquivalent() returned true")
+		if a.IsEquivalent(b) {
+			t.Fatal("Stages are equivalent")
 		}
 	})
 
@@ -54,12 +45,8 @@ func TestEquivalency(t *testing.T) {
 		a, b := newStage(), newStage()
 		b.Command = "echo 'foo'"
 
-		isEq, err := a.IsEquivalent(b)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if isEq {
-			t.Fatal("stage.IsEquivalent() returned true")
+		if a.IsEquivalent(b) {
+			t.Fatal("Stages are equivalent")
 		}
 	})
 
@@ -67,12 +54,8 @@ func TestEquivalency(t *testing.T) {
 		a, b := newStage(), newStage()
 		b.Outputs[0].Path = "fizz.buzz"
 
-		isEq, err := a.IsEquivalent(b)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if isEq {
-			t.Fatal("stage.IsEquivalent() returned true")
+		if a.IsEquivalent(b) {
+			t.Fatal("Stages are equivalent")
 		}
 	})
 
@@ -80,12 +63,8 @@ func TestEquivalency(t *testing.T) {
 		a, b := newStage(), newStage()
 		b.Outputs[0].Checksum = "doesn't matter"
 
-		isEq, err := a.IsEquivalent(b)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !isEq {
-			t.Fatal("stage.IsEquivalent() returned false")
+		if !a.IsEquivalent(b) {
+			t.Fatal("Stages are not equivalent")
 		}
 	})
 
@@ -93,12 +72,8 @@ func TestEquivalency(t *testing.T) {
 		a, b := newStage(), newStage()
 		b.Dependencies[0].IsDir = false
 
-		isEq, err := a.IsEquivalent(b)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if isEq {
-			t.Fatal("stage.IsEquivalent() returned true")
+		if a.IsEquivalent(b) {
+			t.Fatal("Stages are equivalent")
 		}
 	})
 
@@ -106,12 +81,8 @@ func TestEquivalency(t *testing.T) {
 		a, b := newStage(), newStage()
 		b.Dependencies[0].Checksum = "doesn't matter"
 
-		isEq, err := a.IsEquivalent(b)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !isEq {
-			t.Fatal("stage.IsEquivalent() returned false")
+		if !a.IsEquivalent(b) {
+			t.Fatal("Stages are not equivalent")
 		}
 	})
 
@@ -122,7 +93,7 @@ func TestFromFile(t *testing.T) {
 
 	fromYamlFileOrig := fromYamlFile
 	fromYamlFile = func(path string, v interface{}) error {
-		return errors.New("Mock not implemented")
+		panic("Mock not implemented")
 	}
 	var resetFromYamlFileMock = func() { fromYamlFile = fromYamlFileOrig }
 

@@ -37,7 +37,7 @@ func TestStatus(t *testing.T) {
 			}
 		}
 
-		stageStatus, err := stg.Status(&mockCache)
+		stageStatus, err := stg.Status(&mockCache, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -50,6 +50,42 @@ func TestStatus(t *testing.T) {
 	})
 
 	t.Run("include dependencies", func(t *testing.T) {
-		//t.Fatal("TODO")
+		stg := Stage{
+			WorkingDir: "workDir",
+			Dependencies: []artifact.Artifact{
+				{Path: "foo.txt"},
+			},
+			Outputs: []artifact.Artifact{
+				{Path: "bar.txt"},
+			},
+		}
+
+		artStatus := artifact.Status{
+			WorkspaceFileStatus: fsutil.RegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
+
+		mockCache := mocks.Cache{}
+		expectedStageStatus := Status{}
+		for _, art := range stg.Dependencies {
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			expectedStageStatus[art.Path] = artifact.ArtifactWithStatus{
+				Artifact: art,
+				Status:   artStatus,
+			}
+		}
+
+		stageStatus, err := stg.Status(&mockCache, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if diff := cmp.Diff(expectedStageStatus, stageStatus); diff != "" {
+			t.Fatalf("stage.Status() -want +got:\n%s", diff)
+		}
 	})
 }

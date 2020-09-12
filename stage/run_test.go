@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"os/exec"
 	"testing"
 
 	"github.com/kevlar1818/duc/artifact"
@@ -11,18 +12,20 @@ import (
 func TestRun(t *testing.T) {
 
 	var runCommandCalled bool
-	var runCommandCalledWith string
+	var command *exec.Cmd
 	var resetRunCommandMock = func() {
 		runCommandCalled = false
-		runCommandCalledWith = ""
+		command = new(exec.Cmd)
 	}
 	runCommandOrig := runCommand
-	runCommand = func(command string) error {
+	runCommand = func(cmd *exec.Cmd) error {
 		runCommandCalled = true
-		runCommandCalledWith = command
+		command = cmd
 		return nil
 	}
 	defer func() { runCommand = runCommandOrig }()
+
+	rootDir := "rootDir"
 
 	t.Run("run reports up-to-date even if no command", func(t *testing.T) {
 		defer resetRunCommandMock()
@@ -47,7 +50,7 @@ func TestRun(t *testing.T) {
 			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache)
+		upToDate, err := stg.Run(&mockCache, rootDir)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,7 +86,7 @@ func TestRun(t *testing.T) {
 			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache)
+		upToDate, err := stg.Run(&mockCache, rootDir)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -119,7 +122,7 @@ func TestRun(t *testing.T) {
 			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache)
+		upToDate, err := stg.Run(&mockCache, rootDir)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -155,7 +158,7 @@ func TestRun(t *testing.T) {
 			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache)
+		upToDate, err := stg.Run(&mockCache, rootDir)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -165,13 +168,62 @@ func TestRun(t *testing.T) {
 		if !runCommandCalled {
 			t.Fatal("runCommand not called")
 		}
-		if runCommandCalledWith != stg.Command {
-			t.Fatalf("runCommand called with %#v, want %#v", runCommandCalledWith, stg.Command)
-		}
+		assertCorrectCommand(stg, command, t)
 		mockCache.AssertExpectations(t)
 	})
 
 	t.Run("run executes if dependencies out-of-date", func(t *testing.T) {
-		//t.Fatal("TODO")
+		defer resetRunCommandMock()
+		stg := Stage{
+			Command:    "echo 'hello world'",
+			WorkingDir: "workDir",
+			Dependencies: []artifact.Artifact{
+				{Path: "foo.txt"},
+			},
+			Outputs: []artifact.Artifact{
+				{Path: "bar.txt"},
+			},
+		}
+		mockCache := mocks.Cache{}
+
+		artStatus := artifact.Status{
+			WorkspaceFileStatus: fsutil.RegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
+
+		for _, art := range stg.Outputs {
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+		}
+
+		artStatus.ContentsMatch = false
+		for _, art := range stg.Dependencies {
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+		}
+
+		upToDate, err := stg.Run(&mockCache, rootDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if upToDate {
+			t.Fatal("expected Run() to return upToDate = false")
+		}
+		if !runCommandCalled {
+			t.Fatal("runCommand not called")
+		}
+		assertCorrectCommand(stg, command, t)
+		mockCache.AssertExpectations(t)
 	})
+}
+
+func assertCorrectCommand(stg Stage, cmd *exec.Cmd, t *testing.T) {
+	lastArg := cmd.Args[len(cmd.Args)-1]
+	if lastArg != stg.Command {
+		t.Fatalf("cmd.Args[-1] = %#v, want %#v", lastArg, stg.Command)
+	}
+	dirWant := "rootDir/workDir"
+	if cmd.Dir != dirWant {
+		t.Fatalf("cmd.Dir = %#v, want %#v", cmd.Dir, dirWant)
+	}
 }

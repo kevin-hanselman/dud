@@ -16,7 +16,6 @@ func getRoot() (string, error) {
 	}
 
 	for {
-
 		ducFolderExists, err := hasDucFolder(dirname)
 		if err != nil {
 			return "", err

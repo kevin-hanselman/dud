@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kevlar1818/duc/fsutil"
 )
 
@@ -121,4 +122,11 @@ func FromPath(path string, isRecursive bool) (art Artifact, err error) {
 		IsDir:       isDir,
 		IsRecursive: isRecursive && isDir,
 	}, nil
+}
+
+// IsEquivalent returns true if the Artifacts are identical, ignoring Checksum.
+func (art Artifact) IsEquivalent(other Artifact) bool {
+	art.Checksum = ""
+	other.Checksum = ""
+	return cmp.Equal(art, other)
 }

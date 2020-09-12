@@ -60,7 +60,7 @@ var statusCmd = &cobra.Command{
 			if !ok {
 				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}
-			status, err := entry.Stage.Status(ch)
+			status, err := entry.Stage.Status(ch, false)
 			if err != nil {
 				log.Fatal(err)
 			}
