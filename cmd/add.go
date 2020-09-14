@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,8 +59,10 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		idx := make(index.Index)
-		if err := fsutil.FromYamlFile(indexPath, idx); err != nil && err != io.EOF {
+		idx, err := index.FromFile(indexPath)
+		if os.IsNotExist(err) {
+			idx = make(index.Index)
+		} else if err != nil {
 			log.Fatal(err)
 		}
 
@@ -69,7 +70,7 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if err := fsutil.ToYamlFile(indexPath, idx); err != nil {
+		if err := idx.ToFile(indexPath); err != nil {
 			log.Fatal(err)
 		}
 	},

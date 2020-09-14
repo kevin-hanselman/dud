@@ -60,7 +60,7 @@ depgraph.png:
 	dd if=/dev/urandom of=$@ bs=1M count=$(patsubst %mb_random.bin,%,$@)
 
 hyperfine: 50mb_random.bin duc
-	hyperfine -L cmd sha1sum,md5sum,sha256sum,b2sum,'./duc checksum' \
+	hyperfine -L cmd sha1sum,md5sum,sha256sum,b2sum,xxh64sum,'./duc checksum' \
 		'{cmd} $<'
 	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 \
 		'./duc checksum -b{bufsize} $<'

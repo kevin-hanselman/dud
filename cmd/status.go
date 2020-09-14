@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/kevlar1818/duc/cache"
-	"github.com/kevlar1818/duc/fsutil"
 	"github.com/kevlar1818/duc/index"
 	"github.com/kevlar1818/duc/stage"
 	"github.com/spf13/cobra"
@@ -44,8 +44,10 @@ var statusCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		idx := make(index.Index)
-		if err := fsutil.FromYamlFile(indexPath, &idx); err != nil {
+		idx, err := index.FromFile(indexPath)
+		if os.IsNotExist(err) { // TODO: print error instead?
+			idx = make(index.Index)
+		} else if err != nil {
 			log.Fatal(err)
 		}
 

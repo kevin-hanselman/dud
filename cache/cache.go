@@ -39,7 +39,7 @@ func (ch *LocalCache) Dir() string {
 // file commit args).  TODO: Needing to compare LocalCaches in tests is a bit
 // smelly. Consider removing this method?
 func (ch *LocalCache) Equal(other *LocalCache) bool {
-	return ch.Dir() == other.Dir()
+	return ch.dir == other.dir
 }
 
 // PathForChecksum returns the expected location of an object with the
