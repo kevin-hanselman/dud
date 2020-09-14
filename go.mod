@@ -1,4 +1,4 @@
-module github.com/kevlar1818/duc
+module github.com/kevin-hanselman/duc
 
 go 1.14
 

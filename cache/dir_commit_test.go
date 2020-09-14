@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/fsutil"
-	"github.com/kevlar1818/duc/strategy"
-	"github.com/kevlar1818/duc/testutil"
+	"github.com/kevin-hanselman/duc/artifact"
+	"github.com/kevin-hanselman/duc/fsutil"
+	"github.com/kevin-hanselman/duc/strategy"
+	"github.com/kevin-hanselman/duc/testutil"
 )
 
 func TestDirectoryCommitIntegration(t *testing.T) {

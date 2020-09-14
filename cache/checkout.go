@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/checksum"
-	"github.com/kevlar1818/duc/fsutil"
-	"github.com/kevlar1818/duc/strategy"
+	"github.com/kevin-hanselman/duc/artifact"
+	"github.com/kevin-hanselman/duc/checksum"
+	"github.com/kevin-hanselman/duc/fsutil"
+	"github.com/kevin-hanselman/duc/strategy"
 	"github.com/pkg/errors"
 )
 

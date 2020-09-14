@@ -40,15 +40,15 @@ tidy:
 	go mod tidy -v
 
 loc:
-	tokei --sort lines
-	tokei --sort lines --exclude "*_test.go"
+	tokei --sort lines --exclude 'mocks/'
+	tokei --sort lines --exclude 'mocks/' --exclude '*_test.go'
 
 mockery:
-	curl -L https://github.com/vektra/mockery/releases/download/v1.1.2/mockery_1.1.2_Linux_x86_64.tar.gz \
+	curl -L https://github.com/vektra/mockery/releases/download/v2.2.1/mockery_2.2.1_Linux_x86_64.tar.gz \
 		| tar -zxvf - mockery
 
 mocks: mockery
-	./mockery -all
+	./mockery --all
 
 # The awk command removes all graph edge definitions that don't include duc
 depgraph.png:

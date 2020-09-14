@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevin-hanselman/duc/fsutil"
 )
 
 func TestFromPath(t *testing.T) {

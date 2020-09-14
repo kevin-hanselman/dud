@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevlar1818/duc/fsutil"
-	"github.com/kevlar1818/duc/index"
-	"github.com/kevlar1818/duc/stage"
+	"github.com/kevin-hanselman/duc/fsutil"
+	"github.com/kevin-hanselman/duc/index"
+	"github.com/kevin-hanselman/duc/stage"
 	"github.com/spf13/cobra"
 )
 

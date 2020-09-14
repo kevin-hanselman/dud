@@ -1,8 +1,8 @@
 package index
 
 import (
-	"github.com/kevlar1818/duc/fsutil"
-	"github.com/kevlar1818/duc/stage"
+	"github.com/kevin-hanselman/duc/fsutil"
+	"github.com/kevin-hanselman/duc/stage"
 )
 
 type entry struct {

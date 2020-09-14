@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevin-hanselman/duc/fsutil"
 )
 
 func getRoot() (string, error) {

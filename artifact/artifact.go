@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevin-hanselman/duc/fsutil"
 )
 
 // An Artifact is a file or directory that is tracked by DUC.

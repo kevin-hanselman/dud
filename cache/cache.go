@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/strategy"
+	"github.com/kevin-hanselman/duc/artifact"
+	"github.com/kevin-hanselman/duc/strategy"
 )
 
 // A Cache provides a means to store Artifacts.

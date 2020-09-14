@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/kevlar1818/duc/checksum"
+	"github.com/kevin-hanselman/duc/checksum"
 	"github.com/spf13/cobra"
 )
 

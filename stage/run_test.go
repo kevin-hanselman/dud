@@ -4,9 +4,9 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/fsutil"
-	"github.com/kevlar1818/duc/mocks"
+	"github.com/kevin-hanselman/duc/artifact"
+	"github.com/kevin-hanselman/duc/fsutil"
+	"github.com/kevin-hanselman/duc/mocks"
 )
 
 func TestRun(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevin-hanselman/duc/artifact"
+	"github.com/kevin-hanselman/duc/fsutil"
 )
 
 // MockFileInfo mocks os.FileInfo

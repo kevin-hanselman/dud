@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/kevlar1818/duc/cache"
-	"github.com/kevlar1818/duc/index"
-	"github.com/kevlar1818/duc/stage"
+	"github.com/kevin-hanselman/duc/cache"
+	"github.com/kevin-hanselman/duc/index"
+	"github.com/kevin-hanselman/duc/stage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

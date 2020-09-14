@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kevlar1818/duc/artifact"
-	"github.com/kevlar1818/duc/cache"
-	"github.com/kevlar1818/duc/checksum"
-	"github.com/kevlar1818/duc/fsutil"
+	"github.com/kevin-hanselman/duc/artifact"
+	"github.com/kevin-hanselman/duc/cache"
+	"github.com/kevin-hanselman/duc/checksum"
+	"github.com/kevin-hanselman/duc/fsutil"
 )
 
 func TestCreateTempDirsIntegration(t *testing.T) {
