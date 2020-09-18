@@ -8,7 +8,7 @@ import (
 	"github.com/kevin-hanselman/duc/fsutil"
 )
 
-func getRoot() (string, error) {
+func getProjectRootDir() (string, error) {
 
 	dirname, err := os.Getwd()
 	if err != nil {
@@ -34,7 +34,7 @@ func getRoot() (string, error) {
 }
 
 func getIndexPath() (string, error) {
-	root, err := getRoot()
+	root, err := getProjectRootDir()
 	if err != nil {
 		return "", err
 	}

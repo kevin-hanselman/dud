@@ -16,9 +16,10 @@ import (
 // A Stage holds all information required to reproduce data. It is the primary
 // building block of Duc pipelines.
 type Stage struct {
+	// The string to be evaluated and executed by a shell.
 	Command string `yaml:",omitempty"`
-	// WorkingDir is a directory path relative to Duc root directory. An empty
-	// value means the Stage's working directory _is_ the project root
+	// WorkingDir is a directory path relative to the Duc root directory. An
+	// empty value means the Stage's working directory _is_ the Duc root
 	// directory. All outputs and dependencies of the Stage are themselves
 	// relative to WorkingDir. The Stage's Command is executed in WorkingDir.
 	WorkingDir   string              `yaml:",omitempty"`
@@ -82,10 +83,16 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 }
 
 // Commit commits all Outputs of the Stage.
-func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error {
+func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy, rootDir string) error {
+	baseDir := filepath.Join(rootDir, stg.WorkingDir)
+	for i := range stg.Dependencies {
+		stg.Dependencies[i].SkipCache = true // always skip the cache for dependencies
+		if err := ch.Commit(baseDir, &stg.Dependencies[i], strat); err != nil {
+			return errors.Wrap(err, "stage commit failed")
+		}
+	}
 	for i := range stg.Outputs {
-		if err := ch.Commit(stg.WorkingDir, &stg.Outputs[i], strat); err != nil {
-			// TODO: unwind anything?
+		if err := ch.Commit(baseDir, &stg.Outputs[i], strat); err != nil {
 			return errors.Wrap(err, "stage commit failed")
 		}
 	}
@@ -93,9 +100,10 @@ func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error 
 }
 
 // Checkout checks out all Outputs of the Stage.
-func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) error {
+func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy, rootDir string) error {
+	baseDir := filepath.Join(rootDir, stg.WorkingDir)
 	for i := range stg.Outputs {
-		if err := ch.Checkout(stg.WorkingDir, &stg.Outputs[i], strat); err != nil {
+		if err := ch.Checkout(baseDir, &stg.Outputs[i], strat); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage checkout failed")
 		}
@@ -106,8 +114,9 @@ func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) erro
 // Status checks the statuses of a subset of Artifacts owned by the Stage. If
 // checkDependencies is true, the statuses of all Dependencies are returned,
 // otherwise the statuses of all Outputs are returned.
-func (stg *Stage) Status(ch cache.Cache, checkDependencies bool) (Status, error) {
+func (stg *Stage) Status(ch cache.Cache, checkDependencies bool, rootDir string) (Status, error) {
 	stat := make(Status)
+	baseDir := filepath.Join(rootDir, stg.WorkingDir)
 	var artifacts []artifact.Artifact
 	if checkDependencies {
 		artifacts = stg.Dependencies
@@ -115,7 +124,7 @@ func (stg *Stage) Status(ch cache.Cache, checkDependencies bool) (Status, error)
 		artifacts = stg.Outputs
 	}
 	for _, art := range artifacts {
-		artStatus, err := ch.Status(stg.WorkingDir, art)
+		artStatus, err := ch.Status(baseDir, art)
 		if err != nil {
 			return stat, errors.Wrap(err, "stage status failed")
 		}
@@ -130,13 +139,13 @@ func (stg *Stage) Status(ch cache.Cache, checkDependencies bool) (Status, error)
 // Run runs the Stage's command unless the Stage is up-to-date. rootDir is the
 // project's root directory.
 func (stg *Stage) Run(ch cache.Cache, rootDir string) (upToDate bool, err error) {
-	outStatus, err := stg.Status(ch, false)
+	outStatus, err := stg.Status(ch, false, rootDir)
 	if err != nil {
 		return false, err
 	}
 	outputsUpToDate := isUpToDate(outStatus)
 
-	depStatus, err := stg.Status(ch, true)
+	depStatus, err := stg.Status(ch, true, rootDir)
 	if err != nil {
 		return false, err
 	}

@@ -35,9 +35,9 @@ func init() {
 }
 
 func initConfig() {
-	root, err := getRoot()
+	rootDir, err := getProjectRootDir()
 	if err == nil {
-		viper.AddConfigPath(filepath.Join(root, ".duc"))
+		viper.AddConfigPath(filepath.Join(rootDir, ".duc"))
 	}
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")

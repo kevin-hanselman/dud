@@ -50,11 +50,16 @@ var commitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		rootDir, err := getProjectRootDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		for stagePath, entry := range idx {
 			if !entry.ToCommit {
 				continue
 			}
-			if err := entry.Stage.Commit(ch, strat); err != nil {
+			if err := entry.Stage.Commit(ch, strat, rootDir); err != nil {
 				log.Fatal(err)
 			}
 			lockPath := stage.FilePathForLock(stagePath)

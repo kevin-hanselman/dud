@@ -39,6 +39,11 @@ var checkoutCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		rootDir, err := getProjectRootDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
 			log.Fatal(err)
@@ -58,7 +63,7 @@ var checkoutCmd = &cobra.Command{
 			if !ok {
 				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}
-			if err := entry.Stage.Checkout(ch, strat); err != nil {
+			if err := entry.Stage.Checkout(ch, strat, rootDir); err != nil {
 				log.Fatal(err)
 			}
 		}

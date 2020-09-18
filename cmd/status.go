@@ -44,6 +44,11 @@ var statusCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		rootDir, err := getProjectRootDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		idx, err := index.FromFile(indexPath)
 		if os.IsNotExist(err) { // TODO: print error instead?
 			idx = make(index.Index)
@@ -62,7 +67,7 @@ var statusCmd = &cobra.Command{
 			if !ok {
 				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}
-			status, err := entry.Stage.Status(ch, false)
+			status, err := entry.Stage.Status(ch, false, rootDir)
 			if err != nil {
 				log.Fatal(err)
 			}

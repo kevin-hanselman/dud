@@ -213,9 +213,17 @@ func TestCommit(t *testing.T) {
 	t.Run("Link", func(t *testing.T) { testCommit(strategy.LinkStrategy, t) })
 }
 
+// TODO: This is a parrot test. It parrots the production code instead of
+// testing any key outcomes. It should either be improved or removed.
 func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	stg := Stage{
 		WorkingDir: "workDir",
+		Dependencies: []artifact.Artifact{
+			{
+				Checksum: "",
+				Path:     "dep.txt",
+			},
+		},
 		Outputs: []artifact.Artifact{
 			{
 				Checksum: "",
@@ -230,15 +238,18 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 
 	mockCache := mocks.Cache{}
 	for i := range stg.Outputs {
-		mockCache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
+		mockCache.On("Commit", "rootDir/workDir", &stg.Outputs[i], strat).Return(nil)
+	}
+	for _, art := range stg.Dependencies {
+		art.SkipCache = true
+		mockCache.On("Commit", "rootDir/workDir", &art, strat).Return(nil)
 	}
 
-	if err := stg.Commit(&mockCache, strat); err != nil {
+	if err := stg.Commit(&mockCache, strat, "rootDir"); err != nil {
 		t.Fatal(err)
 	}
 
 	mockCache.AssertExpectations(t)
-	// TODO: test artifact checksums set
 }
 
 func TestCheckout(t *testing.T) {
@@ -263,10 +274,10 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 
 	mockCache := mocks.Cache{}
 	for i := range stg.Outputs {
-		mockCache.On("Checkout", "workDir", &stg.Outputs[i], strat).Return(nil)
+		mockCache.On("Checkout", "rootDir/workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 
-	if err := stg.Checkout(&mockCache, strat); err != nil {
+	if err := stg.Checkout(&mockCache, strat, "rootDir"); err != nil {
 		t.Fatal(err)
 	}
 

@@ -47,7 +47,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache, rootDir)
@@ -83,7 +83,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache, rootDir)
@@ -119,7 +119,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache, rootDir)
@@ -155,7 +155,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache, rootDir)
@@ -194,12 +194,12 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
 		}
 
 		artStatus.ContentsMatch = false
 		for _, art := range stg.Dependencies {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache, rootDir)

@@ -29,11 +29,11 @@ var addCmd = &cobra.Command{
 	Long:  "Add artifacts or stages to the index and commit list",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		root, err := getRoot()
+		rootDir, err := getProjectRootDir()
 		if err != nil {
 			log.Fatal(err)
 		}
-		indexPath := filepath.Join(root, ".duc", "index")
+		indexPath := filepath.Join(rootDir, ".duc", "index")
 
 		// Create an index file if it doesn't exist
 		// TODO replace with fsutil.Exists
