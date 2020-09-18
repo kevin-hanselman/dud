@@ -44,6 +44,8 @@ var checkoutCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
+		// TODO: forcing a checkout will require a "force load lock"
+		// flag in index.FromFile
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
 			log.Fatal(err)
@@ -56,10 +58,9 @@ var checkoutCmd = &cobra.Command{
 			}
 		}
 
+		// TODO: first, check all entry.IsLocked and error out if any are false
 		for _, path := range args {
 			entry, ok := idx[path]
-			// TODO: --force flag will need to always load the locked version
-			// of the stage.
 			if !ok {
 				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}

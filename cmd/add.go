@@ -14,12 +14,12 @@ import (
 
 func init() {
 	rootCmd.AddCommand(addCmd)
-	addCmd.Flags().StringVarP(&ducfileFlag, "output", "o", "", "output path for Ducfile")
-	addCmd.Flags().BoolVarP(&recursiveFlag, "recursive", "r", false, "Recursively add directories. Defaults to false.")
+	addCmd.Flags().StringVarP(&outputStagePath, "output", "o", "", "output path for Ducfile")
+	addCmd.Flags().BoolVarP(&isRecursive, "recursive", "r", false, "Recursively add directories. Defaults to false.")
 }
 
-var ducfileFlag string
-var recursiveFlag bool
+var outputStagePath string
+var isRecursive bool
 var toFile = fsutil.ToYamlFile
 var fromFile = fsutil.FromYamlFile
 
@@ -35,28 +35,8 @@ var addCmd = &cobra.Command{
 		}
 		indexPath := filepath.Join(rootDir, ".duc", "index")
 
-		// Create an index file if it doesn't exist
-		// TODO replace with fsutil.Exists
-		if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-			_, err := os.Create(indexPath)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		// TODO: replace with package var above
-		outputStagePath, err := cmd.Flags().GetString("output")
-		if err != nil {
-			log.Fatal(err)
-		}
 		if outputStagePath == "" {
 			outputStagePath = "Ducfile"
-		}
-
-		// TODO: replace with package var above
-		isRecursive, err := cmd.Flags().GetBool("recursive")
-		if err != nil {
-			log.Fatal(err)
 		}
 
 		idx, err := index.FromFile(indexPath)
