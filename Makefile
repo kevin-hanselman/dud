@@ -1,4 +1,4 @@
-.PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine build-benchmark
+.PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine build-benchmark integration-image
 
 duc: test-all
 	go build -o duc
@@ -31,6 +31,24 @@ int-test.coverage:
 
 all-test.coverage:
 	go test ./... -coverprofile=$@
+
+integration-image:
+	docker build -t duc_integration ./integration/
+
+integration-env: integration-image duc
+	docker run \
+		--rm \
+		-it \
+		-v $(shell pwd)/duc:/usr/bin/duc \
+		-v $(shell pwd)/integration:/integration \
+	duc_integration
+
+integration-tests: integration-image duc
+	docker run \
+		--rm \
+		-v $(shell pwd)/duc:/usr/bin/duc \
+		-v $(shell pwd)/integration:/integration \
+	duc_integration python /integration/run_tests.py
 
 clean:
 	rm -f *.coverage *.bin depgraph.png mockery
