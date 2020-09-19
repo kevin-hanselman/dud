@@ -28,18 +28,9 @@ func getProjectRootDir() (string, error) {
 		dirname = filepath.Dir(dirname)
 
 		if dirname == "/" {
-			return "", errors.New("no root")
+			return "", errors.New("no project root directory found")
 		}
 	}
-}
-
-func getIndexPath() (string, error) {
-	root, err := getProjectRootDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(root, ".duc", "index"), nil
 }
 
 func hasDucFolder(dir string) (bool, error) {

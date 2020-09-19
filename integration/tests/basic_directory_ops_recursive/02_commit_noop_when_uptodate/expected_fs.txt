@@ -1,6 +1,6 @@
 drwxr-xr-x user user    4096 .   
--rw-r--r-- user user     222 ./Ducfile.lock   
--rw-r--r-- user user      70 ./Ducfile   
+-rw-r--r-- user user     132 ./Ducfile.lock   
+-rw-r--r-- user user      55 ./Ducfile   
 drwxr-xr-x user user    4096 ./foo   
 drwxr-xr-x user user    4096 ./foo/bar   
 lrwxrwxrwx user user     122 ./foo/bar/7.txt   /home/user/basic_directory_ops_recursive/repo/.duc/cache/de/dc9531a3ea216ed967a15ede743b4e4d1e9181bf24204cdd6c316171daa2e8

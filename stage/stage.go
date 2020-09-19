@@ -83,16 +83,15 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 }
 
 // Commit commits all Outputs of the Stage.
-func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy, rootDir string) error {
-	baseDir := filepath.Join(rootDir, stg.WorkingDir)
+func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error {
 	for i := range stg.Dependencies {
 		stg.Dependencies[i].SkipCache = true // always skip the cache for dependencies
-		if err := ch.Commit(baseDir, &stg.Dependencies[i], strat); err != nil {
+		if err := ch.Commit(stg.WorkingDir, &stg.Dependencies[i], strat); err != nil {
 			return errors.Wrap(err, "stage commit failed")
 		}
 	}
 	for i := range stg.Outputs {
-		if err := ch.Commit(baseDir, &stg.Outputs[i], strat); err != nil {
+		if err := ch.Commit(stg.WorkingDir, &stg.Outputs[i], strat); err != nil {
 			return errors.Wrap(err, "stage commit failed")
 		}
 	}
@@ -100,10 +99,9 @@ func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy, rootDi
 }
 
 // Checkout checks out all Outputs of the Stage.
-func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy, rootDir string) error {
-	baseDir := filepath.Join(rootDir, stg.WorkingDir)
+func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) error {
 	for i := range stg.Outputs {
-		if err := ch.Checkout(baseDir, &stg.Outputs[i], strat); err != nil {
+		if err := ch.Checkout(stg.WorkingDir, &stg.Outputs[i], strat); err != nil {
 			// TODO: unwind anything?
 			return errors.Wrap(err, "stage checkout failed")
 		}
@@ -114,9 +112,8 @@ func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy, root
 // Status checks the statuses of a subset of Artifacts owned by the Stage. If
 // checkDependencies is true, the statuses of all Dependencies are returned,
 // otherwise the statuses of all Outputs are returned.
-func (stg *Stage) Status(ch cache.Cache, checkDependencies bool, rootDir string) (Status, error) {
+func (stg *Stage) Status(ch cache.Cache, checkDependencies bool) (Status, error) {
 	stat := make(Status)
-	baseDir := filepath.Join(rootDir, stg.WorkingDir)
 	var artifacts []artifact.Artifact
 	if checkDependencies {
 		artifacts = stg.Dependencies
@@ -124,7 +121,7 @@ func (stg *Stage) Status(ch cache.Cache, checkDependencies bool, rootDir string)
 		artifacts = stg.Outputs
 	}
 	for _, art := range artifacts {
-		artStatus, err := ch.Status(baseDir, art)
+		artStatus, err := ch.Status(stg.WorkingDir, art)
 		if err != nil {
 			return stat, errors.Wrap(err, "stage status failed")
 		}
@@ -136,16 +133,15 @@ func (stg *Stage) Status(ch cache.Cache, checkDependencies bool, rootDir string)
 	return stat, nil
 }
 
-// Run runs the Stage's command unless the Stage is up-to-date. rootDir is the
-// project's root directory.
-func (stg *Stage) Run(ch cache.Cache, rootDir string) (upToDate bool, err error) {
-	outStatus, err := stg.Status(ch, false, rootDir)
+// Run runs the Stage's command unless the Stage is up-to-date.
+func (stg *Stage) Run(ch cache.Cache) (upToDate bool, err error) {
+	outStatus, err := stg.Status(ch, false)
 	if err != nil {
 		return false, err
 	}
 	outputsUpToDate := isUpToDate(outStatus)
 
-	depStatus, err := stg.Status(ch, true, rootDir)
+	depStatus, err := stg.Status(ch, true)
 	if err != nil {
 		return false, err
 	}
@@ -159,7 +155,7 @@ func (stg *Stage) Run(ch cache.Cache, rootDir string) (upToDate bool, err error)
 		return false, nil
 	}
 
-	return false, runCommand(stg.createCommand(rootDir))
+	return false, runCommand(stg.createCommand())
 }
 
 // FromPaths creates a Stage from one or more file paths.
@@ -195,13 +191,13 @@ func isUpToDate(status Status) bool {
 	return true
 }
 
-func (stg Stage) createCommand(rootDir string) *exec.Cmd {
+func (stg Stage) createCommand() *exec.Cmd {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "sh"
 	}
 	cmd := exec.Command(shell, "-c", stg.Command)
-	cmd.Dir = filepath.Join(rootDir, stg.WorkingDir)
+	cmd.Dir = filepath.Join(stg.WorkingDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd

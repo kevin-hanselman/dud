@@ -30,14 +30,14 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 		expectedStageStatus := Status{}
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 			expectedStageStatus[art.Path] = artifact.ArtifactWithStatus{
 				Artifact: art,
 				Status:   artStatus,
 			}
 		}
 
-		stageStatus, err := stg.Status(&mockCache, false, "rootDir")
+		stageStatus, err := stg.Status(&mockCache, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -70,14 +70,14 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 		expectedStageStatus := Status{}
 		for _, art := range stg.Dependencies {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 			expectedStageStatus[art.Path] = artifact.ArtifactWithStatus{
 				Artifact: art,
 				Status:   artStatus,
 			}
 		}
 
-		stageStatus, err := stg.Status(&mockCache, true, "rootDir")
+		stageStatus, err := stg.Status(&mockCache, true)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/cache"
 	"github.com/kevin-hanselman/duc/index"
@@ -34,15 +36,14 @@ var checkoutCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		indexPath, err := getIndexPath()
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		rootDir, err := getProjectRootDir()
 		if err != nil {
 			log.Fatal(err)
 		}
+		if err := os.Chdir(rootDir); err != nil {
+			log.Fatal(err)
+		}
+		indexPath := filepath.Join(".duc", "index")
 
 		// TODO: forcing a checkout will require a "force load lock"
 		// flag in index.FromFile
@@ -64,7 +65,7 @@ var checkoutCmd = &cobra.Command{
 			if !ok {
 				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}
-			if err := entry.Stage.Checkout(ch, strat, rootDir); err != nil {
+			if err := entry.Stage.Checkout(ch, strat); err != nil {
 				log.Fatal(err)
 			}
 		}

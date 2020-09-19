@@ -25,8 +25,6 @@ func TestRun(t *testing.T) {
 	}
 	defer func() { runCommand = runCommandOrig }()
 
-	rootDir := "rootDir"
-
 	t.Run("run reports up-to-date even if no command", func(t *testing.T) {
 		defer resetRunCommandMock()
 		stg := Stage{
@@ -47,10 +45,10 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache, rootDir)
+		upToDate, err := stg.Run(&mockCache)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,10 +81,10 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache, rootDir)
+		upToDate, err := stg.Run(&mockCache)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -119,10 +117,10 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache, rootDir)
+		upToDate, err := stg.Run(&mockCache)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -155,10 +153,10 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache, rootDir)
+		upToDate, err := stg.Run(&mockCache)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -194,15 +192,15 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
 		artStatus.ContentsMatch = false
 		for _, art := range stg.Dependencies {
-			mockCache.On("Status", "rootDir/workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
 		}
 
-		upToDate, err := stg.Run(&mockCache, rootDir)
+		upToDate, err := stg.Run(&mockCache)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -222,7 +220,7 @@ func assertCorrectCommand(stg Stage, cmd *exec.Cmd, t *testing.T) {
 	if lastArg != stg.Command {
 		t.Fatalf("cmd.Args[-1] = %#v, want %#v", lastArg, stg.Command)
 	}
-	dirWant := "rootDir/workDir"
+	dirWant := "workDir"
 	if cmd.Dir != dirWant {
 		t.Fatalf("cmd.Dir = %#v, want %#v", cmd.Dir, dirWant)
 	}

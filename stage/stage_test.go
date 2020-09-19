@@ -238,14 +238,14 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 
 	mockCache := mocks.Cache{}
 	for i := range stg.Outputs {
-		mockCache.On("Commit", "rootDir/workDir", &stg.Outputs[i], strat).Return(nil)
+		mockCache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 	for _, art := range stg.Dependencies {
 		art.SkipCache = true
-		mockCache.On("Commit", "rootDir/workDir", &art, strat).Return(nil)
+		mockCache.On("Commit", "workDir", &art, strat).Return(nil)
 	}
 
-	if err := stg.Commit(&mockCache, strat, "rootDir"); err != nil {
+	if err := stg.Commit(&mockCache, strat); err != nil {
 		t.Fatal(err)
 	}
 
@@ -274,10 +274,10 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 
 	mockCache := mocks.Cache{}
 	for i := range stg.Outputs {
-		mockCache.On("Checkout", "rootDir/workDir", &stg.Outputs[i], strat).Return(nil)
+		mockCache.On("Checkout", "workDir", &stg.Outputs[i], strat).Return(nil)
 	}
 
-	if err := stg.Checkout(&mockCache, strat, "rootDir"); err != nil {
+	if err := stg.Checkout(&mockCache, strat); err != nil {
 		t.Fatal(err)
 	}
 

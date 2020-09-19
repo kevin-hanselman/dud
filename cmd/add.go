@@ -33,6 +33,9 @@ var addCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		if err := os.Chdir(rootDir); err != nil {
+			log.Fatal(err)
+		}
 		indexPath := filepath.Join(rootDir, ".duc", "index")
 
 		if outputStagePath == "" {

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/cache"
 	"github.com/kevin-hanselman/duc/fsutil"
@@ -40,17 +42,16 @@ var commitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		indexPath, err := getIndexPath()
+		rootDir, err := getProjectRootDir()
 		if err != nil {
 			log.Fatal(err)
 		}
+		if err := os.Chdir(rootDir); err != nil {
+			log.Fatal(err)
+		}
+		indexPath := filepath.Join(".duc", "index")
 
 		idx, err := index.FromFile(indexPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		rootDir, err := getProjectRootDir()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -59,7 +60,7 @@ var commitCmd = &cobra.Command{
 			if !entry.ToCommit {
 				continue
 			}
-			if err := entry.Stage.Commit(ch, strat, rootDir); err != nil {
+			if err := entry.Stage.Commit(ch, strat); err != nil {
 				log.Fatal(err)
 			}
 			lockPath := stage.FilePathForLock(stagePath)

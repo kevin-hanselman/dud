@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/cache"
 	"github.com/kevin-hanselman/duc/index"
@@ -40,15 +41,14 @@ var statusCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		indexPath, err := getIndexPath()
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		rootDir, err := getProjectRootDir()
 		if err != nil {
 			log.Fatal(err)
 		}
+		if err := os.Chdir(rootDir); err != nil {
+			log.Fatal(err)
+		}
+		indexPath := filepath.Join(".duc", "index")
 
 		idx, err := index.FromFile(indexPath)
 		if os.IsNotExist(err) { // TODO: print error instead?
@@ -68,7 +68,7 @@ var statusCmd = &cobra.Command{
 			if !ok {
 				log.Fatal(fmt.Errorf("path %s not present in Index", path))
 			}
-			status, err := entry.Stage.Status(ch, false, rootDir)
+			status, err := entry.Stage.Status(ch, false)
 			if err != nil {
 				log.Fatal(err)
 			}
