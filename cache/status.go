@@ -120,9 +120,7 @@ func dirArtifactStatus(
 
 	// first, ensure all artifacts in the directoryManifest are up-to-date;
 	// quit early if any are not.
-	manifestPaths := make(map[string]bool)
 	for _, art := range manifest.Contents {
-		manifestPaths[art.Path] = true
 		artStatus, err := ch.Status(workPath, *art)
 		if err != nil {
 			return status, manifest, err
@@ -140,7 +138,7 @@ func dirArtifactStatus(
 	}
 	for _, entry := range entries {
 		// only check entries that don't appear in the manifest
-		if !manifestPaths[entry.Name()] {
+		if _, ok := manifest.Contents[entry.Name()]; !ok {
 			if entry.IsDir() {
 				// if the entry is a (untracked) directory,
 				// this is only a mismatch if the artifact is recursive

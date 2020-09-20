@@ -9,9 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
 
 	"github.com/kevin-hanselman/duc/artifact"
 	"github.com/kevin-hanselman/duc/checksum"
@@ -173,13 +170,6 @@ func commitDirArtifact(
 		return nil
 	}
 
-	var manifestPaths sync.Map
-	for i := range oldManifest.Contents {
-		// TODO: Consider storing manifest contents as a map of this form.
-		// We do this same O(n) transformation in dirArtifactStatus.
-		manifestPaths.Store(oldManifest.Contents[i].Path, oldManifest.Contents[i])
-	}
-
 	baseDir := filepath.Join(workingDir, art.Path)
 	entries, err := readDir(baseDir)
 	if err != nil {
@@ -187,7 +177,8 @@ func commitDirArtifact(
 	}
 	errGroup, childCtx := errgroup.WithContext(ctx)
 	childArtChan := make(chan *artifact.Artifact, len(entries))
-	newManifest := directoryManifest{Path: baseDir}
+	newManifest := &directoryManifest{Path: baseDir}
+	newManifest.Contents = make(map[string]*artifact.Artifact)
 	for i := range entries {
 		// This verbose declaration of entry is necessary to avoid capturing
 		// loop variables in the closure below.
@@ -197,10 +188,10 @@ func commitDirArtifact(
 			path := entry.Name()
 			// See if we can recover a sub-artifact from an existing dirManifest. This
 			// is important for skipping up-to-date artifacts.
-			childArt := &artifact.Artifact{Path: path}
-			mapVal, ok := manifestPaths.Load(path)
-			if ok {
-				childArt = mapVal.(*artifact.Artifact)
+			var childArt *artifact.Artifact
+			childArt, ok := oldManifest.Contents[path]
+			if !ok {
+				childArt = &artifact.Artifact{Path: path}
 			}
 			if entry.IsDir() {
 				if !art.IsRecursive {
@@ -225,21 +216,12 @@ func commitDirArtifact(
 	}
 	close(childArtChan)
 	for childArt := range childArtChan {
-		newManifest.Contents = append(newManifest.Contents, childArt)
+		newManifest.Contents[childArt.Path] = childArt
 	}
-	// Because we commit the child artifacts concurrently, they will arrive
-	// here in any order. We sort the array to keep the manifest deterministic.
-	sort.Sort(byPath(newManifest.Contents))
-	cksum, err := commitDirManifest(ch, &newManifest)
+	cksum, err := commitDirManifest(ch, newManifest)
 	if err != nil {
 		return err
 	}
 	art.Checksum = cksum
 	return nil
 }
-
-type byPath []*artifact.Artifact
-
-func (a byPath) Len() int           { return len(a) }
-func (a byPath) Less(i, j int) bool { return strings.Compare(a[i].Path, a[j].Path) < 0 }
-func (a byPath) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }

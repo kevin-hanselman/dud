@@ -1,7 +1,6 @@
 package checksum
 
 import (
-	"encoding/gob"
 	"encoding/hex"
 	"hash"
 	"io"
@@ -9,17 +8,6 @@ import (
 	"github.com/c2h5oh/datasize"
 	"github.com/zeebo/blake3"
 )
-
-// ChecksumObject returns the checksum of an object's encoded bytes.
-// TODO: currently unused; delete?
-func ChecksumObject(v interface{}) (string, error) {
-	h := blake3.New()
-	enc := gob.NewEncoder(h)
-	if err := enc.Encode(v); err != nil {
-		return "", err
-	}
-	return hashToHexString(h), nil
-}
 
 // hashToHexString returns the sum of the hash object encoded as a hex string.
 func hashToHexString(h hash.Hash) string {

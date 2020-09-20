@@ -20,7 +20,9 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 	}
 
 	t.Run("happy path", func(t *testing.T) {
-		dirs, art, cache := setup(t)
+		dirs, art, cache := setupDirTest(t)
+		defer os.RemoveAll(dirs.CacheDir)
+		defer os.RemoveAll(dirs.WorkDir)
 
 		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
 			t.Fatal(err)
@@ -44,7 +46,9 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 	})
 
 	t.Run("partially up-to-date, rm subdir", func(t *testing.T) {
-		dirs, art, cache := setup(t)
+		dirs, art, cache := setupDirTest(t)
+		defer os.RemoveAll(dirs.CacheDir)
+		defer os.RemoveAll(dirs.WorkDir)
 
 		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
 			t.Fatal(err)
@@ -76,7 +80,9 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 	})
 
 	t.Run("partially up-to-date, rm file", func(t *testing.T) {
-		dirs, art, cache := setup(t)
+		dirs, art, cache := setupDirTest(t)
+		defer os.RemoveAll(dirs.CacheDir)
+		defer os.RemoveAll(dirs.WorkDir)
 
 		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
 			t.Fatal(err)
@@ -108,7 +114,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T) (testutil.TempDirs, artifact.Artifact, *LocalCache) {
+func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, *LocalCache) {
 	dirs, err := testutil.CreateTempDirs()
 	if err != nil {
 		t.Fatal(err)

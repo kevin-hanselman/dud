@@ -15,8 +15,6 @@ drwxr-xr-x user user    4096 ./foo/bar
 drwxr-xr-x user user    4096 ./.duc   
 -rw-r--r-- user user      15 ./.duc/index   
 drwxr-xr-x user user    4096 ./.duc/cache   
-drwxr-xr-x user user    4096 ./.duc/cache/52   
--r--r--r-- user user     906 ./.duc/cache/52/7bb2932daaaad6a1447e4609c76fed9e14192f8cd0604efaf514b2a9736806   
 drwxr-xr-x user user    4096 ./.duc/cache/ec   
 -r--r--r-- user user       2 ./.duc/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1   
 drwxr-xr-x user user    4096 ./.duc/cache/49   
@@ -27,9 +25,11 @@ drwxr-xr-x user user    4096 ./.duc/cache/1f
 -r--r--r-- user user       2 ./.duc/cache/1f/ad12e6bdb0d30895fb817b05d8fd97be199d01a4e489433629778eae97d314   
 drwxr-xr-x user user    4096 ./.duc/cache/00   
 -r--r--r-- user user       2 ./.duc/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c   
+drwxr-xr-x user user    4096 ./.duc/cache/09   
+-r--r--r-- user user     652 ./.duc/cache/09/f46e55d8df90747cf72898383042a06c0ea6cdbea03fff8cfa6104fa12f392   
 drwxr-xr-x user user    4096 ./.duc/cache/b9   
 -r--r--r-- user user       2 ./.duc/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde   
-drwxr-xr-x user user    4096 ./.duc/cache/e2   
--r--r--r-- user user     620 ./.duc/cache/e2/62038725ae8578c54b725610de8d325c349e23ed0e3c5500520f5bb2877e3e   
 drwxr-xr-x user user    4096 ./.duc/cache/50   
 -r--r--r-- user user       2 ./.duc/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9   
+drwxr-xr-x user user    4096 ./.duc/cache/0d   
+-r--r--r-- user user     952 ./.duc/cache/0d/9b378eba7bb8ca66ed8999bad22255c936fe8ae2b6086964e696e4a2d6ff80   

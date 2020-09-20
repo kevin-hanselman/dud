@@ -54,5 +54,5 @@ func (ch *LocalCache) PathForChecksum(checksum string) (string, error) {
 
 type directoryManifest struct {
 	Path     string
-	Contents []*artifact.Artifact
+	Contents map[string]*artifact.Artifact
 }
