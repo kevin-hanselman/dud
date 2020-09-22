@@ -25,16 +25,19 @@ func TestRun(t *testing.T) {
 	}
 	defer func() { runCommand = runCommandOrig }()
 
-	t.Run("run reports up-to-date even if no command", func(t *testing.T) {
-		defer resetRunCommandMock()
-		stg := Stage{
-			Command:    "",
+	newStage := func() Stage {
+		return Stage{
 			WorkingDir: "workDir",
-			Outputs: []artifact.Artifact{
-				{Path: "foo.txt"},
-				{Path: "bar.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"foo.txt": {Path: "foo.txt"},
+				"bar.txt": {Path: "bar.txt"},
 			},
 		}
+	}
+
+	t.Run("run reports status (up-to-date) even if no command", func(t *testing.T) {
+		defer resetRunCommandMock()
+		stg := newStage()
 		mockCache := mocks.Cache{}
 
 		artStatus := artifact.Status{
@@ -45,7 +48,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache)
@@ -61,16 +64,9 @@ func TestRun(t *testing.T) {
 		mockCache.AssertExpectations(t)
 	})
 
-	t.Run("run reports out-of-date even if no command", func(t *testing.T) {
+	t.Run("run reports status (out-of-date) even if no command", func(t *testing.T) {
 		defer resetRunCommandMock()
-		stg := Stage{
-			Command:    "",
-			WorkingDir: "workDir",
-			Outputs: []artifact.Artifact{
-				{Path: "foo.txt"},
-				{Path: "bar.txt"},
-			},
-		}
+		stg := newStage()
 		mockCache := mocks.Cache{}
 
 		artStatus := artifact.Status{
@@ -81,7 +77,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache)
@@ -99,14 +95,8 @@ func TestRun(t *testing.T) {
 
 	t.Run("run is no-op if artifacts up-to-date", func(t *testing.T) {
 		defer resetRunCommandMock()
-		stg := Stage{
-			Command:    "echo 'hello world'",
-			WorkingDir: "workDir",
-			Outputs: []artifact.Artifact{
-				{Path: "foo.txt"},
-				{Path: "bar.txt"},
-			},
-		}
+		stg := newStage()
+		stg.Command = "echo 'Hello, World!'"
 		mockCache := mocks.Cache{}
 
 		artStatus := artifact.Status{
@@ -117,7 +107,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache)
@@ -135,14 +125,8 @@ func TestRun(t *testing.T) {
 
 	t.Run("run executes if outputs out-of-date", func(t *testing.T) {
 		defer resetRunCommandMock()
-		stg := Stage{
-			Command:    "echo 'hello world'",
-			WorkingDir: "workDir",
-			Outputs: []artifact.Artifact{
-				{Path: "foo.txt"},
-				{Path: "bar.txt"},
-			},
-		}
+		stg := newStage()
+		stg.Command = "echo 'Hello, World!'"
 		mockCache := mocks.Cache{}
 
 		artStatus := artifact.Status{
@@ -153,7 +137,7 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache)
@@ -172,15 +156,10 @@ func TestRun(t *testing.T) {
 
 	t.Run("run executes if dependencies out-of-date", func(t *testing.T) {
 		defer resetRunCommandMock()
-		stg := Stage{
-			Command:    "echo 'hello world'",
-			WorkingDir: "workDir",
-			Dependencies: []artifact.Artifact{
-				{Path: "foo.txt"},
-			},
-			Outputs: []artifact.Artifact{
-				{Path: "bar.txt"},
-			},
+		stg := newStage()
+		stg.Command = "echo 'Hello, World!'"
+		stg.Dependencies = map[string]*artifact.Artifact{
+			"dep": {Path: "dep", IsDir: true},
 		}
 		mockCache := mocks.Cache{}
 
@@ -192,12 +171,12 @@ func TestRun(t *testing.T) {
 		}
 
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 		}
 
 		artStatus.ContentsMatch = false
 		for _, art := range stg.Dependencies {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 		}
 
 		upToDate, err := stg.Run(&mockCache)

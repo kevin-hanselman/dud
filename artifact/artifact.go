@@ -103,7 +103,7 @@ var fileStatusFromPath = fsutil.FileStatusFromPath
 // TODO: When adding new files, the Index needs to be consulted to ensure
 // exactly one Artifact owns a given file, and that exactly one Stage owns
 // a given Artifact.
-func FromPath(path string, isRecursive bool) (art Artifact, err error) {
+func FromPath(path string, isRecursive bool) (art *Artifact, err error) {
 	status, err := fileStatusFromPath(path)
 	if err != nil {
 		return
@@ -116,7 +116,7 @@ func FromPath(path string, isRecursive bool) (art Artifact, err error) {
 	}
 
 	isDir := status == fsutil.Directory
-	return Artifact{
+	return &Artifact{
 		Checksum:    "",
 		Path:        path,
 		IsDir:       isDir,

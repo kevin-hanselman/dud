@@ -4,16 +4,17 @@ import (
 	"testing"
 
 	"github.com/go-yaml/yaml"
+	"github.com/kevin-hanselman/duc/stage"
 )
 
 func TestCheckAddTypes(t *testing.T) {
 
 	t.Run("check all stages", func(t *testing.T) {
-		fromFileOrig := fromFile
-		fromFile = func(path string, v interface{}) error {
-			return nil
+		stageFromFileOrig := stageFromFile
+		stageFromFile = func(path string) (stg stage.Stage, isLock bool, err error) {
+			return
 		}
-		defer func() { fromFile = fromFileOrig }()
+		defer func() { stageFromFile = stageFromFileOrig }()
 
 		stagePaths := []string{"a.duc", "b.duc", "c.duc"}
 
@@ -29,11 +30,12 @@ func TestCheckAddTypes(t *testing.T) {
 	})
 
 	t.Run("check all files", func(t *testing.T) {
-		fromFileOrig := fromFile
-		fromFile = func(path string, v interface{}) error {
-			return &yaml.TypeError{}
+		stageFromFileOrig := stageFromFile
+		stageFromFile = func(path string) (stg stage.Stage, isLock bool, err error) {
+			err = &yaml.TypeError{}
+			return
 		}
-		defer func() { fromFile = fromFileOrig }()
+		defer func() { stageFromFile = stageFromFileOrig }()
 
 		stagePaths := []string{"file1", "file2", "file3"}
 
@@ -49,17 +51,17 @@ func TestCheckAddTypes(t *testing.T) {
 	})
 
 	t.Run("check files and stages throws error", func(t *testing.T) {
-		fromFileOrig := fromFile
+		stageFromFileOrig := stageFromFile
 
 		first := true
-		fromFile = func(path string, v interface{}) error {
+		stageFromFile = func(path string) (stg stage.Stage, isLock bool, err error) {
 			if first {
 				first = false
-				return &yaml.TypeError{}
+				err = &yaml.TypeError{}
 			}
-			return nil
+			return
 		}
-		defer func() { fromFile = fromFileOrig }()
+		defer func() { stageFromFile = stageFromFileOrig }()
 
 		stagePaths := []string{"file1", "a.duc"}
 

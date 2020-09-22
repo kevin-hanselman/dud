@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/cache"
-	"github.com/kevin-hanselman/duc/fsutil"
 	"github.com/kevin-hanselman/duc/index"
 	"github.com/kevin-hanselman/duc/stage"
 	"github.com/kevin-hanselman/duc/strategy"
@@ -64,7 +63,7 @@ var commitCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 			lockPath := stage.FilePathForLock(stagePath)
-			if err := fsutil.ToYamlFile(lockPath, entry.Stage); err != nil {
+			if err := entry.Stage.ToFile(lockPath); err != nil {
 				log.Fatal(err)
 			}
 			entry.ToCommit = false

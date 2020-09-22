@@ -1,4 +1,4 @@
-- make stage outputs and deps and dir manifests all type `map[path]Artifact`
+- add 'pin' command to run_tests.py to automate updating test targets
 
 misc:
     integrate with rclone for remote caches?

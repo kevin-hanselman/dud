@@ -15,12 +15,12 @@ func TestEquivalency(t *testing.T) {
 	newStage := func() Stage {
 		return Stage{
 			WorkingDir: "dir",
-			Outputs: []artifact.Artifact{
-				{Path: "foo.txt"},
-				{Path: "bar.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"foo.txt": {Path: "foo.txt"},
+				"bar.txt": {Path: "bar.txt"},
 			},
-			Dependencies: []artifact.Artifact{
-				{Path: "b", IsDir: true},
+			Dependencies: map[string]*artifact.Artifact{
+				"dep": {Path: "dep", IsDir: true},
 			},
 		}
 	}
@@ -52,7 +52,7 @@ func TestEquivalency(t *testing.T) {
 
 	t.Run("differing paths in Outputs not equivalent", func(t *testing.T) {
 		a, b := newStage(), newStage()
-		b.Outputs[0].Path = "fizz.buzz"
+		b.Outputs["foo.txt"].Path = "fizz.buzz"
 
 		if a.IsEquivalent(b) {
 			t.Fatal("Stages are equivalent")
@@ -61,7 +61,7 @@ func TestEquivalency(t *testing.T) {
 
 	t.Run("differing checksums in Outputs are equivalent", func(t *testing.T) {
 		a, b := newStage(), newStage()
-		b.Outputs[0].Checksum = "doesn't matter"
+		b.Outputs["foo.txt"].Checksum = "doesn't matter"
 
 		if !a.IsEquivalent(b) {
 			t.Fatal("Stages are not equivalent")
@@ -70,7 +70,7 @@ func TestEquivalency(t *testing.T) {
 
 	t.Run("differing IsDir in Dependencies not equivalent", func(t *testing.T) {
 		a, b := newStage(), newStage()
-		b.Dependencies[0].IsDir = false
+		b.Dependencies["dep"].IsDir = false
 
 		if a.IsEquivalent(b) {
 			t.Fatal("Stages are equivalent")
@@ -79,7 +79,7 @@ func TestEquivalency(t *testing.T) {
 
 	t.Run("differing checksums in Dependencies are equivalent", func(t *testing.T) {
 		a, b := newStage(), newStage()
-		b.Dependencies[0].Checksum = "doesn't matter"
+		b.Dependencies["dep"].Checksum = "doesn't matter"
 
 		if !a.IsEquivalent(b) {
 			t.Fatal("Stages are not equivalent")
@@ -101,9 +101,9 @@ func TestFromFile(t *testing.T) {
 		defer resetFromYamlFileMock()
 		expectedStage := Stage{WorkingDir: "foo", Command: "echo 'bar'"}
 		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*Stage)
+			output := v.(*stageFileFormat)
 			if path == "stage.yaml" {
-				*output = expectedStage
+				*output = expectedStage.toFileFormat()
 				return nil
 			}
 			return os.ErrNotExist
@@ -126,30 +126,30 @@ func TestFromFile(t *testing.T) {
 		expectedStage := Stage{
 			WorkingDir: "foo",
 			Command:    "echo 'bar'",
-			Outputs: []artifact.Artifact{
-				{Path: "bar.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {Path: "bar.txt"},
 			},
 		}
 		lockedStage := Stage{
 			WorkingDir: "foo",
 			Command:    "echo 'bar'",
-			Outputs: []artifact.Artifact{
-				{
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {
 					Checksum: "abcdef",
 					Path:     "bar.txt",
 				},
-				{
+				"inequivalent.txt": {
 					Checksum: "ghijkl",
 					Path:     "inequivalent.txt",
 				},
 			},
 		}
 		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*Stage)
+			output := v.(*stageFileFormat)
 			if path == "stage.yaml" {
-				*output = expectedStage
+				*output = expectedStage.toFileFormat()
 			} else {
-				*output = lockedStage
+				*output = lockedStage.toFileFormat()
 			}
 			return nil
 		}
@@ -171,26 +171,26 @@ func TestFromFile(t *testing.T) {
 		stg := Stage{
 			WorkingDir: "foo",
 			Command:    "echo 'bar'",
-			Outputs: []artifact.Artifact{
-				{Path: "bar.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {Path: "bar.txt"},
 			},
 		}
 		lockedStage := Stage{
 			WorkingDir: "foo",
 			Command:    "echo 'bar'",
-			Outputs: []artifact.Artifact{
-				{
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {
 					Checksum: "abcdef",
 					Path:     "bar.txt",
 				},
 			},
 		}
 		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*Stage)
+			output := v.(*stageFileFormat)
 			if path == "stage.yaml" {
-				*output = stg
+				*output = stg.toFileFormat()
 			} else {
-				*output = lockedStage
+				*output = lockedStage.toFileFormat()
 			}
 			return nil
 		}
@@ -218,18 +218,18 @@ func TestCommit(t *testing.T) {
 func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	stg := Stage{
 		WorkingDir: "workDir",
-		Dependencies: []artifact.Artifact{
-			{
+		Dependencies: map[string]*artifact.Artifact{
+			"dep.txt": {
 				Checksum: "",
 				Path:     "dep.txt",
 			},
 		},
-		Outputs: []artifact.Artifact{
-			{
+		Outputs: map[string]*artifact.Artifact{
+			"foo.txt": {
 				Checksum: "",
 				Path:     "foo.txt",
 			},
-			{
+			"bar.txt": {
 				Checksum: "",
 				Path:     "bar.txt",
 			},
@@ -237,12 +237,12 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	mockCache := mocks.Cache{}
-	for i := range stg.Outputs {
-		mockCache.On("Commit", "workDir", &stg.Outputs[i], strat).Return(nil)
+	for _, art := range stg.Outputs {
+		mockCache.On("Commit", "workDir", art, strat).Return(nil)
 	}
 	for _, art := range stg.Dependencies {
 		art.SkipCache = true
-		mockCache.On("Commit", "workDir", &art, strat).Return(nil)
+		mockCache.On("Commit", "workDir", art, strat).Return(nil)
 	}
 
 	if err := stg.Commit(&mockCache, strat); err != nil {
@@ -260,12 +260,12 @@ func TestCheckout(t *testing.T) {
 func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 	stg := Stage{
 		WorkingDir: "workDir",
-		Outputs: []artifact.Artifact{
-			{
+		Outputs: map[string]*artifact.Artifact{
+			"foo.txt": {
 				Checksum: "",
 				Path:     "foo.txt",
 			},
-			{
+			"bar.txt": {
 				Checksum: "",
 				Path:     "bar.txt",
 			},
@@ -273,8 +273,8 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	mockCache := mocks.Cache{}
-	for i := range stg.Outputs {
-		mockCache.On("Checkout", "workDir", &stg.Outputs[i], strat).Return(nil)
+	for _, art := range stg.Outputs {
+		mockCache.On("Checkout", "workDir", art, strat).Return(nil)
 	}
 
 	if err := stg.Checkout(&mockCache, strat); err != nil {

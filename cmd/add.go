@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/fsutil"
 	"github.com/kevin-hanselman/duc/index"
 	"github.com/kevin-hanselman/duc/stage"
 	"github.com/spf13/cobra"
@@ -20,8 +19,6 @@ func init() {
 
 var outputStagePath string
 var isRecursive bool
-var toFile = fsutil.ToYamlFile
-var fromFile = fsutil.FromYamlFile
 
 var addCmd = &cobra.Command{
 	Use:   "add",
@@ -90,7 +87,7 @@ func add(paths []string, idx *index.Index, outputStagePath string, isRecursive b
 		if err != nil {
 			return err
 		}
-		if err := fsutil.ToYamlFile(outputStagePath, stg); err != nil {
+		if err := stg.ToFile(outputStagePath); err != nil {
 			return err
 		}
 		if err := idx.AddStagesFromPaths(outputStagePath); err != nil {
@@ -114,10 +111,11 @@ func checkAddTypes(paths []string) (addType, error) {
 	return firstPathType, nil
 }
 
+var stageFromFile = stage.FromFile
+
 // for now, any error opening decoding yaml means it is not a stage
 func checkAddType(path string) addType {
-	stg := stage.Stage{}
-	err := fromFile(path, &stg)
+	_, _, err := stageFromFile(path)
 
 	if err != nil {
 		return artifactType

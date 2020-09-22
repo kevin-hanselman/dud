@@ -46,7 +46,7 @@ func testFromPath(fileStatus fsutil.FileStatus, isRecursive bool, expectError bo
 	defer func() { fileStatusFromPath = fileStatusFromPathOrig }()
 
 	path := "foobar"
-	expectedArtifact := Artifact{
+	expectedArtifact := &Artifact{
 		Path: path,
 	}
 	if fileStatus == fsutil.Directory {

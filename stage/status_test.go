@@ -14,9 +14,9 @@ func TestStatus(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		stg := Stage{
 			WorkingDir: "workDir",
-			Outputs: []artifact.Artifact{
-				{Path: "foo.txt"},
-				{Path: "bar.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"foo.txt": {Path: "foo.txt"},
+				"bar.txt": {Path: "bar.txt"},
 			},
 		}
 
@@ -30,9 +30,9 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 		expectedStageStatus := Status{}
 		for _, art := range stg.Outputs {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 			expectedStageStatus[art.Path] = artifact.ArtifactWithStatus{
-				Artifact: art,
+				Artifact: *art,
 				Status:   artStatus,
 			}
 		}
@@ -52,11 +52,11 @@ func TestStatus(t *testing.T) {
 	t.Run("include dependencies", func(t *testing.T) {
 		stg := Stage{
 			WorkingDir: "workDir",
-			Dependencies: []artifact.Artifact{
-				{Path: "foo.txt"},
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.txt": {Path: "foo.txt"},
 			},
-			Outputs: []artifact.Artifact{
-				{Path: "bar.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {Path: "bar.txt"},
 			},
 		}
 
@@ -70,9 +70,9 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 		expectedStageStatus := Status{}
 		for _, art := range stg.Dependencies {
-			mockCache.On("Status", "workDir", art).Return(artStatus, nil)
+			mockCache.On("Status", "workDir", *art).Return(artStatus, nil)
 			expectedStageStatus[art.Path] = artifact.ArtifactWithStatus{
-				Artifact: art,
+				Artifact: *art,
 				Status:   artStatus,
 			}
 		}
