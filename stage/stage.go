@@ -38,7 +38,7 @@ type stageFileFormat struct {
 	Outputs      []*artifact.Artifact
 }
 
-// Status holds a map of artifact names to statuses
+// Status is a map of Artifact Paths to statuses
 type Status map[string]artifact.ArtifactWithStatus
 
 func (stg Stage) toFileFormat() (out stageFileFormat) {
@@ -182,6 +182,7 @@ func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) erro
 // Status checks the statuses of a subset of Artifacts owned by the Stage. If
 // checkDependencies is true, the statuses of all Dependencies are returned,
 // otherwise the statuses of all Outputs are returned.
+// TODO: remove checkDependencies once Index.Status() matures
 func (stg *Stage) Status(ch cache.Cache, checkDependencies bool) (Status, error) {
 	stat := make(Status)
 	var artifacts map[string]*artifact.Artifact

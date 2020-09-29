@@ -1,7 +1,6 @@
 package index
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/duc/artifact"
 	"github.com/kevin-hanselman/duc/stage"
 
@@ -12,7 +11,7 @@ func TestFindOwner(t *testing.T) {
 
 	t.Run("single stage", func(t *testing.T) {
 		idx := make(Index)
-		expectedEntry := &entry{
+		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo.bin": {Path: "foo.bin"},
@@ -20,26 +19,21 @@ func TestFindOwner(t *testing.T) {
 				},
 			},
 		}
-		idx["foo.yaml"] = expectedEntry
 
-		owner, ok, err := idx.findOwner("bar.bin")
+		owner, err := idx.findOwner("bar.bin")
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if !ok {
-			t.Fatal("findOwner returned ok = false")
-		}
-
-		if diff := cmp.Diff(expectedEntry, owner); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
+		if owner != "foo.yaml" {
+			t.Fatalf("got owner = %v, want foo.yaml", owner)
 		}
 	})
 
 	t.Run("no owner", func(t *testing.T) {
 		idx := make(Index)
-		en := &entry{
+		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo.bin": {Path: "foo.bin"},
@@ -47,52 +41,42 @@ func TestFindOwner(t *testing.T) {
 				},
 			},
 		}
-		idx["foo.yaml"] = en
 
-		owner, ok, err := idx.findOwner("other.bin")
+		owner, err := idx.findOwner("other.bin")
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if ok {
-			t.Fatal("findOwner returned ok = true")
-		}
-
-		if owner != nil {
-			t.Fatal("expected owner to be nil")
+		if owner != "" {
+			t.Fatalf("got owner = %v, want empty string", owner)
 		}
 	})
 
 	t.Run("file in dir artifact", func(t *testing.T) {
 		idx := make(Index)
-		expectedEntry := &entry{
+		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo": {Path: "foo", IsDir: true, IsRecursive: false},
 				},
 			},
 		}
-		idx["foo.yaml"] = expectedEntry
 
-		owner, ok, err := idx.findOwner("foo/bar.bin")
+		owner, err := idx.findOwner("foo/bar.bin")
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if !ok {
-			t.Fatal("findOwner returned ok = false")
-		}
-
-		if diff := cmp.Diff(expectedEntry, owner); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
+		if owner != "foo.yaml" {
+			t.Fatalf("got owner = %v, want foo.yaml", owner)
 		}
 	})
 
 	t.Run("non-zero WorkingDir", func(t *testing.T) {
 		idx := make(Index)
-		expectedEntry := &entry{
+		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				WorkingDir: "foo",
 				Outputs: map[string]*artifact.Artifact{
@@ -100,72 +84,57 @@ func TestFindOwner(t *testing.T) {
 				},
 			},
 		}
-		idx["foo.yaml"] = expectedEntry
 
-		owner, ok, err := idx.findOwner("foo/bar.bin")
+		owner, err := idx.findOwner("foo/bar.bin")
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if !ok {
-			t.Fatal("findOwner returned ok = false")
-		}
-
-		if diff := cmp.Diff(expectedEntry, owner); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
+		if owner != "foo.yaml" {
+			t.Fatalf("got owner = %v, want foo.yaml", owner)
 		}
 	})
 
 	t.Run("file in sub-dir of non-recursive dir artifact", func(t *testing.T) {
 		idx := make(Index)
-		expectedEntry := &entry{
+		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo": {Path: "foo", IsDir: true, IsRecursive: false},
 				},
 			},
 		}
-		idx["foo.yaml"] = expectedEntry
 
-		owner, ok, err := idx.findOwner("foo/bar/test.bin")
+		owner, err := idx.findOwner("foo/bar/test.bin")
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if ok {
-			t.Fatal("findOwner returned ok = true")
-		}
-
-		if owner != nil {
-			t.Fatal("expected owner to be nil")
+		if owner != "" {
+			t.Fatalf("got owner = %v, want empty string", owner)
 		}
 	})
 
 	t.Run("file in sub-dir of recursive dir artifact", func(t *testing.T) {
 		idx := make(Index)
-		expectedEntry := &entry{
+		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo": {Path: "foo", IsDir: true, IsRecursive: true},
 				},
 			},
 		}
-		idx["foo.yaml"] = expectedEntry
 
-		owner, ok, err := idx.findOwner("foo/bar/test.bin")
+		owner, err := idx.findOwner("foo/bar/test.bin")
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if !ok {
-			t.Fatal("findOwner returned ok = false")
-		}
-
-		if diff := cmp.Diff(expectedEntry, owner); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
+		if owner != "foo.yaml" {
+			t.Fatalf("got owner = %v, want foo.yaml", owner)
 		}
 	})
 }

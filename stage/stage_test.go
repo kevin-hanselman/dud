@@ -213,6 +213,16 @@ func TestCommit(t *testing.T) {
 	t.Run("Link", func(t *testing.T) { testCommit(strategy.LinkStrategy, t) })
 }
 
+func ExpectCommitCalled(stg *Stage, mockCache *mocks.Cache, strat strategy.CheckoutStrategy) {
+	for _, art := range stg.Outputs {
+		mockCache.On("Commit", "workDir", art, strat).Return(nil)
+	}
+	for _, art := range stg.Dependencies {
+		art.SkipCache = true
+		mockCache.On("Commit", "workDir", art, strat).Return(nil)
+	}
+}
+
 // TODO: This is a parrot test. It parrots the production code instead of
 // testing any key outcomes. It should either be improved or removed.
 func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
@@ -237,13 +247,8 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	mockCache := mocks.Cache{}
-	for _, art := range stg.Outputs {
-		mockCache.On("Commit", "workDir", art, strat).Return(nil)
-	}
-	for _, art := range stg.Dependencies {
-		art.SkipCache = true
-		mockCache.On("Commit", "workDir", art, strat).Return(nil)
-	}
+
+	ExpectCommitCalled(&stg, &mockCache, strat)
 
 	if err := stg.Commit(&mockCache, strat); err != nil {
 		t.Fatal(err)
@@ -255,6 +260,12 @@ func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
 func TestCheckout(t *testing.T) {
 	t.Run("Copy", func(t *testing.T) { testCheckout(strategy.CopyStrategy, t) })
 	t.Run("Link", func(t *testing.T) { testCheckout(strategy.LinkStrategy, t) })
+}
+
+func ExpectCheckoutCalled(stg *Stage, mockCache *mocks.Cache, strat strategy.CheckoutStrategy) {
+	for _, art := range stg.Outputs {
+		mockCache.On("Checkout", "workDir", art, strat).Return(nil)
+	}
 }
 
 func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
@@ -273,9 +284,8 @@ func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
 	}
 
 	mockCache := mocks.Cache{}
-	for _, art := range stg.Outputs {
-		mockCache.On("Checkout", "workDir", art, strat).Return(nil)
-	}
+
+	ExpectCheckoutCalled(&stg, &mockCache, strat)
 
 	if err := stg.Checkout(&mockCache, strat); err != nil {
 		t.Fatal(err)
