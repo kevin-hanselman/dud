@@ -63,16 +63,16 @@ var statusCmd = &cobra.Command{
 			}
 		}
 
+		status := make(index.Status)
 		for _, path := range args {
-			entry, ok := idx[path]
-			if !ok {
-				log.Fatal(fmt.Errorf("path %s not present in Index", path))
-			}
-			status, err := entry.Stage.Status(ch, false)
+			err := idx.Status(path, ch, status)
 			if err != nil {
 				log.Fatal(err)
 			}
-			if err := printStageStatus(path, status); err != nil {
+		}
+
+		for path, stageStatus := range status {
+			if err := printStageStatus(path, stageStatus); err != nil {
 				log.Fatal(err)
 			}
 		}

@@ -12,12 +12,17 @@ import (
 )
 
 // Status reports the status of an Artifact in the Cache.
-func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
+func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (
+	outputStatus artifact.ArtifactWithStatus,
+	err error,
+) {
+	outputStatus.Artifact = art
 	if art.IsDir {
-		status, _, err := dirArtifactStatus(ch, workingDir, art)
-		return status, err
+		outputStatus.Status, _, err = dirArtifactStatus(ch, workingDir, art)
+	} else {
+		outputStatus.Status, err = fileArtifactStatus(ch, workingDir, art)
 	}
-	return fileArtifactStatus(ch, workingDir, art)
+	return
 }
 
 // quickStatus populates all artifact.Status fields except for ContentsMatch.

@@ -65,14 +65,14 @@ func (_m *Cache) PathForChecksum(checksum string) (string, error) {
 }
 
 // Status provides a mock function with given fields: workingDir, art
-func (_m *Cache) Status(workingDir string, art artifact.Artifact) (artifact.Status, error) {
+func (_m *Cache) Status(workingDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error) {
 	ret := _m.Called(workingDir, art)
 
-	var r0 artifact.Status
-	if rf, ok := ret.Get(0).(func(string, artifact.Artifact) artifact.Status); ok {
+	var r0 artifact.ArtifactWithStatus
+	if rf, ok := ret.Get(0).(func(string, artifact.Artifact) artifact.ArtifactWithStatus); ok {
 		r0 = rf(workingDir, art)
 	} else {
-		r0 = ret.Get(0).(artifact.Status)
+		r0 = ret.Get(0).(artifact.ArtifactWithStatus)
 	}
 
 	var r1 error

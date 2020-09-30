@@ -40,7 +40,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			ContentsMatch:       true,
 		}
 
-		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
+		if diff := cmp.Diff(expectedStatus, actualStatus.Status); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
 		}
 	})
@@ -74,7 +74,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			ContentsMatch:       true,
 		}
 
-		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
+		if diff := cmp.Diff(expectedStatus, actualStatus.Status); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
 		}
 	})
@@ -108,7 +108,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			ContentsMatch:       true,
 		}
 
-		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
+		if diff := cmp.Diff(expectedStatus, actualStatus.Status); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
 		}
 	})

@@ -179,56 +179,6 @@ func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) erro
 	return nil
 }
 
-// Status checks the statuses of a subset of Artifacts owned by the Stage. If
-// checkDependencies is true, the statuses of all Dependencies are returned,
-// otherwise the statuses of all Outputs are returned.
-// TODO: remove checkDependencies once Index.Status() matures
-func (stg *Stage) Status(ch cache.Cache, checkDependencies bool) (Status, error) {
-	stat := make(Status)
-	var artifacts map[string]*artifact.Artifact
-	if checkDependencies {
-		artifacts = stg.Dependencies
-	} else {
-		artifacts = stg.Outputs
-	}
-	for _, art := range artifacts {
-		artStatus, err := ch.Status(stg.WorkingDir, *art)
-		if err != nil {
-			return stat, errors.Wrap(err, "stage status failed")
-		}
-		stat[art.Path] = artifact.ArtifactWithStatus{
-			Artifact: *art,
-			Status:   artStatus,
-		}
-	}
-	return stat, nil
-}
-
-// Run runs the Stage's command unless the Stage is up-to-date.
-func (stg *Stage) Run(ch cache.Cache) (upToDate bool, err error) {
-	outStatus, err := stg.Status(ch, false)
-	if err != nil {
-		return false, err
-	}
-	outputsUpToDate := isUpToDate(outStatus)
-
-	depStatus, err := stg.Status(ch, true)
-	if err != nil {
-		return false, err
-	}
-	depsUpToDate := isUpToDate(depStatus)
-
-	if outputsUpToDate && depsUpToDate {
-		return true, nil
-	}
-
-	if stg.Command == "" {
-		return false, nil
-	}
-
-	return false, runCommand(stg.createCommand())
-}
-
 // FromPaths creates a Stage from one or more file paths.
 // TODO: rename or delete (to differentiate from FromFile)
 func FromPaths(isRecursive bool, paths ...string) (stg Stage, err error) {

@@ -80,7 +80,7 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 		t.Fatal(err)
 	}
 
-	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
+	if diff := cmp.Diff(statusWant, statusGot.Status); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
 

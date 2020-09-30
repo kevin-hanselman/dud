@@ -86,7 +86,7 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 		t.Fatal(err)
 	}
 
-	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
+	if diff := cmp.Diff(statusWant, statusGot.Status); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
 }

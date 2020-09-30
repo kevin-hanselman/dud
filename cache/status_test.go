@@ -28,6 +28,8 @@ func testStatusIntegration(statusWant artifact.ArtifactWithStatus, t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
+	statusWant.Artifact = art
+
 	cache, err := NewLocalCache(dirs.CacheDir)
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +39,7 @@ func testStatusIntegration(statusWant artifact.ArtifactWithStatus, t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if diff := cmp.Diff(statusWant.Status, statusGot); diff != "" {
+	if diff := cmp.Diff(statusWant, statusGot); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
 }

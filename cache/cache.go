@@ -13,7 +13,7 @@ type Cache interface {
 	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	PathForChecksum(checksum string) (string, error)
-	Status(workingDir string, art artifact.Artifact) (artifact.Status, error)
+	Status(workingDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
 }
 
 // A LocalCache is a concrete Cache that uses a directory on a local filesystem.
