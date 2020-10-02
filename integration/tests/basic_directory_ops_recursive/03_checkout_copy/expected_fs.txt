@@ -13,7 +13,7 @@ drwxr-xr-x user user    4096 ./foo/bar
 -rw-r--r-- user user       2 ./foo/5.txt   
 -rw-r--r-- user user       2 ./foo/2.txt   
 drwxr-xr-x user user    4096 ./.duc   
--rw-r--r-- user user      15 ./.duc/index   
+-rw-r--r-- user user      14 ./.duc/index   
 drwxr-xr-x user user    4096 ./.duc/cache   
 drwxr-xr-x user user    4096 ./.duc/cache/ec   
 -r--r--r-- user user       2 ./.duc/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1   

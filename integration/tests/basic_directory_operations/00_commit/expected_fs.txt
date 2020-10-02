@@ -13,7 +13,7 @@ lrwxrwxrwx user user     119 ./foo/3.txt   /home/user/basic_directory_operations
 lrwxrwxrwx user user     119 ./foo/5.txt   /home/user/basic_directory_operations/repo/.duc/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
 lrwxrwxrwx user user     119 ./foo/2.txt   /home/user/basic_directory_operations/repo/.duc/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
 drwxr-xr-x user user    4096 ./.duc   
--rw-r--r-- user user      15 ./.duc/index   
+-rw-r--r-- user user      14 ./.duc/index   
 drwxr-xr-x user user    4096 ./.duc/cache   
 drwxr-xr-x user user    4096 ./.duc/cache/ec   
 -r--r--r-- user user       2 ./.duc/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1   

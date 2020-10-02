@@ -4,12 +4,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"fmt"
-
-	"github.com/kevin-hanselman/duc/cache"
+	"github.com/kevin-hanselman/duc/artifact"
 	"github.com/kevin-hanselman/duc/fsutil"
 	"github.com/kevin-hanselman/duc/stage"
-	"github.com/pkg/errors"
 )
 
 type entry struct {
@@ -89,57 +86,14 @@ func FromFile(path string) (Index, error) {
 	return idx, nil
 }
 
-// Status is a map of Stage paths to Stage Statuses
-type Status map[string]stage.Status
-
-// Status returns the status for the given Stage and all upstream Stages.
-func (idx Index) Status(stagePath string, ch cache.Cache, out Status) error {
-	// Exit early if we've already visited this Stage.
-	if _, ok := out[stagePath]; ok {
-		return nil
-	}
-	en, ok := idx[stagePath]
-	if !ok {
-		return fmt.Errorf("status: unknown stage %#v", stagePath)
-	}
-	stageStatus := make(stage.Status)
-	for artPath, art := range en.Stage.Dependencies {
-		ownerPath, err := idx.findOwner(artPath)
-		if err != nil {
-			errors.Wrap(err, "status")
-		}
-		if ownerPath == "" {
-			stageStatus[artPath], err = ch.Status(en.Stage.WorkingDir, *art)
-			if err != nil {
-				return errors.Wrapf(err, "status: %s", art.Path)
-			}
-		} else {
-			// TODO: get the Status of the Dependency, not the whole Stage?
-			if err := idx.Status(ownerPath, ch, out); err != nil {
-				return err
-			}
-		}
-	}
-
-	for artPath, art := range en.Stage.Outputs {
-		var err error
-		stageStatus[artPath], err = ch.Status(en.Stage.WorkingDir, *art)
-		if err != nil {
-			return errors.Wrapf(err, "status: %s", art.Path)
-		}
-	}
-	out[stagePath] = stageStatus
-	return nil
-}
-
-func (idx Index) findOwner(artPath string) (string, error) {
+func (idx Index) findOwner(artPath string) (string, *artifact.Artifact, error) {
 	for stagePath, en := range idx {
 		relPath, err := filepath.Rel(en.Stage.WorkingDir, artPath)
 		if err != nil {
-			return "", err
+			return "", &artifact.Artifact{}, err
 		}
-		if _, ok := en.Stage.Outputs[relPath]; ok {
-			return stagePath, nil
+		if art, ok := en.Stage.Outputs[relPath]; ok {
+			return stagePath, art, nil
 		}
 		// Search for an Artifact whose Path is any directory in the input's lineage.
 		// For example: given "bish/bash/bosh/file.txt", look for "bish", then
@@ -154,9 +108,9 @@ func (idx Index) findOwner(artPath string) (string, error) {
 			// question is only the owner if the Artifact is recursive, or
 			// we've reached the immediate parent directory of the input.
 			if ok && (art.IsRecursive || dir == fullDir) {
-				return stagePath, nil
+				return stagePath, art, nil
 			}
 		}
 	}
-	return "", nil
+	return "", &artifact.Artifact{}, nil
 }

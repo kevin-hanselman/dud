@@ -1,6 +1,7 @@
 package index
 
 import (
+	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/duc/artifact"
 	"github.com/kevin-hanselman/duc/stage"
 
@@ -10,17 +11,18 @@ import (
 func TestFindOwner(t *testing.T) {
 
 	t.Run("single stage", func(t *testing.T) {
+		targetArt := artifact.Artifact{Path: "bar.bin"}
 		idx := make(Index)
 		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo.bin": {Path: "foo.bin"},
-					"bar.bin": {Path: "bar.bin"},
+					"bar.bin": &targetArt,
 				},
 			},
 		}
 
-		owner, err := idx.findOwner("bar.bin")
+		owner, foundArt, err := idx.findOwner("bar.bin")
 
 		if err != nil {
 			t.Fatal(err)
@@ -28,6 +30,10 @@ func TestFindOwner(t *testing.T) {
 
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %v, want foo.yaml", owner)
+		}
+
+		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
+			t.Fatalf("artifact -want +got:\n%s", diff)
 		}
 	})
 
@@ -42,7 +48,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, err := idx.findOwner("other.bin")
+		owner, _, err := idx.findOwner("other.bin")
 
 		if err != nil {
 			t.Fatal(err)
@@ -54,16 +60,17 @@ func TestFindOwner(t *testing.T) {
 	})
 
 	t.Run("file in dir artifact", func(t *testing.T) {
+		targetArt := artifact.Artifact{Path: "foo", IsDir: true, IsRecursive: false}
 		idx := make(Index)
 		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
-					"foo": {Path: "foo", IsDir: true, IsRecursive: false},
+					"foo": &targetArt,
 				},
 			},
 		}
 
-		owner, err := idx.findOwner("foo/bar.bin")
+		owner, foundArt, err := idx.findOwner("foo/bar.bin")
 
 		if err != nil {
 			t.Fatal(err)
@@ -72,20 +79,25 @@ func TestFindOwner(t *testing.T) {
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %v, want foo.yaml", owner)
 		}
+
+		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
+			t.Fatalf("artifact -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("non-zero WorkingDir", func(t *testing.T) {
+		targetArt := artifact.Artifact{Path: "bar.bin"}
 		idx := make(Index)
 		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				WorkingDir: "foo",
 				Outputs: map[string]*artifact.Artifact{
-					"bar.bin": {Path: "bar.bin"},
+					"bar.bin": &targetArt,
 				},
 			},
 		}
 
-		owner, err := idx.findOwner("foo/bar.bin")
+		owner, foundArt, err := idx.findOwner("foo/bar.bin")
 
 		if err != nil {
 			t.Fatal(err)
@@ -93,6 +105,10 @@ func TestFindOwner(t *testing.T) {
 
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %v, want foo.yaml", owner)
+		}
+
+		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
+			t.Fatalf("artifact -want +got:\n%s", diff)
 		}
 	})
 
@@ -106,7 +122,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, err := idx.findOwner("foo/bar/test.bin")
+		owner, _, err := idx.findOwner("foo/bar/test.bin")
 
 		if err != nil {
 			t.Fatal(err)
@@ -118,16 +134,17 @@ func TestFindOwner(t *testing.T) {
 	})
 
 	t.Run("file in sub-dir of recursive dir artifact", func(t *testing.T) {
+		targetArt := artifact.Artifact{Path: "foo", IsDir: true, IsRecursive: true}
 		idx := make(Index)
 		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
-					"foo": {Path: "foo", IsDir: true, IsRecursive: true},
+					"foo": &targetArt,
 				},
 			},
 		}
 
-		owner, err := idx.findOwner("foo/bar/test.bin")
+		owner, foundArt, err := idx.findOwner("foo/bar/test.bin")
 
 		if err != nil {
 			t.Fatal(err)
@@ -135,6 +152,10 @@ func TestFindOwner(t *testing.T) {
 
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %v, want foo.yaml", owner)
+		}
+
+		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
+			t.Fatalf("artifact -want +got:\n%s", diff)
 		}
 	})
 }

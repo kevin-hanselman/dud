@@ -152,22 +152,6 @@ func (stg *Stage) ToFile(path string) error {
 	return fsutil.ToYamlFile(path, stg.toFileFormat())
 }
 
-// Commit commits all Outputs of the Stage.
-func (stg *Stage) Commit(ch cache.Cache, strat strategy.CheckoutStrategy) error {
-	for _, art := range stg.Dependencies {
-		art.SkipCache = true // always skip the cache for dependencies
-		if err := ch.Commit(stg.WorkingDir, art, strat); err != nil {
-			return errors.Wrap(err, "stage commit failed")
-		}
-	}
-	for _, art := range stg.Outputs {
-		if err := ch.Commit(stg.WorkingDir, art, strat); err != nil {
-			return errors.Wrap(err, "stage commit failed")
-		}
-	}
-	return nil
-}
-
 // Checkout checks out all Outputs of the Stage.
 func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) error {
 	for _, art := range stg.Outputs {

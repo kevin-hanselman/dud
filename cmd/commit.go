@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -55,18 +56,27 @@ var commitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		for stagePath, entry := range idx {
-			if !entry.ToCommit {
-				continue
+		if len(args) == 0 { // By default, commit all Stages.
+			for path := range idx {
+				args = append(args, path)
 			}
-			if err := entry.Stage.Commit(ch, strat); err != nil {
+		}
+
+		committed := make(map[string]bool)
+		for _, path := range args {
+			err := idx.Commit(path, ch, strat, committed)
+			if err != nil {
 				log.Fatal(err)
 			}
-			lockPath := stage.FilePathForLock(stagePath)
-			if err := entry.Stage.ToFile(lockPath); err != nil {
+			lockPath := stage.FilePathForLock(path)
+			if idx[path].Stage.ToFile(lockPath); err != nil {
 				log.Fatal(err)
 			}
-			entry.ToCommit = false
+		}
+
+		fmt.Println("committed:")
+		for stagePath := range committed {
+			fmt.Printf("  %s\n", stagePath)
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {

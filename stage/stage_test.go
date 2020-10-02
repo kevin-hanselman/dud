@@ -6,8 +6,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/duc/artifact"
-	"github.com/kevin-hanselman/duc/mocks"
-	"github.com/kevin-hanselman/duc/strategy"
 )
 
 func TestEquivalency(t *testing.T) {
@@ -206,92 +204,6 @@ func TestFromFile(t *testing.T) {
 			t.Fatalf("Stage -want +got:\n%s", diff)
 		}
 	})
-}
-
-func TestCommit(t *testing.T) {
-	t.Run("Copy", func(t *testing.T) { testCommit(strategy.CopyStrategy, t) })
-	t.Run("Link", func(t *testing.T) { testCommit(strategy.LinkStrategy, t) })
-}
-
-func ExpectCommitCalled(stg *Stage, mockCache *mocks.Cache, strat strategy.CheckoutStrategy) {
-	for _, art := range stg.Outputs {
-		mockCache.On("Commit", "workDir", art, strat).Return(nil)
-	}
-	for _, art := range stg.Dependencies {
-		art.SkipCache = true
-		mockCache.On("Commit", "workDir", art, strat).Return(nil)
-	}
-}
-
-// TODO: This is a parrot test. It parrots the production code instead of
-// testing any key outcomes. It should either be improved or removed.
-func testCommit(strat strategy.CheckoutStrategy, t *testing.T) {
-	stg := Stage{
-		WorkingDir: "workDir",
-		Dependencies: map[string]*artifact.Artifact{
-			"dep.txt": {
-				Checksum: "",
-				Path:     "dep.txt",
-			},
-		},
-		Outputs: map[string]*artifact.Artifact{
-			"foo.txt": {
-				Checksum: "",
-				Path:     "foo.txt",
-			},
-			"bar.txt": {
-				Checksum: "",
-				Path:     "bar.txt",
-			},
-		},
-	}
-
-	mockCache := mocks.Cache{}
-
-	ExpectCommitCalled(&stg, &mockCache, strat)
-
-	if err := stg.Commit(&mockCache, strat); err != nil {
-		t.Fatal(err)
-	}
-
-	mockCache.AssertExpectations(t)
-}
-
-func TestCheckout(t *testing.T) {
-	t.Run("Copy", func(t *testing.T) { testCheckout(strategy.CopyStrategy, t) })
-	t.Run("Link", func(t *testing.T) { testCheckout(strategy.LinkStrategy, t) })
-}
-
-func ExpectCheckoutCalled(stg *Stage, mockCache *mocks.Cache, strat strategy.CheckoutStrategy) {
-	for _, art := range stg.Outputs {
-		mockCache.On("Checkout", "workDir", art, strat).Return(nil)
-	}
-}
-
-func testCheckout(strat strategy.CheckoutStrategy, t *testing.T) {
-	stg := Stage{
-		WorkingDir: "workDir",
-		Outputs: map[string]*artifact.Artifact{
-			"foo.txt": {
-				Checksum: "",
-				Path:     "foo.txt",
-			},
-			"bar.txt": {
-				Checksum: "",
-				Path:     "bar.txt",
-			},
-		},
-	}
-
-	mockCache := mocks.Cache{}
-
-	ExpectCheckoutCalled(&stg, &mockCache, strat)
-
-	if err := stg.Checkout(&mockCache, strat); err != nil {
-		t.Fatal(err)
-	}
-
-	mockCache.AssertExpectations(t)
 }
 
 func TestFilePathForLock(t *testing.T) {
