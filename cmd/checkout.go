@@ -59,15 +59,17 @@ var checkoutCmd = &cobra.Command{
 			}
 		}
 
-		// TODO: first, check all entry.IsLocked and error out if any are false
+		checkedOut := make(map[string]bool)
 		for _, path := range args {
-			entry, ok := idx[path]
-			if !ok {
-				log.Fatal(fmt.Errorf("path %s not present in Index", path))
-			}
-			if err := entry.Stage.Checkout(ch, strat); err != nil {
+			err := idx.Checkout(path, ch, strat, checkedOut)
+			if err != nil {
 				log.Fatal(err)
 			}
+		}
+
+		fmt.Println("checked out:")
+		for stagePath := range checkedOut {
+			fmt.Printf("  %s\n", stagePath)
 		}
 	},
 }

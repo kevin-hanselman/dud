@@ -7,10 +7,7 @@ import (
 	"strings"
 
 	"github.com/kevin-hanselman/duc/artifact"
-	"github.com/kevin-hanselman/duc/cache"
 	"github.com/kevin-hanselman/duc/fsutil"
-	"github.com/kevin-hanselman/duc/strategy"
-	"github.com/pkg/errors"
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
@@ -150,17 +147,6 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 // to a simplified format when stored on disk.
 func (stg *Stage) ToFile(path string) error {
 	return fsutil.ToYamlFile(path, stg.toFileFormat())
-}
-
-// Checkout checks out all Outputs of the Stage.
-func (stg *Stage) Checkout(ch cache.Cache, strat strategy.CheckoutStrategy) error {
-	for _, art := range stg.Outputs {
-		if err := ch.Checkout(stg.WorkingDir, art, strat); err != nil {
-			// TODO: unwind anything?
-			return errors.Wrap(err, "stage checkout failed")
-		}
-	}
-	return nil
 }
 
 // FromPaths creates a Stage from one or more file paths.
