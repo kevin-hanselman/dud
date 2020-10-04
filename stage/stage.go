@@ -173,16 +173,8 @@ func FilePathForLock(stagePath string) string {
 	return str.String()
 }
 
-func isUpToDate(status Status) bool {
-	for _, artStatus := range status {
-		if !artStatus.ContentsMatch {
-			return false
-		}
-	}
-	return true
-}
-
-func (stg Stage) createCommand() *exec.Cmd {
+// CreateCommand return an exec.Cmd for the Stage.
+func (stg Stage) CreateCommand() *exec.Cmd {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "sh"
@@ -192,9 +184,4 @@ func (stg Stage) createCommand() *exec.Cmd {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd
-}
-
-// for mocking
-var runCommand = func(cmd *exec.Cmd) error {
-	return cmd.Run()
 }

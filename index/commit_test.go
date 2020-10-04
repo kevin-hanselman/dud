@@ -29,7 +29,7 @@ func TestCommit(t *testing.T) {
 
 	strat := strategy.LinkStrategy
 
-	t.Run("disjoint stages with oprhan dependency", func(t *testing.T) {
+	t.Run("disjoint stages with orphan dependency", func(t *testing.T) {
 		orphanArt := artifact.Artifact{Path: "bish.bin"}
 		stgA := stage.Stage{
 			WorkingDir: "a",
