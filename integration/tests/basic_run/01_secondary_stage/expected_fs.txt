@@ -1,0 +1,8 @@
+drwxr-xr-x user user    4096 .  
+-rw-r--r-- user user      51 ./base.txt  
+-rw-r--r-- user user      56 ./second.txt  
+drwxr-xr-x user user    4096 ./.duc  
+-rw-r--r-- user user      34 ./.duc/index  
+drwxr-xr-x user user    4096 ./.duc/cache  
+-rw-r--r-- user user      55 ./base.yaml  
+-rw-r--r-- user user      80 ./second.yaml  

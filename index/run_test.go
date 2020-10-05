@@ -326,8 +326,4 @@ func TestRun(t *testing.T) {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
 	})
-
-	t.Run("two stages, downstream out-of-date", func(t *testing.T) {
-		defer resetRunCommandMock()
-	})
 }

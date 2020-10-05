@@ -122,8 +122,10 @@ var fromYamlFile = fsutil.FromYamlFile
 // FromFile loads a Stage from a file. If a lock file exists and is equivalent
 // (see stage.IsEquivalent), it loads the Stage's locked version.
 var FromFile = func(stagePath string) (Stage, bool, error) {
-	var stg, locked Stage
-	var sff stageFileFormat
+	var (
+		stg, locked Stage
+		sff         stageFileFormat
+	)
 	if err := fromYamlFile(stagePath, &sff); err != nil {
 		return stg, false, err
 	}

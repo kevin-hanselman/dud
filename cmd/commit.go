@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -74,9 +73,9 @@ var commitCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Println("committed:")
+		log.Println("committed:")
 		for stagePath := range committed {
-			fmt.Printf("  %s\n", stagePath)
+			log.Printf("  %s\n", stagePath)
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {
