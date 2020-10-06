@@ -3,6 +3,7 @@ package index
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/cache"
 	"github.com/kevin-hanselman/duc/stage"
@@ -36,7 +37,7 @@ func (idx Index) Run(stagePath string, ch cache.Cache, ran map[string]bool) erro
 	hasDeps := len(en.Stage.Dependencies) > 0
 	doRun := hasCommand && !hasDeps
 	for artPath, art := range en.Stage.Dependencies {
-		ownerPath, _, err := idx.findOwner(artPath)
+		ownerPath, _, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
 		if err != nil {
 			errors.Wrap(err, "run")
 		}
@@ -45,18 +46,12 @@ func (idx Index) Run(stagePath string, ch cache.Cache, ran map[string]bool) erro
 			if err != nil {
 				return errors.Wrap(err, "run")
 			}
-			if !artStatus.ContentsMatch {
-				doRun = true
-				break
-			}
+			doRun = doRun || !artStatus.ContentsMatch
 		} else {
 			if err := idx.Run(ownerPath, ch, ran); err != nil {
 				return errors.Wrap(err, "run")
 			}
-			if ran[ownerPath] {
-				doRun = true
-				break
-			}
+			doRun = doRun || ran[ownerPath]
 		}
 	}
 	if !doRun {

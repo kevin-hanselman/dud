@@ -2,6 +2,7 @@ package index
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/cache"
 	"github.com/kevin-hanselman/duc/strategy"
@@ -24,7 +25,7 @@ func (idx Index) Commit(
 		return fmt.Errorf("status: unknown stage %#v", stagePath)
 	}
 	for artPath, art := range en.Stage.Dependencies {
-		ownerPath, upstreamArt, err := idx.findOwner(artPath)
+		ownerPath, upstreamArt, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
 		if err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}

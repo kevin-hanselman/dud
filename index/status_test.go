@@ -193,6 +193,44 @@ func TestStatus(t *testing.T) {
 		}
 	})
 
+	t.Run("handle relative paths to other work dirs", func(t *testing.T) {
+		stgA := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"foo.bin": {Path: "foo.bin"},
+			},
+		}
+		stgB := stage.Stage{
+			WorkingDir: "workDir",
+			Dependencies: map[string]*artifact.Artifact{
+				"../foo.bin": {Path: "../foo.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.bin": {Path: "bar.bin"},
+			},
+		}
+
+		mockCache := mocks.Cache{}
+
+		expectedStatus := make(Status)
+		expectedStatus["foo.yaml"] = expectStageStatusCalled(&stgA, &mockCache, upToDate)
+		expectedStatus["bar.yaml"] = expectStageStatusCalled(&stgB, &mockCache, upToDate)
+
+		idx := make(Index)
+		idx["foo.yaml"] = &entry{Stage: stgA}
+		idx["bar.yaml"] = &entry{Stage: stgB}
+
+		outputStatus := make(Status)
+		err := idx.Status("bar.yaml", &mockCache, outputStatus)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+		if diff := cmp.Diff(expectedStatus, outputStatus); diff != "" {
+			t.Fatalf("Stage -want +got:\n%s", diff)
+		}
+	})
+
 	// TODO list:
 	// * make output ordered by recursive call ordering to aid interpretability?
 	// * stop at first out-of-date dep? might be unintuitive/unhelpful

@@ -11,7 +11,11 @@ import (
 	"github.com/kevin-hanselman/duc/stage"
 )
 
-func assertCorrectCommand(stg stage.Stage, cmd *exec.Cmd, t *testing.T) {
+func assertCorrectCommand(stg stage.Stage, commands map[string]*exec.Cmd, t *testing.T) {
+	cmd, ok := commands[stg.Command]
+	if !ok {
+		t.Fatalf("%#v not found in commands", stg.Command)
+	}
 	lastArg := cmd.Args[len(cmd.Args)-1]
 	if lastArg != stg.Command {
 		t.Fatalf("cmd.Args[-1] = %#v, want %#v", lastArg, stg.Command)
@@ -37,16 +41,14 @@ func TestRun(t *testing.T) {
 		ContentsMatch:       false,
 	}
 
-	runCommandCalled := false
-	var command *exec.Cmd
+	var commands map[string]*exec.Cmd
 	var resetRunCommandMock = func() {
-		runCommandCalled = false
-		command = new(exec.Cmd)
+		commands = make(map[string]*exec.Cmd)
 	}
 	runCommandOrig := runCommand
 	runCommand = func(cmd *exec.Cmd) error {
-		runCommandCalled = true
-		command = cmd
+		lastArg := cmd.Args[len(cmd.Args)-1]
+		commands[lastArg] = cmd
 		return nil
 	}
 	defer func() { runCommand = runCommandOrig }()
@@ -73,7 +75,7 @@ func TestRun(t *testing.T) {
 
 		mockCache.AssertExpectations(t)
 
-		if runCommandCalled {
+		if len(commands) > 0 {
 			t.Fatal("runCommand called unexpectedly")
 		}
 
@@ -107,7 +109,7 @@ func TestRun(t *testing.T) {
 
 		mockCache.AssertExpectations(t)
 
-		if runCommandCalled {
+		if len(commands) > 0 {
 			t.Fatal("runCommand called unexpectedly")
 		}
 
@@ -138,11 +140,11 @@ func TestRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !runCommandCalled {
-			t.Fatal("runCommand not called")
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d time(s), want 1", len(commands))
 		}
 
-		assertCorrectCommand(stgA, command, t)
+		assertCorrectCommand(stgA, commands, t)
 
 		expectedRan := map[string]bool{
 			"foo.yaml": true,
@@ -173,11 +175,11 @@ func TestRun(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if !runCommandCalled {
-			t.Fatal("runCommand not called")
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d time(s), want 1", len(commands))
 		}
 
-		assertCorrectCommand(stgA, command, t)
+		assertCorrectCommand(stgA, commands, t)
 
 		expectedRan := map[string]bool{
 			"foo.yaml": true,
@@ -219,7 +221,7 @@ func TestRun(t *testing.T) {
 
 		mockCache.AssertExpectations(t)
 
-		if runCommandCalled {
+		if len(commands) > 0 {
 			t.Fatal("runCommand called unexpectedly")
 		}
 
@@ -265,11 +267,11 @@ func TestRun(t *testing.T) {
 
 		mockCache.AssertExpectations(t)
 
-		if !runCommandCalled {
-			t.Fatal("runCommand not called")
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d time(s), want 1", len(commands))
 		}
 
-		assertCorrectCommand(stgB, command, t)
+		assertCorrectCommand(stgB, commands, t)
 
 		expectedRan := map[string]bool{
 			"foo.yaml": true,
@@ -312,15 +314,118 @@ func TestRun(t *testing.T) {
 
 		mockCache.AssertExpectations(t)
 
-		if !runCommandCalled {
-			t.Fatal("runCommand not called")
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d times, want 1", len(commands))
 		}
 
-		assertCorrectCommand(stgB, command, t)
+		assertCorrectCommand(stgB, commands, t)
 
 		expectedRan := map[string]bool{
 			"foo.yaml": false,
 			"bar.yaml": true,
+		}
+		if diff := cmp.Diff(expectedRan, ran); diff != "" {
+			t.Fatalf("committed -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("ensure all deps are checked", func(t *testing.T) {
+		defer resetRunCommandMock()
+		depA := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"bish.bin": {Path: "bish.bin"},
+			},
+		}
+		depB := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"bash.bin": {Path: "bash.bin"},
+			},
+		}
+		downstream := stage.Stage{
+			Command: "echo 'generating bosh.bin'",
+			Dependencies: map[string]*artifact.Artifact{
+				"bish.bin": {Path: "bish.bin"},
+				"bash.bin": {Path: "bash.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bosh.bin": {Path: "bosh.bin"},
+			},
+		}
+		idx := make(Index)
+		idx["bish.yaml"] = &entry{Stage: depA}
+		idx["bash.yaml"] = &entry{Stage: depB}
+		idx["bosh.yaml"] = &entry{Stage: downstream}
+
+		mockCache := mocks.Cache{}
+
+		expectStageStatusCalled(&depA, &mockCache, outOfDate)
+		expectStageStatusCalled(&depB, &mockCache, upToDate)
+
+		ran := make(map[string]bool)
+		if err := idx.Run("bosh.yaml", &mockCache, ran); err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d times, want 1", len(commands))
+		}
+
+		assertCorrectCommand(downstream, commands, t)
+
+		expectedRan := map[string]bool{
+			"bish.yaml": true,
+			"bash.yaml": false,
+			"bosh.yaml": true,
+		}
+		if diff := cmp.Diff(expectedRan, ran); diff != "" {
+			t.Fatalf("committed -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("handle relative paths to other work dirs", func(t *testing.T) {
+		defer resetRunCommandMock()
+		depA := stage.Stage{
+			WorkingDir: "binDir",
+			Outputs: map[string]*artifact.Artifact{
+				"bish.bin": {Path: "bish.bin"},
+			},
+		}
+		downstream := stage.Stage{
+			WorkingDir: "mainDir",
+			Command:    "echo 'generating bosh.bin'",
+			Dependencies: map[string]*artifact.Artifact{
+				"../binDir/bish.bin": {Path: "../binDir/bish.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"../binDir/bosh.bin": {Path: "../binDir/bosh.bin"},
+			},
+		}
+		idx := make(Index)
+		idx["bish.yaml"] = &entry{Stage: depA}
+		idx["bosh.yaml"] = &entry{Stage: downstream}
+
+		mockCache := mocks.Cache{}
+
+		expectStageStatusCalled(&depA, &mockCache, outOfDate)
+
+		ran := make(map[string]bool)
+		if err := idx.Run("bosh.yaml", &mockCache, ran); err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d times, want 1", len(commands))
+		}
+
+		assertCorrectCommand(downstream, commands, t)
+
+		expectedRan := map[string]bool{
+			"bish.yaml": true,
+			"bosh.yaml": true,
 		}
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
