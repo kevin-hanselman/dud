@@ -6,6 +6,13 @@ duc init
 
 echo 'foo' > bar.txt
 
-duc add bar.txt
+(
+cat <<EOF
+outputs:
+- path: bar.txt
+EOF
+) > Ducfile
+
+duc add Ducfile
 
 duc commit --copy

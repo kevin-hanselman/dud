@@ -18,7 +18,7 @@ func init() {
 }
 
 func printStageStatus(stagePath string, status stage.Status) error {
-	// TODO: include entry.IsLocked and entry.ToCommit in output
+	// TODO: include entry.IsLocked in output
 	fmt.Println(stagePath)
 	for path, artStatus := range status {
 		// TODO: use test/tabwriter?

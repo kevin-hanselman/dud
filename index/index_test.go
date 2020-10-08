@@ -23,12 +23,9 @@ func TestAdd(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		entry, added := idx[path]
+		_, added := idx[path]
 		if !added {
 			t.Fatal("path wasn't added to the index")
-		}
-		if !entry.ToCommit {
-			t.Fatal("path wasn't added to commit list")
 		}
 	})
 
@@ -37,18 +34,15 @@ func TestAdd(t *testing.T) {
 		path := "foo/bar.duc"
 
 		var stg stage.Stage
-		idx[path] = &entry{ToCommit: false, Stage: stg}
+		idx[path] = &entry{Stage: stg}
 
 		if err := idx.AddStagesFromPaths(path); err != nil {
 			t.Fatal(err)
 		}
 
-		entry, added := idx[path]
+		_, added := idx[path]
 		if !added {
 			t.Fatal("path wasn't added to the index")
-		}
-		if !entry.ToCommit {
-			t.Fatal("path wasn't added to commit list")
 		}
 	})
 

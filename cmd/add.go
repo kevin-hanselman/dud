@@ -1,29 +1,22 @@
 package cmd
 
 import (
-	"errors"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/index"
-	"github.com/kevin-hanselman/duc/stage"
 	"github.com/spf13/cobra"
 )
 
 func init() {
 	rootCmd.AddCommand(addCmd)
-	addCmd.Flags().StringVarP(&outputStagePath, "output", "o", "", "output path for Ducfile")
-	addCmd.Flags().BoolVarP(&isRecursive, "recursive", "r", false, "Recursively add directories. Defaults to false.")
 }
-
-var outputStagePath string
-var isRecursive bool
 
 var addCmd = &cobra.Command{
 	Use:   "add",
-	Short: "Add artifacts or stages to the index and commit list",
-	Long:  "Add artifacts or stages to the index and commit list",
+	Short: "Add stages to the index",
+	Long:  "Add stages to the index",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		rootDir, err := getProjectRootDir()
@@ -35,10 +28,6 @@ var addCmd = &cobra.Command{
 		}
 		indexPath := filepath.Join(rootDir, ".duc", "index")
 
-		if outputStagePath == "" {
-			outputStagePath = "Ducfile"
-		}
-
 		idx, err := index.FromFile(indexPath)
 		if os.IsNotExist(err) {
 			idx = make(index.Index)
@@ -46,7 +35,7 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if err := add(args, &idx, outputStagePath, isRecursive); err != nil {
+		if err := idx.AddStagesFromPaths(args...); err != nil {
 			log.Fatal(err)
 		}
 
@@ -54,72 +43,4 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 	},
-}
-
-type addType int
-
-const (
-	stageType addType = iota
-	artifactType
-)
-
-func (addtype addType) String() string {
-	return [...]string{"stageType", "artifactType"}[addtype]
-}
-
-// add will add new artifacts to a stage and the new stage to the Index (and
-// the commit list), or will add existing stages to the Index.
-func add(paths []string, idx *index.Index, outputStagePath string, isRecursive bool) error {
-
-	pathTypes, err := checkAddTypes(paths)
-
-	if err != nil {
-		return err
-	}
-
-	switch pathTypes {
-	case stageType:
-		if err := idx.AddStagesFromPaths(paths...); err != nil {
-			return err
-		}
-	case artifactType:
-		stg, err := stage.FromPaths(isRecursive, paths...)
-		if err != nil {
-			return err
-		}
-		if err := stg.ToFile(outputStagePath); err != nil {
-			return err
-		}
-		if err := idx.AddStagesFromPaths(outputStagePath); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func checkAddTypes(paths []string) (addType, error) {
-	var firstPathType addType
-
-	for idx, path := range paths {
-		if idx == 0 {
-			firstPathType = checkAddType(path)
-		} else if pathType := checkAddType(path); pathType != firstPathType {
-			return 0, errors.New("cannot mix artifacts and stages")
-		}
-	}
-	return firstPathType, nil
-}
-
-var stageFromFile = stage.FromFile
-
-// for now, any error opening decoding yaml means it is not a stage
-func checkAddType(path string) addType {
-	_, _, err := stageFromFile(path)
-
-	if err != nil {
-		return artifactType
-	}
-
-	return stageType
 }

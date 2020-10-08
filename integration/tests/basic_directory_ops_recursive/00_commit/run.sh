@@ -14,6 +14,15 @@ for n in $(seq 4 7); do
     echo "$n" > "foo/bar/$n.txt"
 done
 
-duc add -r foo
+(
+cat <<EOF
+outputs:
+- path: foo
+  isdir: true
+  isrecursive: true
+EOF
+) > Ducfile
+
+duc add Ducfile
 
 duc commit

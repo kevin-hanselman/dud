@@ -1,6 +1,9 @@
 package index
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -10,19 +13,11 @@ import (
 )
 
 type entry struct {
-	// ToCommit is true if the stage is marked for commit
-	ToCommit bool
 	// IsLocked is true if the Stage in this entry is a locked version; i.e. it
 	// has checksummed dependencies and outputs.
 	IsLocked bool
 	Stage    stage.Stage
 }
-
-// fileFormat stores Stage paths and their ToCommit status
-// TODO: ToCommit should be separated from the Index file format at some
-// point. The index should be tracked by Git, but the commit status should not
-// be; it only makes sense on a per-clone basis.
-type fileFormat map[string]bool
 
 // An Index holds an exhaustive set of Stages for a repository.
 // TODO: Not threadsafe
@@ -38,7 +33,6 @@ func (idx *Index) AddStagesFromPaths(paths ...string) error {
 			return err
 		}
 		(*idx)[path] = &entry{
-			ToCommit: true,
 			IsLocked: isLock,
 			Stage:    stg,
 		}
@@ -52,11 +46,17 @@ func (idx *Index) AddStagesFromPaths(paths ...string) error {
 // commit set membership).
 // TODO no tests
 func (idx Index) ToFile(path string) error {
-	indexFile := make(fileFormat)
-	for path, ent := range idx {
-		indexFile[path] = ent.ToCommit
+	file, err := os.Create(path)
+	if err != nil {
+		return err
 	}
-	return fsutil.ToYamlFile(path, indexFile)
+	defer file.Close()
+	for path := range idx {
+		if _, err := fmt.Fprintln(file, path); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // FromFile reads and returns an Index from the specified file path.
@@ -67,18 +67,20 @@ func (idx Index) ToFile(path string) error {
 //      just want to check if a path is in the Index.
 func FromFile(path string) (Index, error) {
 	var idx Index
-	indexFile := make(fileFormat)
-	if err := fromYamlFile(path, indexFile); err != nil {
+	file, err := os.Open(path)
+	if err != nil {
 		return idx, err
 	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
 	idx = make(Index)
-	for path, toCommit := range indexFile {
-		stg, isLock, err := stage.FromFile(path)
+	for scanner.Scan() {
+		stagePath := scanner.Text()
+		stg, isLock, err := stage.FromFile(stagePath)
 		if err != nil {
 			return idx, err
 		}
-		idx[path] = &entry{
-			ToCommit: toCommit,
+		idx[stagePath] = &entry{
 			IsLocked: isLock,
 			Stage:    stg,
 		}
