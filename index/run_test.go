@@ -2,6 +2,7 @@ package index
 
 import (
 	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -20,7 +21,7 @@ func assertCorrectCommand(stg stage.Stage, commands map[string]*exec.Cmd, t *tes
 	if lastArg != stg.Command {
 		t.Fatalf("cmd.Args[-1] = %#v, want %#v", lastArg, stg.Command)
 	}
-	if cmd.Dir != stg.WorkingDir {
+	if cmd.Dir != filepath.Clean(stg.WorkingDir) {
 		t.Fatalf("cmd.Dir = %#v, want %#v", cmd.Dir, stg.WorkingDir)
 	}
 }

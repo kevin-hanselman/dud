@@ -182,7 +182,7 @@ func (stg Stage) CreateCommand() *exec.Cmd {
 		shell = "sh"
 	}
 	cmd := exec.Command(shell, "-c", stg.Command)
-	cmd.Dir = filepath.Join(stg.WorkingDir)
+	cmd.Dir = filepath.Clean(stg.WorkingDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd

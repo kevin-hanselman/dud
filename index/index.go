@@ -28,9 +28,26 @@ var fromYamlFile = fsutil.FromYamlFile
 // AddStagesFromPaths adds the Stages at the given paths to the Index.
 func (idx *Index) AddStagesFromPaths(paths ...string) error {
 	for _, path := range paths {
+		if _, ok := (*idx)[path]; ok {
+			return fmt.Errorf("add stage %s: already in index", path)
+		}
 		stg, isLock, err := stage.FromFile(path)
 		if err != nil {
 			return err
+		}
+		for artPath := range stg.Outputs {
+			fullPath := filepath.Join(stg.WorkingDir, artPath)
+			ownerPath, _, err := idx.findOwner(fullPath)
+			if err != nil {
+				return err
+			} else if ownerPath != "" {
+				return fmt.Errorf(
+					"add stage %s: artifact %s is already owned by %s",
+					path,
+					fullPath,
+					ownerPath,
+				)
+			}
 		}
 		(*idx)[path] = &entry{
 			IsLocked: isLock,
