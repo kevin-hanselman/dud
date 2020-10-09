@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -25,8 +23,7 @@ var (
 // Execute is the main entry point to the cobra cli
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
 
