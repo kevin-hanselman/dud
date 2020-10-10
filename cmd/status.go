@@ -65,7 +65,8 @@ var statusCmd = &cobra.Command{
 
 		status := make(index.Status)
 		for _, path := range args {
-			err := idx.Status(path, ch, status)
+			inProgress := make(map[string]bool)
+			err := idx.Status(path, ch, status, inProgress)
 			if err != nil {
 				log.Fatal(err)
 			}

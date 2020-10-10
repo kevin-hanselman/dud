@@ -61,7 +61,8 @@ var checkoutCmd = &cobra.Command{
 
 		checkedOut := make(map[string]bool)
 		for _, path := range args {
-			err := idx.Checkout(path, ch, strat, checkedOut)
+			inProgress := make(map[string]bool)
+			err := idx.Checkout(path, ch, strat, checkedOut, inProgress)
 			if err != nil {
 				log.Fatal(err)
 			}

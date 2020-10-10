@@ -15,10 +15,19 @@ func (idx Index) Checkout(
 	ch cache.Cache,
 	strat strategy.CheckoutStrategy,
 	checkedOut map[string]bool,
+	inProgress map[string]bool,
 ) error {
 	if checkedOut[stagePath] {
 		return nil
 	}
+
+	// If we've visited this Stage but haven't recorded its status (the check
+	// above), then we're in a cycle.
+	if inProgress[stagePath] {
+		return errors.New("cycle detected")
+	}
+	inProgress[stagePath] = true
+
 	errorPrefix := "stage checkout"
 	en, ok := idx[stagePath]
 	if !ok {
@@ -32,8 +41,8 @@ func (idx Index) Checkout(
 		if ownerPath == "" {
 			continue
 		} else {
-			if err := idx.Checkout(ownerPath, ch, strat, checkedOut); err != nil {
-				return errors.Wrap(err, errorPrefix)
+			if err := idx.Checkout(ownerPath, ch, strat, checkedOut, inProgress); err != nil {
+				return err
 			}
 		}
 	}
@@ -43,5 +52,6 @@ func (idx Index) Checkout(
 		}
 	}
 	checkedOut[stagePath] = true
+	delete(inProgress, stagePath)
 	return nil
 }

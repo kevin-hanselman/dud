@@ -15,10 +15,19 @@ func (idx Index) Commit(
 	ch cache.Cache,
 	strat strategy.CheckoutStrategy,
 	committed map[string]bool,
+	inProgress map[string]bool,
 ) error {
 	if committed[stagePath] {
 		return nil
 	}
+
+	// If we've visited this Stage but haven't recorded its status (the check
+	// above), then we're in a cycle.
+	if inProgress[stagePath] {
+		return errors.New("cycle detected")
+	}
+	inProgress[stagePath] = true
+
 	errorPrefix := "stage commit"
 	en, ok := idx[stagePath]
 	if !ok {
@@ -35,8 +44,8 @@ func (idx Index) Commit(
 				return errors.Wrap(err, errorPrefix)
 			}
 		} else {
-			if err := idx.Commit(ownerPath, ch, strat, committed); err != nil {
-				return errors.Wrap(err, errorPrefix)
+			if err := idx.Commit(ownerPath, ch, strat, committed, inProgress); err != nil {
+				return err
 			}
 			art.Checksum = upstreamArt.Checksum
 		}
@@ -47,5 +56,6 @@ func (idx Index) Commit(
 		}
 	}
 	committed[stagePath] = true
+	delete(inProgress, stagePath)
 	return nil
 }

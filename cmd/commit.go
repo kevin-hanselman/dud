@@ -63,7 +63,8 @@ var commitCmd = &cobra.Command{
 
 		committed := make(map[string]bool)
 		for _, path := range args {
-			err := idx.Commit(path, ch, strat, committed)
+			inProgress := make(map[string]bool)
+			err := idx.Commit(path, ch, strat, committed, inProgress)
 			if err != nil {
 				log.Fatal(err)
 			}

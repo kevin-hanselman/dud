@@ -57,7 +57,8 @@ func TestStatus(t *testing.T) {
 		expectedStatus["foo.yaml"] = expectStageStatusCalled(&stgA, &mockCache, upToDate)
 
 		outputStatus := make(Status)
-		err := idx.Status("foo.yaml", &mockCache, outputStatus)
+		inProgress := make(map[string]bool)
+		err := idx.Status("foo.yaml", &mockCache, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -94,7 +95,8 @@ func TestStatus(t *testing.T) {
 		idx["bar.yaml"] = &entry{Stage: stgB}
 
 		outputStatus := make(Status)
-		err := idx.Status("bar.yaml", &mockCache, outputStatus)
+		inProgress := make(map[string]bool)
+		err := idx.Status("bar.yaml", &mockCache, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -110,40 +112,41 @@ func TestStatus(t *testing.T) {
 		//    ^---------------|
 		stgA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
-				"bish.bin": {Path: "bish.bin"},
+				"a.bin": {Path: "a.bin"},
 			},
 		}
 		stgB := stage.Stage{
 			Dependencies: map[string]*artifact.Artifact{
-				"bish.bin": {Path: "bish.bin"},
+				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
-				"bash.bin": {Path: "bash.bin"},
+				"b.bin": {Path: "b.bin"},
 			},
 		}
 		stgC := stage.Stage{
 			Dependencies: map[string]*artifact.Artifact{
-				"bash.bin": {Path: "bash.bin"},
-				"bish.bin": {Path: "bish.bin"},
+				"b.bin": {Path: "b.bin"},
+				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
-				"bosh.bin": {Path: "bosh.bin"},
+				"c.bin": {Path: "c.bin"},
 			},
 		}
+		idx := make(Index)
+		idx["a.yaml"] = &entry{Stage: stgA}
+		idx["b.yaml"] = &entry{Stage: stgB}
+		idx["c.yaml"] = &entry{Stage: stgC}
+
 		mockCache := mocks.Cache{}
 
 		expectedStatus := make(Status)
-		expectedStatus["bish.yaml"] = expectStageStatusCalled(&stgA, &mockCache, upToDate)
-		expectedStatus["bash.yaml"] = expectStageStatusCalled(&stgB, &mockCache, upToDate)
-		expectedStatus["bosh.yaml"] = expectStageStatusCalled(&stgC, &mockCache, upToDate)
-
-		idx := make(Index)
-		idx["bish.yaml"] = &entry{Stage: stgA}
-		idx["bash.yaml"] = &entry{Stage: stgB}
-		idx["bosh.yaml"] = &entry{Stage: stgC}
+		expectedStatus["a.yaml"] = expectStageStatusCalled(&stgA, &mockCache, upToDate)
+		expectedStatus["b.yaml"] = expectStageStatusCalled(&stgB, &mockCache, upToDate)
+		expectedStatus["c.yaml"] = expectStageStatusCalled(&stgC, &mockCache, upToDate)
 
 		outputStatus := make(Status)
-		err := idx.Status("bosh.yaml", &mockCache, outputStatus)
+		inProgress := make(map[string]bool)
+		err := idx.Status("c.yaml", &mockCache, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -151,6 +154,73 @@ func TestStatus(t *testing.T) {
 		mockCache.AssertExpectations(t)
 		if diff := cmp.Diff(expectedStatus, outputStatus); diff != "" {
 			t.Fatalf("Stage -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("cycles are prevented", func(t *testing.T) {
+		// stgA <-- stgB <-- stgC --> stgD
+		//    |---------------^
+		stgA := stage.Stage{
+			Dependencies: map[string]*artifact.Artifact{
+				"c.bin": {Path: "c.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"a.bin": {Path: "a.bin"},
+			},
+		}
+		stgB := stage.Stage{
+			Dependencies: map[string]*artifact.Artifact{
+				"a.bin": {Path: "a.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"b.bin": {Path: "b.bin"},
+			},
+		}
+		stgC := stage.Stage{
+			Dependencies: map[string]*artifact.Artifact{
+				"b.bin": {Path: "b.bin"},
+				"d.bin": {Path: "d.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"c.bin": {Path: "c.bin"},
+			},
+		}
+		stgD := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"d.bin": {Path: "d.bin"},
+			},
+		}
+		idx := make(Index)
+		idx["a.yaml"] = &entry{Stage: stgA}
+		idx["b.yaml"] = &entry{Stage: stgB}
+		idx["c.yaml"] = &entry{Stage: stgC}
+		idx["d.yaml"] = &entry{Stage: stgD}
+
+		mockCache := mocks.Cache{}
+		// Stage D is the only Stage that could possibly be committed
+		// successfully. We mock it to prevent a panic, but we don't
+		// enforce that it must be called (due to random order).
+		expectStageStatusCalled(&stgD, &mockCache, upToDate)
+
+		outputStatus := make(Status)
+		inProgress := make(map[string]bool)
+		err := idx.Status("c.yaml", &mockCache, outputStatus, inProgress)
+		if err == nil {
+			t.Fatal("expected error")
+		}
+
+		expectedError := "cycle detected"
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
+		}
+
+		expectedInProgress := map[string]bool{
+			"c.yaml": true,
+			"b.yaml": true,
+			"a.yaml": true,
+		}
+		if diff := cmp.Diff(expectedInProgress, inProgress); diff != "" {
+			t.Fatalf("inProgress -want +got:\n%s", diff)
 		}
 	})
 
@@ -182,7 +252,8 @@ func TestStatus(t *testing.T) {
 		mockCache.On("Status", stg.WorkingDir, orphanArt).Return(orphanArtStatus, nil).Once()
 
 		outputStatus := make(Status)
-		err := idx.Status("foo.yaml", &mockCache, outputStatus)
+		inProgress := make(map[string]bool)
+		err := idx.Status("foo.yaml", &mockCache, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -220,7 +291,8 @@ func TestStatus(t *testing.T) {
 		idx["bar.yaml"] = &entry{Stage: stgB}
 
 		outputStatus := make(Status)
-		err := idx.Status("bar.yaml", &mockCache, outputStatus)
+		inProgress := make(map[string]bool)
+		err := idx.Status("bar.yaml", &mockCache, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}

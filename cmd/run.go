@@ -49,7 +49,8 @@ var runCmd = &cobra.Command{
 
 		ran := make(map[string]bool)
 		for _, path := range args {
-			err := idx.Run(path, ch, ran)
+			inProgress := make(map[string]bool)
+			err := idx.Run(path, ch, ran, inProgress)
 			if err != nil {
 				log.Fatal(err)
 			}
