@@ -151,20 +151,6 @@ func (stg *Stage) ToFile(path string) error {
 	return fsutil.ToYamlFile(path, stg.toFileFormat())
 }
 
-// FromPaths creates a Stage from one or more file paths.
-// TODO: rename or delete (to differentiate from FromFile)
-func FromPaths(isRecursive bool, paths ...string) (stg Stage, err error) {
-	stg.Outputs = make(map[string]*artifact.Artifact, len(paths))
-
-	for _, path := range paths {
-		stg.Outputs[path], err = artifact.FromPath(path, isRecursive)
-		if err != nil {
-			return
-		}
-	}
-	return
-}
-
 // FilePathForLock returns the lock file path given a Stage path.
 func FilePathForLock(stagePath string) string {
 	var str strings.Builder

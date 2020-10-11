@@ -443,6 +443,7 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("cycles are prevented", func(t *testing.T) {
+		defer resetRunCommandMock()
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^
 		stgA := stage.Stage{
@@ -506,6 +507,56 @@ func TestRun(t *testing.T) {
 		}
 		if diff := cmp.Diff(expectedInProgress, inProgress); diff != "" {
 			t.Fatalf("inProgress -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("run when any orphan dep is out-of-date", func(t *testing.T) {
+		defer resetRunCommandMock()
+		bish := artifact.ArtifactWithStatus{
+			Artifact: artifact.Artifact{Path: "bish.bin"},
+			Status:   upToDate,
+		}
+		bash := artifact.ArtifactWithStatus{
+			Artifact: artifact.Artifact{Path: "bash.bin"},
+			Status:   outOfDate,
+		}
+		stg := stage.Stage{
+			Command: "echo 'generating bosh.bin'",
+			Dependencies: map[string]*artifact.Artifact{
+				"bish.bin": &(bish.Artifact),
+				"bash.bin": &(bash.Artifact),
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bosh.bin": {Path: "bosh.bin"},
+			},
+		}
+		idx := make(Index)
+		idx["bosh.yaml"] = &entry{Stage: stg}
+
+		mockCache := mocks.Cache{}
+
+		mockCache.On("Status", "", bish.Artifact).Return(bish, nil).Once()
+		mockCache.On("Status", "", bash.Artifact).Return(bash, nil).Once()
+
+		ran := make(map[string]bool)
+		inProgress := make(map[string]bool)
+		if err := idx.Run("bosh.yaml", &mockCache, ran, inProgress); err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d times, want 1", len(commands))
+		}
+
+		assertCorrectCommand(stg, commands, t)
+
+		expectedRan := map[string]bool{
+			"bosh.yaml": true,
+		}
+		if diff := cmp.Diff(expectedRan, ran); diff != "" {
+			t.Fatalf("committed -want +got:\n%s", diff)
 		}
 	})
 }

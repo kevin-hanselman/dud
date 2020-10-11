@@ -6,22 +6,12 @@ import (
 	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/src/cache"
-	"github.com/kevin-hanselman/duc/src/stage"
 	"github.com/pkg/errors"
 )
 
 // for mocking
 var runCommand = func(cmd *exec.Cmd) error {
 	return cmd.Run()
-}
-
-func isUpToDate(status stage.Status) bool {
-	for _, artStatus := range status {
-		if !artStatus.ContentsMatch {
-			return false
-		}
-	}
-	return true
 }
 
 // Run runs a Stage and all upstream Stages.
