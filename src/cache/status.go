@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -29,7 +30,7 @@ func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (
 // However, this function will set ContentsMatch if the workspace file is
 // a link and the other status booleans are true; checking to see if a link
 // points to the cache is, as this function suggests, quick.
-var quickStatus = func(
+func quickStatus(
 	// TODO: It may be worth exposing this version of status (bypassing the full
 	// status check) using a CLI flag
 	ch *LocalCache,
@@ -62,7 +63,7 @@ var quickStatus = func(
 	return
 }
 
-var fileArtifactStatus = func(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
+func fileArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
 	errorPrefix := "file status"
 	if err != nil {
@@ -123,7 +124,7 @@ func dirArtifactStatus(
 		return status, manifest, err
 	}
 
-	// first, ensure all artifacts in the directoryManifest are up-to-date;
+	// First, ensure all artifacts in the directoryManifest are up-to-date;
 	// quit early if any are not.
 	for _, art := range manifest.Contents {
 		artStatus, err := ch.Status(workPath, *art)
@@ -135,9 +136,10 @@ func dirArtifactStatus(
 		}
 	}
 
-	// second, get a directory listing and check for untracked files;
+	// Second, get a directory listing and check for untracked files;
 	// quit early if any exist.
-	entries, err := readDir(workPath)
+	// TODO: Consider replacing ReadDir with filepath.Walk to better handle massive directories.
+	entries, err := ioutil.ReadDir(workPath)
 	if err != nil {
 		return status, manifest, err
 	}
@@ -161,7 +163,7 @@ func dirArtifactStatus(
 	return status, manifest, nil
 }
 
-var readDirManifest = func(path string) (man directoryManifest, err error) {
+func readDirManifest(path string) (man directoryManifest, err error) {
 	manifestFile, err := os.Open(path)
 	if err != nil {
 		return

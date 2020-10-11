@@ -46,7 +46,7 @@ func (err MissingFromCacheError) Error() string {
 	return fmt.Sprintf("file missing from cache: %#v", err.checksum)
 }
 
-var checkoutFile = func(
+func checkoutFile(
 	ch *LocalCache,
 	workingDir string,
 	art *artifact.Artifact,
@@ -123,7 +123,6 @@ func checkoutDir(
 	}
 	for _, childArt := range man.Contents {
 		if err := ch.Checkout(workPath, childArt, strat); err != nil {
-			// TODO: undo previous file checkouts?
 			return errors.Wrap(err, "checkoutDir")
 		}
 	}

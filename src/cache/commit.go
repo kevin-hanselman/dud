@@ -31,9 +31,7 @@ func (ch *LocalCache) Commit(
 	return commitFileArtifact(ch, workingDir, art, strat)
 }
 
-var readDir = ioutil.ReadDir
-
-var commitFileArtifact = func(
+func commitFileArtifact(
 	ch *LocalCache,
 	workingDir string,
 	art *artifact.Artifact,
@@ -140,7 +138,7 @@ func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, er
 	return cksum, nil
 }
 
-var commitDirManifest = func(ch *LocalCache, manifest *directoryManifest) (string, error) {
+func commitDirManifest(ch *LocalCache, manifest *directoryManifest) (string, error) {
 	// TODO: Consider using an io.Pipe() instead of a buffer.
 	// For large directories this is probably more important.
 	buf := new(bytes.Buffer)
@@ -171,10 +169,12 @@ func commitDirArtifact(
 	}
 
 	baseDir := filepath.Join(workingDir, art.Path)
-	entries, err := readDir(baseDir)
+	entries, err := ioutil.ReadDir(baseDir)
 	if err != nil {
 		return err
 	}
+	// TODO: refactor to something like this example from errgroup:
+	// https://godoc.org/golang.org/x/sync/errgroup#example-Group--Pipeline
 	errGroup, childCtx := errgroup.WithContext(ctx)
 	childArtChan := make(chan *artifact.Artifact, len(entries))
 	newManifest := &directoryManifest{Path: baseDir}

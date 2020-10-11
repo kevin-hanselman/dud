@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/fsutil"
 	"github.com/kevin-hanselman/duc/src/stage"
 )
 
@@ -22,8 +21,6 @@ type entry struct {
 // An Index holds an exhaustive set of Stages for a repository.
 // TODO: Not threadsafe
 type Index map[string]*entry
-
-var fromYamlFile = fsutil.FromYamlFile
 
 // AddStagesFromPaths adds the Stages at the given paths to the Index.
 func (idx *Index) AddStagesFromPaths(paths ...string) error {
