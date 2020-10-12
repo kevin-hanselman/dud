@@ -1,9 +1,9 @@
-drwxr-xr-x user user    4096 .   
--rw-r--r-- user user     102 ./Ducfile.lock   
--rw-r--r-- user user      25 ./Ducfile   
--rw-r--r-- user user       4 ./bar.txt   
-drwxr-xr-x user user    4096 ./.duc   
--rw-r--r-- user user      8 ./.duc/index   
-drwxr-xr-x user user    4096 ./.duc/cache   
-drwxr-xr-x user user    4096 ./.duc/cache/49   
--r--r--r-- user user       4 ./.duc/cache/49/dc870df1de7fd60794cebce449f5ccdae575affaa67a24b62acb03e039db92   
+.
+[-rw-r--r-- user     user               4]  ./bar.txt
+[drwxr-xr-x user     user            4096]  ./.duc
+[drwxr-xr-x user     user            4096]  ./.duc/cache
+[drwxr-xr-x user     user            4096]  ./.duc/cache/49
+[-r--r--r-- user     user               4]  ./.duc/cache/49/dc870df1de7fd60794cebce449f5ccdae575affaa67a24b62acb03e039db92
+[-rw-r--r-- user     user               8]  ./.duc/index
+[-rw-r--r-- user     user              25]  ./Ducfile
+[-rw-r--r-- user     user             102]  ./Ducfile.lock

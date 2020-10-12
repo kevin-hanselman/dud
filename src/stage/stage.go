@@ -119,7 +119,7 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 	}
 	stg = sff.toStage()
 
-	// Wipe any state from the previous deserialization.
+	// Wipe any output from the previous deserialization.
 	// This is important and hard to unit test.
 	sff = stageFileFormat{}
 
