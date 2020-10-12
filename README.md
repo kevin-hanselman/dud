@@ -1,32 +1,29 @@
-# Data Under Control
+# Duc
 
-Data Under Control is a tool for storing, versioning, and reproducing big data
-files right alongside the source code that creates and/or uses it. It is heavily
-inspired by Data Version Control and Git.
+Duc is a tool that facilitates storing, versioning, and reproducing large files
+alongside the code that uses them.
 
+## Design Principles
 
-## Design Goals
+Duc aims to be simple, fast, and transparent.
 
-### Seamlessly scale to Terabytes of data
+### Simple
 
-The real utility of DUC lies in its ability to scale effortlessly to datasets
-that measure in the Terabytes. DUC operations should remain quick (as can be
-expected) and informative, no matter the size of the data.
+Duc should Do One Thing Well.
 
-### What Would Git Do?
+Duc should require only trivial configuration.
 
-DUC is designed to be a close companion to Source Control Management (SCM)
-tools -- specifically Git. When possible, DUC's operation should mirror Git.
-"If this was a source code file, what would Git do with it?"
+### Fast
 
-### Prefer transparency over abstraction
+Duc should prioritize speed.
 
-DUC should explain itself early and often, and shouldn't shirk from sharing
-details of its inner-workings with the user. Most of the mechanisms DUC uses to
-do its job (such as files, links, and checksums) are intimately familiar to
-those using Git, and inspecting the inner-workings should be encouraged.
+Duc should isolate time-intensive operations to keep the rest of the UI fast.
+Currently, Duc's UI is designed such that only `duc commit` is time-intensive.
 
-### Use sensible defaults
+Duc should scale to datasets in the hundreds of gigabytes, ideally low
+terabytes.
 
-DUC should excel at its job (i.e. meet all of the goals above) with only trivial
-configuration.
+### Transparent
+
+Duc should explain itself early and often. Inspecting Duc's inner-workings
+should be easy and encouraged.

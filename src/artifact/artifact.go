@@ -8,13 +8,13 @@ import (
 	"github.com/kevin-hanselman/duc/src/fsutil"
 )
 
-// An Artifact is a file or directory that is tracked by DUC.
+// An Artifact is a file or directory that is tracked by Duc.
 type Artifact struct {
 	Checksum    string `yaml:",omitempty"`
 	Path        string
-	IsDir       bool `yaml:",omitempty"`
-	IsRecursive bool `yaml:",omitempty"`
-	SkipCache   bool `yaml:",omitempty"`
+	IsDir       bool `yaml:"is-dir,omitempty"`
+	IsRecursive bool `yaml:"is-recursive,omitempty"`
+	SkipCache   bool `yaml:"skip-cache,omitempty"`
 }
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.

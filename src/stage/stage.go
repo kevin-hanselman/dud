@@ -30,7 +30,7 @@ type Stage struct {
 
 type stageFileFormat struct {
 	Command      string               `yaml:",omitempty"`
-	WorkingDir   string               `yaml:",omitempty"`
+	WorkingDir   string               `yaml:"working-dir,omitempty"`
 	Dependencies []*artifact.Artifact `yaml:",omitempty"`
 	Outputs      []*artifact.Artifact
 }
@@ -88,30 +88,18 @@ func (sff stageFileFormat) toStage() (stg Stage) {
 	return
 }
 
-// IsEquivalent return true if the two Stage objects are identical besides
-// Artifact Checksum fields.
-func (stg *Stage) IsEquivalent(other Stage) bool {
-	if stg.Command != other.Command {
+func sameish(stgA, stgB Stage) bool {
+	if stgA.Command != stgB.Command {
 		return false
 	}
-	if stg.WorkingDir != other.WorkingDir {
+	if stgA.WorkingDir != stgB.WorkingDir {
 		return false
 	}
-	if len(stg.Outputs) != len(other.Outputs) {
+	if len(stgA.Outputs) != len(stgB.Outputs) {
 		return false
 	}
-	if len(stg.Dependencies) != len(other.Dependencies) {
+	if len(stgA.Dependencies) != len(stgB.Dependencies) {
 		return false
-	}
-	for path := range stg.Outputs {
-		if !stg.Outputs[path].IsEquivalent(*other.Outputs[path]) {
-			return false
-		}
-	}
-	for path := range stg.Dependencies {
-		if !stg.Dependencies[path].IsEquivalent(*other.Dependencies[path]) {
-			return false
-		}
 	}
 	return true
 }
@@ -119,8 +107,8 @@ func (stg *Stage) IsEquivalent(other Stage) bool {
 // for mocking
 var fromYamlFile = fsutil.FromYamlFile
 
-// FromFile loads a Stage from a file. If a lock file exists and is equivalent
-// (see stage.IsEquivalent), it loads the Stage's locked version.
+// FromFile loads a Stage from a file. If a lock file for the Stage exists,
+// this function uses any Artifact.Checksums it can from the lock file.
 var FromFile = func(stagePath string) (Stage, bool, error) {
 	var (
 		stg, locked Stage
@@ -130,6 +118,11 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 		return stg, false, err
 	}
 	stg = sff.toStage()
+
+	// Wipe any state from the previous deserialization.
+	// This is important and hard to unit test.
+	sff = stageFileFormat{}
+
 	lockPath := FilePathForLock(stagePath)
 	err := fromYamlFile(lockPath, &sff)
 	if os.IsNotExist(err) {
@@ -138,10 +131,28 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 		return locked, false, err
 	}
 	locked = sff.toStage()
-	if locked.IsEquivalent(stg) {
-		return locked, true, nil
+
+	same := sameish(stg, locked)
+
+	for artPath, art := range stg.Dependencies {
+		lockedArt, ok := locked.Dependencies[artPath]
+		if ok && art.IsEquivalent(*lockedArt) {
+			stg.Dependencies[artPath] = lockedArt
+		} else {
+			same = false
+		}
 	}
-	return stg, false, nil
+
+	for artPath, art := range stg.Outputs {
+		lockedArt, ok := locked.Outputs[artPath]
+		if ok && art.IsEquivalent(*lockedArt) {
+			stg.Outputs[artPath] = lockedArt
+		} else {
+			same = false
+		}
+	}
+
+	return stg, same, nil
 }
 
 // ToFile writes a Stage to the given file path. It is important to use this

@@ -17,11 +17,10 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 }
 
-func printStageStatus(stagePath string, status stage.Status) error {
-	// TODO: include entry.IsLocked in output
-	fmt.Println(stagePath)
+func printStageStatus(stagePath string, status stage.Status, isLocked bool) error {
+	fmt.Printf("%s  (lock file up-to-date: %t)\n", stagePath, isLocked)
 	for path, artStatus := range status {
-		// TODO: use test/tabwriter?
+		// TODO: use text/tabwriter?
 		if _, err := fmt.Printf("  %s  %s\n", path, artStatus); err != nil {
 			return err
 		}
@@ -32,8 +31,8 @@ func printStageStatus(stagePath string, status stage.Status) error {
 var statusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"stat", "st"},
-	Short:   "Print the status of one or more DUC stages.",
-	Long:    "Print the status of one or more DUC stages.",
+	Short:   "Print the status of one or more Duc stages.",
+	Long:    "Print the status of one or more Duc stages.",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
@@ -73,7 +72,7 @@ var statusCmd = &cobra.Command{
 		}
 
 		for path, stageStatus := range status {
-			if err := printStageStatus(path, stageStatus); err != nil {
+			if err := printStageStatus(path, stageStatus, idx[path].IsLocked); err != nil {
 				log.Fatal(err)
 			}
 		}

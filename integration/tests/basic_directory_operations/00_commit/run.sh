@@ -18,7 +18,7 @@ done
 cat <<EOF
 outputs:
 - path: foo
-  isdir: true
+  is-dir: true
 EOF
 ) > Ducfile
 

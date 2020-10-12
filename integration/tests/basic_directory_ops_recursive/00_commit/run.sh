@@ -18,8 +18,8 @@ done
 cat <<EOF
 outputs:
 - path: foo
-  isdir: true
-  isrecursive: true
+  is-dir: true
+  is-recursive: true
 EOF
 ) > Ducfile
 
