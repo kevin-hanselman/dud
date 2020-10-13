@@ -20,7 +20,7 @@ func TestAdd(t *testing.T) {
 		idx := make(Index)
 		path := "foo/bar.duc"
 
-		if err := idx.AddStagesFromPaths(path); err != nil {
+		if err := idx.AddStageFromPath(path); err != nil {
 			t.Fatal(err)
 		}
 
@@ -37,7 +37,7 @@ func TestAdd(t *testing.T) {
 		var stg stage.Stage
 		idx[path] = &entry{Stage: stg}
 
-		if err := idx.AddStagesFromPaths(path); err == nil {
+		if err := idx.AddStageFromPath(path); err == nil {
 			t.Fatal("expected error")
 		}
 	})
@@ -50,7 +50,7 @@ func TestAdd(t *testing.T) {
 			return stage.Stage{}, false, os.ErrNotExist
 		}
 
-		err := idx.AddStagesFromPaths(path)
+		err := idx.AddStageFromPath(path)
 		if err == nil {
 			t.Fatal("expected error, got nil")
 		}
@@ -74,11 +74,11 @@ func TestAdd(t *testing.T) {
 				},
 			},
 		}
-		err := idx.AddStagesFromPaths("bar.yaml")
+		err := idx.AddStageFromPath("bar.yaml")
 		if err == nil {
 			t.Fatal("expected error")
 		}
-		expectedError := "add stage bar.yaml: artifact subDir/foo.bin is already owned by foo.yaml"
+		expectedError := "bar.yaml: artifact subDir/foo.bin already owned by foo.yaml"
 		if err.Error() != expectedError {
 			t.Fatalf("\nerror want: %s\nerror got: %s", expectedError, err.Error())
 		}

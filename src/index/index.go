@@ -22,42 +22,39 @@ type entry struct {
 // TODO: Not threadsafe
 type Index map[string]*entry
 
-// AddStagesFromPaths adds the Stages at the given paths to the Index.
-func (idx *Index) AddStagesFromPaths(paths ...string) error {
-	for _, path := range paths {
-		if _, ok := (*idx)[path]; ok {
-			return fmt.Errorf("add stage %s: already in index", path)
-		}
-		stg, isLock, err := stage.FromFile(path)
+// AddStageFromPath adds a Stage at the given file path to the Index.
+func (idx *Index) AddStageFromPath(path string) error {
+	if _, ok := (*idx)[path]; ok {
+		return fmt.Errorf("stage %s already in index", path)
+	}
+	stg, isLock, err := stage.FromFile(path)
+	if err != nil {
+		return err
+	}
+	for artPath := range stg.Outputs {
+		fullPath := filepath.Join(stg.WorkingDir, artPath)
+		ownerPath, _, err := idx.findOwner(fullPath)
 		if err != nil {
 			return err
+		} else if ownerPath != "" {
+			return fmt.Errorf(
+				"%s: artifact %s already owned by %s",
+				path,
+				fullPath,
+				ownerPath,
+			)
 		}
-		for artPath := range stg.Outputs {
-			fullPath := filepath.Join(stg.WorkingDir, artPath)
-			ownerPath, _, err := idx.findOwner(fullPath)
-			if err != nil {
-				return err
-			} else if ownerPath != "" {
-				return fmt.Errorf(
-					"add stage %s: artifact %s is already owned by %s",
-					path,
-					fullPath,
-					ownerPath,
-				)
-			}
-		}
-		(*idx)[path] = &entry{
-			IsLocked: isLock,
-			Stage:    stg,
-		}
+	}
+	(*idx)[path] = &entry{
+		IsLocked: isLock,
+		Stage:    stg,
 	}
 	return nil
 }
 
 // ToFile writes the Index to the specified file path.
 // To prevent the Index from going stale, Stages themselves aren't written to
-// the Index file; the Index only tracks their paths and other metadata (e.g.
-// commit set membership).
+// the Index file; the Index only tracks their paths.
 // TODO no tests
 func (idx Index) ToFile(path string) error {
 	file, err := os.Create(path)
@@ -89,14 +86,8 @@ func FromFile(path string) (Index, error) {
 	scanner := bufio.NewScanner(file)
 	idx = make(Index)
 	for scanner.Scan() {
-		stagePath := scanner.Text()
-		stg, isLock, err := stage.FromFile(stagePath)
-		if err != nil {
+		if err := idx.AddStageFromPath(scanner.Text()); err != nil {
 			return idx, err
-		}
-		idx[stagePath] = &entry{
-			IsLocked: isLock,
-			Stage:    stg,
 		}
 	}
 	if err := scanner.Err(); err != nil {

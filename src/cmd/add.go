@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/kevin-hanselman/duc/src/index"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -35,12 +36,14 @@ var addCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		if err := idx.AddStagesFromPaths(args...); err != nil {
-			log.Fatal(err)
+		for _, path := range args {
+			if err := idx.AddStageFromPath(path); err != nil {
+				log.Fatal(errors.Wrap(err, "add"))
+			}
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {
-			log.Fatal(err)
+			log.Fatal(errors.Wrap(err, "add"))
 		}
 	},
 }
