@@ -197,6 +197,76 @@ func TestFromFile(t *testing.T) {
 			t.Fatalf("Stage -want +got:\n%s", diff)
 		}
 	})
+
+	t.Run("skipCache is always true for dependencies", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stg := Stage{
+			WorkingDir: "foo",
+			Command:    "echo 'new command'",
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.txt":  {Path: "foo.txt"},
+				"bish.txt": {Path: "bish.txt"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {Path: "bar.txt", SkipCache: true},
+			},
+		}
+		lockedStage := Stage{
+			WorkingDir: "foo",
+			Command:    "echo 'bar'",
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.txt": {
+					Path:      "foo.txt",
+					SkipCache: true,
+					Checksum:  "foo_checksum",
+				},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {
+					Path:     "bar.txt",
+					Checksum: "bar_checksum",
+				},
+			},
+		}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stg.toFileFormat()
+			} else {
+				*output = lockedStage.toFileFormat()
+			}
+			return nil
+		}
+		expectedStage := Stage{
+			WorkingDir: "foo",
+			Command:    "echo 'new command'",
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.txt": {
+					Path:      "foo.txt",
+					SkipCache: true,
+					Checksum:  "foo_checksum",
+				},
+				"bish.txt": {Path: "bish.txt", SkipCache: true},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.txt": {
+					Path:      "bar.txt",
+					SkipCache: true,
+				},
+			},
+		}
+
+		outputStage, isLock, err := FromFile("stage.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isLock {
+			t.Fatal("FromFile returned isLock = true")
+		}
+		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
+			t.Fatalf("Stage -want +got:\n%s", diff)
+		}
+	})
 }
 
 func TestFilePathForLock(t *testing.T) {

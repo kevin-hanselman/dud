@@ -135,6 +135,10 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 	same := sameish(stg, locked)
 
 	for artPath, art := range stg.Dependencies {
+		// Dependencies are only committed-to/checked-out-of the Cache if they are an
+		// output of (i.e. owned by) another Stage, in which case said owner
+		// Stage is responsible for interacting with the Cache.
+		art.SkipCache = true
 		lockedArt, ok := locked.Dependencies[artPath]
 		if ok && art.IsEquivalent(*lockedArt) {
 			stg.Dependencies[artPath] = lockedArt
