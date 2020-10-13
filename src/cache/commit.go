@@ -18,13 +18,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const numWorkers = 20
+
 // Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
 func (ch *LocalCache) Commit(
 	workingDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	// TODO: improve error reporting? avoid recursive wrapping
 	if art.IsDir {
 		return commitDirArtifact(context.Background(), ch, workingDir, art, strat)
 	}
@@ -155,11 +156,7 @@ func commitDirArtifact(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	// TODO: for all cache-/wspace-modifying calls, add boolean output to
-	// signal if any changes were made
-
-	// TODO: don't bother checking if regular files are up-to-date
-	// TODO: return readdir output for use here?
+	// TODO: don't bother checking if regular files are up-to-date?
 	status, oldManifest, err := dirArtifactStatus(ch, workingDir, *art)
 	if err != nil {
 		return err
@@ -169,55 +166,90 @@ func commitDirArtifact(
 	}
 
 	baseDir := filepath.Join(workingDir, art.Path)
-	entries, err := ioutil.ReadDir(baseDir)
-	if err != nil {
-		return err
-	}
-	// TODO: refactor to something like this example from errgroup:
+
+	// Using this example as a reference:
 	// https://godoc.org/golang.org/x/sync/errgroup#example-Group--Pipeline
-	errGroup, childCtx := errgroup.WithContext(ctx)
-	childArtChan := make(chan *artifact.Artifact, len(entries))
-	newManifest := &directoryManifest{Path: baseDir}
-	newManifest.Contents = make(map[string]*artifact.Artifact)
-	for i := range entries {
-		// This verbose declaration of entry is necessary to avoid capturing
-		// loop variables in the closure below.
-		// See: https://eli.thegreenplace.net/2019/go-internals-capturing-loop-variables-in-closures/
-		entry := entries[i]
+
+	// Start a goroutine to read the directory and feed files/sub-directories
+	// to the workers.
+	errGroup, groupCtx := errgroup.WithContext(ctx)
+	inputFiles := make(chan os.FileInfo)
+	errGroup.Go(func() error {
+		defer close(inputFiles)
+		// We could use filepath.Walk here (as in the errgroup example), but
+		// this function essentially walks the filesystem using recursion, so
+		// there would be no significant benefit for the added complexity.
+		// Switching to filepath.Walk may make sense if ReadDir doesn't perform
+		// well on huge directories.
+		infos, err := ioutil.ReadDir(baseDir)
+		if err != nil {
+			return err
+		}
+		for _, info := range infos {
+			select {
+			case inputFiles <- info:
+			case <-groupCtx.Done():
+				return groupCtx.Err()
+			}
+		}
+		return nil
+	})
+
+	// Start workers to commit child Artifacts.
+	childArtifacts := make(chan *artifact.Artifact)
+	for i := 0; i < numWorkers; i++ {
 		errGroup.Go(func() error {
-			path := entry.Name()
-			// See if we can recover a sub-artifact from an existing dirManifest. This
-			// is important for skipping up-to-date artifacts.
-			var childArt *artifact.Artifact
-			childArt, ok := oldManifest.Contents[path]
-			if !ok {
-				childArt = &artifact.Artifact{Path: path}
+			for info := range inputFiles {
+				path := info.Name()
+				// See if we can recover a sub-artifact from an existing
+				// dirManifest. This enables skipping up-to-date artifacts.
+				var childArt *artifact.Artifact
+				childArt, ok := oldManifest.Contents[path]
+				if !ok {
+					childArt = &artifact.Artifact{Path: path}
+				}
+				if info.IsDir() {
+					if !art.IsRecursive {
+						continue
+					}
+					childArt.IsDir = true
+					childArt.IsRecursive = true
+					if err := commitDirArtifact(groupCtx, ch, baseDir, childArt, strat); err != nil {
+						return err
+					}
+				} else {
+					if err := commitFileArtifact(ch, baseDir, childArt, strat); err != nil {
+						return err
+					}
+				}
+				select {
+				case childArtifacts <- childArt:
+				case <-groupCtx.Done():
+					return groupCtx.Err()
+				}
 			}
-			if entry.IsDir() {
-				if !art.IsRecursive {
-					return nil
-				}
-				childArt.IsDir = true
-				childArt.IsRecursive = true
-				if err := commitDirArtifact(childCtx, ch, baseDir, childArt, strat); err != nil {
-					return err
-				}
-			} else { // TODO: ensure regular file or symlink
-				if err := commitFileArtifact(ch, baseDir, childArt, strat); err != nil {
-					return err
-				}
-			}
-			childArtChan <- childArt
 			return nil
 		})
 	}
+
+	// Start a goroutine to close the output channel when the workers have
+	// completed.
+	go func() {
+		errGroup.Wait()
+		close(childArtifacts)
+	}()
+
+	newManifest := &directoryManifest{Path: baseDir}
+	newManifest.Contents = make(map[string]*artifact.Artifact)
+	for childArt := range childArtifacts {
+		newManifest.Contents[childArt.Path] = childArt
+	}
+
+	// Check the group again to collect the group error.
 	if err := errGroup.Wait(); err != nil {
 		return err
 	}
-	close(childArtChan)
-	for childArt := range childArtChan {
-		newManifest.Contents[childArt.Path] = childArt
-	}
+
 	cksum, err := commitDirManifest(ch, newManifest)
 	if err != nil {
 		return err
