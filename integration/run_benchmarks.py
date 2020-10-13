@@ -10,33 +10,42 @@ from run_tests import normalize_paths
 
 
 def run_benchmark(bench_def_dir):
-    # TODO: add support for setup_<cmd>.sh to isolate the commands to benchmark
-    # (e.g. commit) from boilerplate.
     for cmd in ['duc', 'dvc']:
+        scratch_dir = setup(bench_def_dir)
+
+        setup_sh = os.path.join(bench_def_dir, f'setup_{cmd}.sh')
+        if os.path.isfile(setup_sh):
+            print(f'Running {setup_sh!r}...')
+            _run(setup_sh, scratch_dir)
+
         run_sh = os.path.join(bench_def_dir, f'run_{cmd}.sh')
         if os.path.isfile(run_sh):
-            scratch_dir = setup(bench_def_dir)
             print(f'Running {run_sh!r}...')
             sys.stdout.flush()
             start = time.time()
-            try:
-                subprocess.run(
-                    run_sh,
-                    shell=True,
-                    cwd=scratch_dir,
-                    check=True,
-                    capture_output=True,
-                )
-                elapsed = time.time() - start
-                print(f'Elapsed time: {elapsed:g}')
-            except subprocess.CalledProcessError as proc:
-                print(proc)
-                if proc.stdout:
-                    print('-STDOUT-')
-                    print(proc.stdout.decode())
-                if proc.stderr:
-                    print('-STDERR-')
-                    print(proc.stderr.decode())
+            _run(run_sh, scratch_dir)
+            elapsed = time.time() - start
+            print(f'Elapsed time: {elapsed:g} seconds')
+
+
+def _run(cmd, working_dir):
+    try:
+        subprocess.run(
+            cmd,
+            shell=True,
+            cwd=working_dir,
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as proc:
+        print(proc)
+        if proc.stdout:
+            print('-STDOUT-')
+            print(proc.stdout.decode())
+        if proc.stderr:
+            print('-STDERR-')
+            print(proc.stderr.decode())
+        raise
 
 
 def _copy_data(bench_def_dir, scratch_dir):
