@@ -64,7 +64,7 @@ def set_up(test_def_dir):
     return repo_dir
 
 
-def _normalize_paths(paths):
+def normalize_paths(paths):
     # os.path.normpath, among other things, removes trailing slashes, which
     # is key when using os.path.join.
     return sorted(os.path.normpath(path) for path in paths)
@@ -72,7 +72,7 @@ def _normalize_paths(paths):
 
 def run_tests(test_def_dir, pin=False):
     output_width = 60
-    sub_dirs = _normalize_paths(glob.glob(os.path.join(test_def_dir, '*', '')))
+    sub_dirs = normalize_paths(glob.glob(os.path.join(test_def_dir, '*', '')))
     has_sub_dirs = len(sub_dirs) > 0
 
     test_name = os.path.basename(test_def_dir)
@@ -129,7 +129,7 @@ if __name__ == '__main__':
         cli_args.test_dirs = glob.iglob(os.path.join(script_dir, 'tests', '*'))
 
     all_successful = True
-    for test_def_dir in _normalize_paths(cli_args.test_dirs):
+    for test_def_dir in normalize_paths(cli_args.test_dirs):
         repo_dir = set_up(test_def_dir)
         all_successful &= run_tests(test_def_dir, pin=cli_args.pin)
 

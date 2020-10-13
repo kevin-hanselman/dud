@@ -1,11 +1,17 @@
 FROM archlinux
 
-RUN pacman -Sy --noconfirm diffutils sudo python jq tree && pacman -Scc --noconfirm
+RUN pacman -Sy --noconfirm diffutils sudo python python-pip jq tree git \
+    && pacman -Scc --noconfirm
 
-RUN groupadd sudo && useradd -m user -G sudo
+RUN groupadd sudo && useradd --no-log-init -m user -G sudo
 
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 USER user
 
 WORKDIR /home/user
+
+ENV PATH=$PATH:/home/user/.local/bin
+RUN pip install --no-cache --user dvc
+
+COPY duc /usr/bin/

@@ -5,7 +5,7 @@ mockery
 
 # test files for benchmarking
 *.bin
-benchmarking/datasets/
+integration/*/data/
 
 # Binaries for programs and plugins
 *.exe

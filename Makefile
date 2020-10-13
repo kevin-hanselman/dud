@@ -1,4 +1,4 @@
-.PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine build-benchmark integration-image
+.PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine integration-%
 
 duc: test-all
 	go build -o duc
@@ -32,23 +32,30 @@ int-test.coverage:
 all-test.coverage:
 	go test ./... -coverprofile=$@
 
-integration-image:
-	docker build -t duc_integration ./integration/
+integration-image: duc
+	docker build \
+		-t duc_integration \
+		-f ./integration/Dockerfile \
+		.
 
-integration-env: integration-image duc
+integration-env: integration-image
 	docker run \
 		--rm \
 		-it \
-		-v $(shell pwd)/duc:/usr/bin/duc \
 		-v $(shell pwd)/integration:/integration \
-	duc_integration
+		duc_integration
 
-integration-tests: integration-image duc
+integration-test: integration-image
 	docker run \
 		--rm \
-		-v $(shell pwd)/duc:/usr/bin/duc \
 		-v $(shell pwd)/integration:/integration \
-	duc_integration python /integration/run_tests.py
+		duc_integration python /integration/run_tests.py
+
+integration-bench: integration-image
+	docker run \
+		--rm \
+		-v $(shell pwd)/integration:/integration \
+		duc_integration python /integration/run_benchmarks.py
 
 clean:
 	rm -f *.coverage *.bin depgraph.png mockery
@@ -82,6 +89,3 @@ hyperfine: 50mb_random.bin duc
 		'{cmd} $<'
 	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 \
 		'./duc checksum -b{bufsize} $<'
-
-build-benchmark:
-	docker build -t duc:benchmark -f benchmarking/Dockerfile .
