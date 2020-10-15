@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/kevin-hanselman/duc/src/artifact"
 	"github.com/kevin-hanselman/duc/src/stage"
@@ -105,21 +104,12 @@ func (idx Index) findOwner(artPath string) (string, *artifact.Artifact, error) {
 		if art, ok := en.Stage.Outputs[relPath]; ok {
 			return stagePath, art, nil
 		}
-		// Search for an Artifact whose Path is any directory in the input's lineage.
-		// For example: given "bish/bash/bosh/file.txt", look for "bish", then
-		// "bish/bash", then "bish/bash/bosh".
-		fullDir := filepath.Dir(relPath)
-		parts := strings.Split(fullDir, string(filepath.Separator))
-		dir := ""
-		for _, part := range parts {
-			dir := filepath.Join(dir, part)
-			art, ok := en.Stage.Outputs[dir]
-			// If we find a matching Artifact for any ancestor directory, the Stage in
-			// question is only the owner if the Artifact is recursive, or
-			// we've reached the immediate parent directory of the input.
-			if ok && (art.IsRecursive || dir == fullDir) {
-				return stagePath, art, nil
-			}
+		art, ok, err := stage.FindDirArtifactOwnerForPath(relPath, en.Stage.Outputs)
+		if err != nil {
+			return "", art, err
+		}
+		if ok {
+			return stagePath, art, nil
 		}
 	}
 	return "", &artifact.Artifact{}, nil

@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -125,9 +126,7 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 
 	lockPath := FilePathForLock(stagePath)
 	err := fromYamlFile(lockPath, &sff)
-	if os.IsNotExist(err) {
-		return stg, false, nil
-	} else if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return locked, false, err
 	}
 	locked = sff.toStage()
@@ -156,7 +155,46 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 		}
 	}
 
-	return stg, same, nil
+	return stg, same, stg.verifyIntegrity()
+}
+
+func (stg Stage) verifyIntegrity() error {
+	// First, check for direct overlap between Outputs and Dependencies.
+	// Consolidate all Artifacts into a single map to facilitate the next step.
+	allArtifacts := make(map[string]*artifact.Artifact, len(stg.Dependencies)+len(stg.Outputs))
+	for artPath, art := range stg.Outputs {
+		if _, ok := stg.Dependencies[artPath]; ok {
+			return fmt.Errorf(
+				"artifact %s is both a dependency and an output",
+				artPath,
+			)
+		}
+		allArtifacts[artPath] = art
+	}
+	for artPath, art := range stg.Dependencies {
+		allArtifacts[artPath] = art
+	}
+
+	// Second, check if an Artifact is owned by any other (directory) Artifact
+	// in the Stage.
+	for artPath := range allArtifacts {
+		artRelPath, err := filepath.Rel(stg.WorkingDir, artPath)
+		if err != nil {
+			return err
+		}
+		parentArt, ok, err := FindDirArtifactOwnerForPath(artRelPath, allArtifacts)
+		if err != nil {
+			return err
+		}
+		if ok {
+			return fmt.Errorf(
+				"artifact %s conflicts with artifact %s",
+				artPath,
+				parentArt.Path,
+			)
+		}
+	}
+	return nil
 }
 
 // ToFile writes a Stage to the given file path. It is important to use this
@@ -187,4 +225,35 @@ func (stg Stage) CreateCommand() *exec.Cmd {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd
+}
+
+// FindDirArtifactOwnerForPath searches the given map for a directory Artifact
+// that should own relPath. relPath should share a base with the Artifacts in
+// the map (hence the name).
+func FindDirArtifactOwnerForPath(
+	relPath string,
+	artifacts map[string]*artifact.Artifact,
+) (
+	*artifact.Artifact,
+	bool,
+	error,
+) {
+	var owner *artifact.Artifact
+	// Search for an Artifact whose Path is any directory in the input's lineage.
+	// For example: given "bish/bash/bosh/file.txt", look for "bish", then
+	// "bish/bash", then "bish/bash/bosh".
+	fullDir := filepath.Dir(relPath)
+	parts := strings.Split(fullDir, string(filepath.Separator))
+	dir := ""
+	for _, part := range parts {
+		dir := filepath.Join(dir, part)
+		owner, ok := artifacts[dir]
+		// If we find a matching Artifact for any ancestor directory, the Stage in
+		// question is only the owner if the Artifact is recursive, or
+		// we've reached the immediate parent directory of the input.
+		if ok && (owner.IsRecursive || dir == fullDir) {
+			return owner, true, nil
+		}
+	}
+	return owner, false, nil
 }

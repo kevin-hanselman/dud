@@ -267,6 +267,81 @@ func TestFromFile(t *testing.T) {
 			t.Fatalf("Stage -want +got:\n%s", diff)
 		}
 	})
+
+	t.Run("fail if artifact in both deps and outputs", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stgFile := stageFileFormat{
+			Dependencies: []*artifact.Artifact{
+				{Path: "foo.txt"},
+			},
+			Outputs: []*artifact.Artifact{
+				{Path: "foo.txt"},
+			},
+		}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stgFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, _, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+	})
+
+	t.Run("fail if output dir artifact would contain a dep", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stgFile := stageFileFormat{
+			Dependencies: []*artifact.Artifact{
+				{Path: "foo/bar.txt"},
+			},
+			Outputs: []*artifact.Artifact{
+				{Path: "foo", IsDir: true},
+			},
+		}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stgFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, _, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+	})
+
+	t.Run("fail if dep dir artifact would contain a dir output", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stgFile := stageFileFormat{
+			Dependencies: []*artifact.Artifact{
+				{Path: "foo", IsDir: true},
+			},
+			Outputs: []*artifact.Artifact{
+				{Path: "foo/bar", IsDir: true},
+			},
+		}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stgFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, _, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+	})
 }
 
 func TestFilePathForLock(t *testing.T) {
