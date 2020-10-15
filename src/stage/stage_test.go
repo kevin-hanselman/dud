@@ -342,6 +342,49 @@ func TestFromFile(t *testing.T) {
 			t.Fatal("expected FromFile to return error")
 		}
 	})
+
+	t.Run("cleans paths", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stgFile := stageFileFormat{
+			WorkingDir: "foo/",
+			Dependencies: []*artifact.Artifact{
+				{Path: "../bish.txt"},
+			},
+			Outputs: []*artifact.Artifact{
+				{Path: "./bar/", IsDir: true},
+			},
+		}
+
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stgFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		expectedStage := stageFileFormat{
+			WorkingDir: "foo",
+			Dependencies: []*artifact.Artifact{
+				{Path: "../bish.txt", SkipCache: true},
+			},
+			Outputs: []*artifact.Artifact{
+				{Path: "bar", IsDir: true},
+			},
+		}.toStage()
+
+		outputStage, isLock, err := FromFile("stage.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if isLock {
+			t.Fatal("FromFile returned isLock = true")
+		}
+		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
+			t.Fatalf("Stage -want +got:\n%s", diff)
+		}
+	})
 }
 
 func TestFilePathForLock(t *testing.T) {

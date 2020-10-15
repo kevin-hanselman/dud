@@ -118,6 +118,17 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 	if err := fromYamlFile(stagePath, &sff); err != nil {
 		return stg, false, err
 	}
+	// Clean all user-editable paths. Assume that the lock file has not been
+	// tampered with. (We may consider relaxing that assumption at some point.)
+	for i, art := range sff.Dependencies {
+		art.Path = filepath.Clean(art.Path)
+		sff.Dependencies[i] = art
+	}
+	for i, art := range sff.Outputs {
+		art.Path = filepath.Clean(art.Path)
+		sff.Outputs[i] = art
+	}
+	sff.WorkingDir = filepath.Clean(sff.WorkingDir)
 	stg = sff.toStage()
 
 	// Wipe any output from the previous deserialization.
