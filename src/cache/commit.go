@@ -20,7 +20,11 @@ import (
 
 const numWorkers = 20
 
-// Commit calculates the checksum of the artifact, moves it to the cache, then performs a checkout.
+// This is a somewhat arbitrary number. We need to profile more.
+const readDirChunkSize = 1000
+
+// Commit calculates the checksum of the artifact, moves it to the cache, then
+// performs a checkout.
 func (ch *LocalCache) Commit(
 	workingDir string,
 	art *artifact.Artifact,
@@ -176,20 +180,23 @@ func commitDirArtifact(
 	inputFiles := make(chan os.FileInfo)
 	errGroup.Go(func() error {
 		defer close(inputFiles)
-		// We could use filepath.Walk here (as in the errgroup example), but
-		// this function essentially walks the filesystem using recursion, so
-		// there would be no significant benefit for the added complexity.
-		// Switching to filepath.Walk may make sense if ReadDir doesn't perform
-		// well on huge directories.
-		infos, err := ioutil.ReadDir(baseDir)
+		dir, err := os.Open(baseDir)
 		if err != nil {
 			return err
 		}
-		for _, info := range infos {
-			select {
-			case inputFiles <- info:
-			case <-groupCtx.Done():
-				return groupCtx.Err()
+		moreFiles := true
+		for moreFiles {
+			infos, err := dir.Readdir(readDirChunkSize)
+			moreFiles = err != io.EOF
+			if err != nil && moreFiles {
+				return err
+			}
+			for _, info := range infos {
+				select {
+				case inputFiles <- info:
+				case <-groupCtx.Done():
+					return groupCtx.Err()
+				}
 			}
 		}
 		return nil
