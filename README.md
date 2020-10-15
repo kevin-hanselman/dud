@@ -1,7 +1,7 @@
 # Duc
 
 Duc is a tool that facilitates storing, versioning, and reproducing large files
-alongside the code that uses them.
+alongside source code.
 
 ## Design Principles
 
@@ -11,19 +11,24 @@ Duc aims to be simple, fast, and transparent.
 
 Duc should Do One Thing Well.
 
-Duc should require only trivial configuration.
+Duc should never get in your way (unless you're about to do something stupid).
+
+Duc should strive to be stateless.
 
 ### Fast
 
-Duc should prioritize speed.
+Duc should prioritize speed while maintaining sensible assurances of data
+integrity.
 
-Duc should isolate time-intensive operations to keep the rest of the UI fast.
-Currently, Duc's UI is designed such that only `duc commit` is time-intensive.
+Duc should isolate time-intensive operations to keep the majority of the UX
+as fast as possible.
 
-Duc should scale to datasets in the hundreds of gigabytes, ideally low
-terabytes.
+Duc should scale to datasets in the hundreds of gigabytes and/or millions of
+files.
 
 ### Transparent
 
-Duc should explain itself early and often. Inspecting Duc's inner-workings
-should be easy and encouraged.
+Duc should explain itself early and often.
+
+Duc should maintain its state in a human-readable (and ideally human-editable)
+form.
