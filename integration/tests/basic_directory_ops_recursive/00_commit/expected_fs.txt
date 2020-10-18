@@ -21,7 +21,7 @@
 [-r--r--r-- user     user               2]  ./.duc/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
 [-rw-r--r-- user     user               8]  ./.duc/index
 [-rw-r--r-- user     user              57]  ./Ducfile
-[-rw-r--r-- user     user             134]  ./Ducfile.lock
+[-rw-r--r-- user     user             149]  ./Ducfile.lock
 [drwxr-xr-x user     user            4096]  ./foo
 [lrwxrwxrwx user     user             122]  ./foo/1.txt -> /home/user/basic_directory_ops_recursive/repo/.duc/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
 [lrwxrwxrwx user     user             122]  ./foo/2.txt -> /home/user/basic_directory_ops_recursive/repo/.duc/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde

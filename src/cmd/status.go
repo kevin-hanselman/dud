@@ -18,9 +18,9 @@ func init() {
 }
 
 func printStageStatus(stagePath string, status stage.Status, isLocked bool) error {
+	// TODO: use text/tabwriter?
 	fmt.Printf("%s  (lock file up-to-date: %t)\n", stagePath, isLocked)
 	for path, artStatus := range status {
-		// TODO: use text/tabwriter?
 		if _, err := fmt.Printf("  %s  %s\n", path, artStatus); err != nil {
 			return err
 		}

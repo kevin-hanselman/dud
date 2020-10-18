@@ -1,6 +1,14 @@
 FROM archlinux
 
-RUN pacman -Sy --noconfirm diffutils sudo python python-pip jq tree git \
+RUN pacman -Sy --noconfirm \
+        diffutils \
+        sudo \
+        python \
+        python-pip \
+        jq \
+        tree \
+        git \
+        graphviz \
     && pacman -Scc --noconfirm
 
 RUN groupadd sudo && useradd --no-log-init -m user -G sudo
