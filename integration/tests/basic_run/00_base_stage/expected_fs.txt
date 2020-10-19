@@ -1,6 +1,6 @@
 .
 [-rw-r--r-- user     user              51]  ./base.txt
 [-rw-r--r-- user     user              55]  ./base.yaml
-[drwxr-xr-x user     user            4096]  ./.duc
-[drwxr-xr-x user     user            4096]  ./.duc/cache
-[-rw-r--r-- user     user              10]  ./.duc/index
+[drwxr-xr-x user     user            4096]  ./.dud
+[drwxr-xr-x user     user            4096]  ./.dud/cache
+[-rw-r--r-- user     user              10]  ./.dud/index

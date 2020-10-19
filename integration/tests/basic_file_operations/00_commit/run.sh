@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-duc init
+dud init
 
 echo 'foo' > bar.txt
 
@@ -11,8 +11,8 @@ cat <<EOF
 outputs:
 - path: bar.txt
 EOF
-) > Ducfile
+) > stage.yaml
 
-duc add Ducfile
+dud add stage.yaml
 
-duc commit
+dud commit

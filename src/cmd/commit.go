@@ -5,10 +5,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/cache"
-	"github.com/kevin-hanselman/duc/src/index"
-	"github.com/kevin-hanselman/duc/src/stage"
-	"github.com/kevin-hanselman/duc/src/strategy"
+	"github.com/kevin-hanselman/dud/src/cache"
+	"github.com/kevin-hanselman/dud/src/index"
+	"github.com/kevin-hanselman/dud/src/stage"
+	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -48,7 +48,7 @@ var commitCmd = &cobra.Command{
 		if err := os.Chdir(rootDir); err != nil {
 			log.Fatal(err)
 		}
-		indexPath := filepath.Join(".duc", "index")
+		indexPath := filepath.Join(".dud", "index")
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/cache"
+	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/pkg/errors"
 )
 

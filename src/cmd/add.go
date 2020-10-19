@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/index"
+	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +27,7 @@ var addCmd = &cobra.Command{
 		if err := os.Chdir(rootDir); err != nil {
 			log.Fatal(err)
 		}
-		indexPath := filepath.Join(rootDir, ".duc", "index")
+		indexPath := filepath.Join(rootDir, ".dud", "index")
 
 		idx, err := index.FromFile(indexPath)
 		if os.IsNotExist(err) {

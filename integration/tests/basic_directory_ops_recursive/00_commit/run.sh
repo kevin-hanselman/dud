@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-duc init
+dud init
 
 mkdir -p foo/bar
 
@@ -21,8 +21,8 @@ outputs:
   is-dir: true
   is-recursive: true
 EOF
-) > Ducfile
+) > stage.yaml
 
-duc add Ducfile
+dud add stage.yaml
 
-duc commit
+dud commit

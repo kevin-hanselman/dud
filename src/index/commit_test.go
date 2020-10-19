@@ -2,10 +2,10 @@ package index
 
 import (
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/mocks"
-	"github.com/kevin-hanselman/duc/src/stage"
-	"github.com/kevin-hanselman/duc/src/strategy"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/mocks"
+	"github.com/kevin-hanselman/dud/src/stage"
+	"github.com/kevin-hanselman/dud/src/strategy"
 
 	"testing"
 )

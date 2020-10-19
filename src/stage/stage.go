@@ -7,17 +7,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/fsutil"
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
-// building block of Duc pipelines.
+// building block of Dud pipelines.
 type Stage struct {
 	// The string to be evaluated and executed by a shell.
 	Command string
-	// WorkingDir is a directory path relative to the Duc root directory. An
-	// empty value means the Stage's working directory _is_ the Duc root
+	// WorkingDir is a directory path relative to the Dud root directory. An
+	// empty value means the Stage's working directory _is_ the Dud root
 	// directory. All outputs and dependencies of the Stage are themselves
 	// relative to WorkingDir. The Stage's Command is executed in WorkingDir.
 	WorkingDir string

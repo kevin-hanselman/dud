@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-duc init
+dud init
 
 mkdir -p foo/bar
 
@@ -20,8 +20,8 @@ outputs:
 - path: foo
   is-dir: true
 EOF
-) > Ducfile
+) > stage.yaml
 
-duc add Ducfile
+dud add stage.yaml
 
-duc commit
+dud commit

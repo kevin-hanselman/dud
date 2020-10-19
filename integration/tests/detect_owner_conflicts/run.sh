@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-duc init
+dud init
 
 (
 cat <<EOF
@@ -17,11 +17,11 @@ outputs:
 EOF
 ) > bar.yaml
 
-duc add *.yaml
+dud add *.yaml
 
 sed -i 's/foo/bar/' foo.yaml
 
-if duc status; then
+if dud status; then
     echo 'Expected command to fail' 1>&2
     exit 1
 fi

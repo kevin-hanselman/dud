@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/checksum"
-	"github.com/kevin-hanselman/duc/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/checksum"
+	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/pkg/errors"
 )
 

@@ -23,6 +23,6 @@ var cacheConfig = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		viper.Set("cache", args[0])
-		viper.WriteConfigAs(".duc/config")
+		viper.WriteConfigAs(".dud/config")
 	},
 }

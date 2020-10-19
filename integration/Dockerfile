@@ -24,4 +24,4 @@ RUN pip install --no-cache --user dvc \
     && dvc config --global core.analytics false \
     && dvc config --global cache.type symlink
 
-COPY duc /usr/bin/
+COPY dud /usr/bin/

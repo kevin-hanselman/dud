@@ -3,8 +3,8 @@ package index
 import (
 	"github.com/awalterschulze/gographviz"
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/stage"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/stage"
 
 	"testing"
 )

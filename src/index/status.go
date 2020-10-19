@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/cache"
-	"github.com/kevin-hanselman/duc/src/stage"
+	"github.com/kevin-hanselman/dud/src/cache"
+	"github.com/kevin-hanselman/dud/src/stage"
 	"github.com/pkg/errors"
 )
 

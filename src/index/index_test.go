@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/stage"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/stage"
 )
 
 func TestAdd(t *testing.T) {
@@ -18,7 +18,7 @@ func TestAdd(t *testing.T) {
 
 	t.Run("add new stage", func(t *testing.T) {
 		idx := make(Index)
-		path := "foo/bar.duc"
+		path := "foo/bar.dud"
 
 		if err := idx.AddStageFromPath(path); err != nil {
 			t.Fatal(err)
@@ -32,7 +32,7 @@ func TestAdd(t *testing.T) {
 
 	t.Run("error if already tracked", func(t *testing.T) {
 		idx := make(Index)
-		path := "foo/bar.duc"
+		path := "foo/bar.dud"
 
 		var stg stage.Stage
 		idx[path] = &entry{Stage: stg}
@@ -44,7 +44,7 @@ func TestAdd(t *testing.T) {
 
 	t.Run("error if invalid stage", func(t *testing.T) {
 		idx := make(Index)
-		path := "foo/bar.duc"
+		path := "foo/bar.dud"
 
 		stage.FromFile = func(path string) (stage.Stage, bool, error) {
 			return stage.Stage{}, false, os.ErrNotExist

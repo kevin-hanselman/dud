@@ -1,4 +1,4 @@
-module github.com/kevin-hanselman/duc
+module github.com/kevin-hanselman/dud
 
 go 1.14
 

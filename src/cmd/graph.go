@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/kevin-hanselman/duc/src/index"
+	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/spf13/cobra"
 )
 
@@ -36,7 +36,7 @@ var graphCmd = &cobra.Command{
 		if err := os.Chdir(rootDir); err != nil {
 			log.Fatal(err)
 		}
-		indexPath := filepath.Join(".duc", "index")
+		indexPath := filepath.Join(".dud", "index")
 
 		idx, err := index.FromFile(indexPath)
 		if os.IsNotExist(err) { // TODO: print error instead?

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-duc init
+dud init
 
 echo 'foo' > foo.txt
 
@@ -12,12 +12,12 @@ outputs:
 EOF
 ) > stage.yaml
 
-duc add stage.yaml
+dud add stage.yaml
 
-duc commit
+dud commit
 
 echo 'bar' > bar.txt
 
 echo '- path: bar.txt' >> stage.yaml
 
-duc commit
+dud commit

@@ -10,8 +10,8 @@ outputs:
 EOF
 ) > base.yaml
 
-duc init
+dud init
 
-duc add base.yaml
+dud add base.yaml
 
-duc run base.yaml
+dud run base.yaml

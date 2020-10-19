@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevin-hanselman/duc/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/fsutil"
 )
 
-// An Artifact is a file or directory that is tracked by Duc.
+// An Artifact is a file or directory that is tracked by Dud.
 type Artifact struct {
 	Checksum    string `yaml:",omitempty"`
 	Path        string

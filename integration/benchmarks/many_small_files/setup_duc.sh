@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-duc init
+dud init
 
 (
 cat <<EOF
@@ -12,4 +12,4 @@ outputs:
 EOF
 ) > data.yaml
 
-duc add data.yaml
+dud add data.yaml

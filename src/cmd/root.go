@@ -12,9 +12,9 @@ var (
 	cfgFile string
 
 	rootCmd = &cobra.Command{
-		Use:   "duc",
-		Short: "Duc is a tool for storing, versioning, and reproducing big data files",
-		Long: `Duc is a tool to store, version, and reproduce big
+		Use:   "dud",
+		Short: "Dud is a tool for storing, versioning, and reproducing big data files",
+		Long: `Dud is a tool to store, version, and reproduce big
 		data files alongside the source code that creates it.`,
 	}
 )
@@ -33,12 +33,12 @@ func init() {
 func initConfig() {
 	rootDir, err := getProjectRootDir()
 	if err == nil {
-		viper.AddConfigPath(filepath.Join(rootDir, ".duc"))
+		viper.AddConfigPath(filepath.Join(rootDir, ".dud"))
 	}
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 
-	defaultCachePath, err := filepath.Abs(".duc/cache")
+	defaultCachePath, err := filepath.Abs(".dud/cache")
 	if err != nil {
 		panic(err)
 	}

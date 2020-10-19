@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/fsutil"
 )
 
 func getProjectRootDir() (string, error) {
@@ -16,12 +16,12 @@ func getProjectRootDir() (string, error) {
 	}
 
 	for {
-		ducFolderExists, err := hasDucFolder(dirname)
+		dudFolderExists, err := hasDudFolder(dirname)
 		if err != nil {
 			return "", err
 		}
 
-		if ducFolderExists {
+		if dudFolderExists {
 			return dirname, nil
 		}
 
@@ -33,8 +33,8 @@ func getProjectRootDir() (string, error) {
 	}
 }
 
-func hasDucFolder(dir string) (bool, error) {
-	exists, err := fsutil.Exists(filepath.Join(dir, ".duc"), false)
+func hasDudFolder(dir string) (bool, error) {
+	exists, err := fsutil.Exists(filepath.Join(dir, ".dud"), false)
 
 	if err != nil {
 		return false, err

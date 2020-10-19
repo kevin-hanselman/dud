@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/cache"
-	"github.com/kevin-hanselman/duc/src/index"
-	"github.com/kevin-hanselman/duc/src/strategy"
+	"github.com/kevin-hanselman/dud/src/cache"
+	"github.com/kevin-hanselman/dud/src/index"
+	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -43,7 +43,7 @@ var checkoutCmd = &cobra.Command{
 		if err := os.Chdir(rootDir); err != nil {
 			log.Fatal(err)
 		}
-		indexPath := filepath.Join(".duc", "index")
+		indexPath := filepath.Join(".dud", "index")
 
 		// TODO: forcing a checkout will require a "force load lock"
 		// flag in index.FromFile

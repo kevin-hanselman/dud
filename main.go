@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/kevin-hanselman/duc/src/cmd"
+	"github.com/kevin-hanselman/dud/src/cmd"
 )
 
 func main() {

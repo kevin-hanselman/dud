@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kevin-hanselman/duc/src/cache"
-	"github.com/kevin-hanselman/duc/src/index"
-	"github.com/kevin-hanselman/duc/src/stage"
+	"github.com/kevin-hanselman/dud/src/cache"
+	"github.com/kevin-hanselman/dud/src/index"
+	"github.com/kevin-hanselman/dud/src/stage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -31,8 +31,8 @@ func printStageStatus(stagePath string, status stage.Status, isLocked bool) erro
 var statusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"stat", "st"},
-	Short:   "Print the status of one or more Duc stages.",
-	Long:    "Print the status of one or more Duc stages.",
+	Short:   "Print the status of one or more Dud stages.",
+	Long:    "Print the status of one or more Dud stages.",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
@@ -47,7 +47,7 @@ var statusCmd = &cobra.Command{
 		if err := os.Chdir(rootDir); err != nil {
 			log.Fatal(err)
 		}
-		indexPath := filepath.Join(".duc", "index")
+		indexPath := filepath.Join(".dud", "index")
 
 		idx, err := index.FromFile(indexPath)
 		if os.IsNotExist(err) { // TODO: print error instead?

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-duc init
+dud init
 
 (
 cat <<EOF
@@ -19,6 +19,6 @@ outputs:
 EOF
 ) > bar.yaml
 
-duc add *.yaml
+dud add *.yaml
 
-duc graph | dot -Tdot
+dud graph | dot -Tdot

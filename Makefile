@@ -1,7 +1,7 @@
 .PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine integration-%
 
-duc: test-all
-	go build -o duc
+dud: test-all
+	go build -o dud
 
 fmt:
 	goimports -w .
@@ -32,9 +32,9 @@ int-test.coverage:
 all-test.coverage:
 	go test ./... -coverprofile=$@
 
-integration-image: duc
+integration-image: dud
 	docker build \
-		-t duc_integration \
+		-t dud_integration \
 		-f ./integration/Dockerfile \
 		.
 
@@ -43,19 +43,19 @@ integration-env: integration-image
 		--rm \
 		-it \
 		-v $(shell pwd)/integration:/integration \
-		duc_integration
+		dud_integration
 
 integration-test: integration-image
 	docker run \
 		--rm \
 		-v $(shell pwd)/integration:/integration \
-		duc_integration python /integration/run_tests.py
+		dud_integration python /integration/run_tests.py
 
 integration-bench: integration-image
 	docker run \
 		--rm \
 		-v $(shell pwd)/integration:/integration \
-		duc_integration python /integration/run_benchmarks.py
+		dud_integration python /integration/run_benchmarks.py
 
 clean:
 	rm -f *.coverage *.bin depgraph.png mockery
@@ -75,17 +75,17 @@ mockery:
 mocks: mockery
 	./mockery --all
 
-# The awk command removes all graph edge definitions that don't include duc
+# The awk command removes all graph edge definitions that don't include dud
 depgraph.png:
 	godepgraph -nostdlib . \
-		| awk '/^[^"]/ || /duc/ {print;}' \
+		| awk '/^[^"]/ || /dud/ {print;}' \
 		| dot -Tpng -o $@
 
 %mb_random.bin:
 	dd if=/dev/urandom of=$@ bs=1M count=$(patsubst %mb_random.bin,%,$@)
 
-hyperfine: 50mb_random.bin duc
-	hyperfine -L cmd sha1sum,md5sum,sha256sum,b2sum,xxh64sum,'./duc checksum' \
+hyperfine: 50mb_random.bin dud
+	hyperfine -L cmd sha1sum,md5sum,sha256sum,b2sum,xxh64sum,'./dud checksum' \
 		'{cmd} $<'
 	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 \
-		'./duc checksum -b{bufsize} $<'
+		'./dud checksum -b{bufsize} $<'

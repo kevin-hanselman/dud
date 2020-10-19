@@ -17,13 +17,13 @@ var completionCmd = &cobra.Command{
 
 Bash:
 
-$ source <(duc completion bash)
+$ source <(dud completion bash)
 
 # To load completions for each session, execute once:
 Linux:
-$ duc completion bash > /etc/bash_completion.d/duc
+$ dud completion bash > /etc/bash_completion.d/dud
 MacOS:
-$ duc completion bash > /usr/local/etc/bash_completion.d/duc
+$ dud completion bash > /usr/local/etc/bash_completion.d/dud
 
 Zsh:
 
@@ -33,16 +33,16 @@ Zsh:
 $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
 # To load completions for each session, execute once:
-$ duc completion zsh > "${fpath[1]}/_duc"
+$ dud completion zsh > "${fpath[1]}/_dud"
 
 # You will need to start a new shell for this setup to take effect.
 
 Fish:
 
-$ duc completion fish | source
+$ dud completion fish | source
 
 # To load completions for each session, execute once:
-$ duc completion fish > ~/.config/fish/completions/duc.fish
+$ dud completion fish > ~/.config/fish/completions/dud.fish
 `,
 	DisableFlagsInUseLine: true,
 	ValidArgs:             []string{"bash", "zsh", "fish"},

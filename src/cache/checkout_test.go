@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/fsutil"
-	"github.com/kevin-hanselman/duc/src/strategy"
-	"github.com/kevin-hanselman/duc/src/testutil"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/strategy"
+	"github.com/kevin-hanselman/dud/src/testutil"
 	"github.com/pkg/errors"
 )
 

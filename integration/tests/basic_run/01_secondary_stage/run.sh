@@ -10,6 +10,6 @@ outputs:
 EOF
 ) > second.yaml
 
-duc add second.yaml
+dud add second.yaml
 
-duc run second.yaml
+dud run second.yaml

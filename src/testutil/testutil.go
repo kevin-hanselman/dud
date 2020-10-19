@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/fsutil"
 )
 
 // MockFileInfo mocks os.FileInfo
@@ -54,13 +54,13 @@ type TempDirs struct {
 	WorkDir  string
 }
 
-// CreateTempDirs creates a DUC cache and workspace in the OS temp FS.
+// CreateTempDirs creates a Dud cache and workspace in the OS temp FS.
 func CreateTempDirs() (dirs TempDirs, err error) {
-	dirs.CacheDir, err = ioutil.TempDir("", "duc_cache")
+	dirs.CacheDir, err = ioutil.TempDir("", "dud_cache")
 	if err != nil {
 		return
 	}
-	dirs.WorkDir, err = ioutil.TempDir("", "duc_wspace")
+	dirs.WorkDir, err = ioutil.TempDir("", "dud_wspace")
 	if err != nil {
 		os.RemoveAll(dirs.CacheDir)
 		return

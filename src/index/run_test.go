@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevin-hanselman/duc/src/artifact"
-	"github.com/kevin-hanselman/duc/src/fsutil"
-	"github.com/kevin-hanselman/duc/src/mocks"
-	"github.com/kevin-hanselman/duc/src/stage"
+	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/mocks"
+	"github.com/kevin-hanselman/dud/src/stage"
 )
 
 func assertCorrectCommand(stg stage.Stage, commands map[string]*exec.Cmd, t *testing.T) {

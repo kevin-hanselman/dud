@@ -1,8 +1,8 @@
 #!/bin/bash
 
-duc init
+dud init
 
-if sudo duc status; then
+if sudo dud status; then
     echo 'Expected command to fail' 1>&2
     exit 1
 fi

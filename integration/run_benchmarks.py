@@ -10,7 +10,7 @@ from run_tests import normalize_paths
 
 
 def run_benchmark(bench_def_dir):
-    for cmd in ['duc', 'dvc']:
+    for cmd in ['dud', 'dvc']:
         scratch_dir = setup(bench_def_dir)
 
         setup_sh = os.path.join(bench_def_dir, f'setup_{cmd}.sh')
