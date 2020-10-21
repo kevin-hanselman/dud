@@ -23,19 +23,23 @@ data files alongside source code.`,
 			// and other commands can override this behavior.
 			rootDir, err := getProjectRootDir()
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 			if err := os.Chdir(rootDir); err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 		},
 	}
+
+	// This is the Logger for the entire application.
+	logger *log.Logger
 )
 
 // Main is the entry point to the cobra CLI.
 func Main() {
+	logger = log.New(os.Stdout, "", 0)
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 }
 
@@ -53,7 +57,7 @@ func initConfig() {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 	}
 }

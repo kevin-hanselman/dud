@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/kevin-hanselman/dud/src/cache"
@@ -36,14 +35,14 @@ var statusCmd = &cobra.Command{
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		idx, err := index.FromFile(".dud/index")
 		if os.IsNotExist(err) { // TODO: print error instead?
 			idx = make(index.Index)
 		} else if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		if len(args) == 0 { // By default, check status of everything in the Index.
@@ -57,13 +56,13 @@ var statusCmd = &cobra.Command{
 			inProgress := make(map[string]bool)
 			err := idx.Status(path, ch, status, inProgress)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 		}
 
 		for path, stageStatus := range status {
 			if err := printStageStatus(path, stageStatus, idx[path].IsLocked); err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 		}
 	},

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"os"
 
 	"github.com/kevin-hanselman/dud/src/index"
@@ -25,17 +24,17 @@ var addCmd = &cobra.Command{
 		if os.IsNotExist(err) {
 			idx = make(index.Index)
 		} else if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		for _, path := range args {
 			if err := idx.AddStageFromPath(path); err != nil {
-				log.Fatal(errors.Wrap(err, "add"))
+				logger.Fatal(errors.Wrap(err, "add"))
 			}
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {
-			log.Fatal(errors.Wrap(err, "add"))
+			logger.Fatal(errors.Wrap(err, "add"))
 		}
 	},
 }

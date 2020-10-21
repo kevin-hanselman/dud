@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"log"
 	"os"
 
 	"github.com/kevin-hanselman/dud/src/cache"
@@ -21,14 +20,14 @@ var runCmd = &cobra.Command{
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		idx, err := index.FromFile(".dud/index")
 		if os.IsNotExist(err) {
 			idx = make(index.Index)
 		} else if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		if len(args) == 0 {
@@ -40,18 +39,10 @@ var runCmd = &cobra.Command{
 		ran := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			err := idx.Run(path, ch, ran, inProgress)
+			err := idx.Run(path, ch, ran, inProgress, logger)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
-		}
-
-		for path, wasRun := range ran {
-			description := "not run"
-			if wasRun {
-				description = "run"
-			}
-			log.Printf("%s: %s\n", path, description)
 		}
 	},
 }

@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
-
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -13,7 +10,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(checkoutCmd)
-	checkoutCmd.Flags().BoolVarP(&useCopyStrategy, "copy", "c", false, "Copy the file instead of linking.")
+	checkoutCmd.Flags().BoolVarP(&useCopyStrategy, "copy", "c", false, "Copy artifacts instead of linking.")
 }
 
 var useCopyStrategy bool
@@ -31,17 +28,16 @@ var checkoutCmd = &cobra.Command{
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		// TODO: forcing a checkout will require a "force load lock"
 		// flag in index.FromFile
 		idx, err := index.FromFile(".dud/index")
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
-		// By default, checkout everything in the Index.
 		if len(args) == 0 {
 			for path := range idx {
 				args = append(args, path)
@@ -51,15 +47,9 @@ var checkoutCmd = &cobra.Command{
 		checkedOut := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			err := idx.Checkout(path, ch, strat, checkedOut, inProgress)
-			if err != nil {
-				log.Fatal(err)
+			if err := idx.Checkout(path, ch, strat, checkedOut, inProgress, logger); err != nil {
+				logger.Fatal(err)
 			}
-		}
-
-		fmt.Println("checked out:")
-		for stagePath := range checkedOut {
-			fmt.Printf("  %s\n", stagePath)
 		}
 	},
 }

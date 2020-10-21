@@ -2,6 +2,7 @@ package index
 
 import (
 	"fmt"
+	"log"
 	"os/exec"
 	"path/filepath"
 
@@ -20,38 +21,38 @@ func (idx Index) Run(
 	ch cache.Cache,
 	ran map[string]bool,
 	inProgress map[string]bool,
+	logger *log.Logger,
 ) error {
 	if _, ok := ran[stagePath]; ok {
 		return nil
 	}
 
-	// If we've visited this Stage but haven't recorded its status (the check
-	// above), then we're in a cycle.
 	if inProgress[stagePath] {
 		return errors.New("cycle detected")
 	}
-
 	inProgress[stagePath] = true
+
 	en, ok := idx[stagePath]
 	if !ok {
-		return fmt.Errorf("run: unknown stage %#v", stagePath)
+		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
+
 	hasCommand := en.Stage.Command != ""
 	hasDeps := len(en.Stage.Dependencies) > 0
 	doRun := hasCommand && !hasDeps
 	for artPath, art := range en.Stage.Dependencies {
 		ownerPath, _, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
 		if err != nil {
-			errors.Wrap(err, "run")
+			return err
 		}
 		if ownerPath == "" {
 			artStatus, err := ch.Status(en.Stage.WorkingDir, *art)
 			if err != nil {
-				return errors.Wrap(err, "run")
+				return err
 			}
 			doRun = doRun || !artStatus.ContentsMatch
 		} else {
-			if err := idx.Run(ownerPath, ch, ran, inProgress); err != nil {
+			if err := idx.Run(ownerPath, ch, ran, inProgress, logger); err != nil {
 				return err
 			}
 			doRun = doRun || ran[ownerPath]
@@ -61,7 +62,7 @@ func (idx Index) Run(
 		for _, art := range en.Stage.Outputs {
 			artStatus, err := ch.Status(en.Stage.WorkingDir, *art)
 			if err != nil {
-				return errors.Wrap(err, "run")
+				return err
 			}
 			if !artStatus.ContentsMatch {
 				doRun = true
@@ -70,7 +71,10 @@ func (idx Index) Run(
 		}
 	}
 	if doRun && hasCommand {
+		logger.Printf("running stage %s\n", stagePath)
 		runCommand(en.Stage.CreateCommand())
+	} else {
+		logger.Printf("nothing to do for stage %s\n", stagePath)
 	}
 	ran[stagePath] = doRun
 	delete(inProgress, stagePath)

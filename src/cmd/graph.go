@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/awalterschulze/gographviz"
@@ -31,7 +30,7 @@ var graphCmd = &cobra.Command{
 		if os.IsNotExist(err) { // TODO: print error instead?
 			idx = make(index.Index)
 		} else if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		if len(args) == 0 { // By default, run on the entire Index
@@ -45,7 +44,7 @@ var graphCmd = &cobra.Command{
 		for _, path := range args {
 			inProgress := make(map[string]bool)
 			if err := idx.Graph(path, inProgress, graph, onlyStages); err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 		}
 		fmt.Println(graph.String())

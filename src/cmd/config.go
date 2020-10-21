@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -10,9 +9,9 @@ import (
 
 func init() {
 	configCmd := &cobra.Command{
-		Use:   "config",
-		Short: "Modify the config file",
-		Long:  "Modify the config file at the project scope",
+		Use:   "config <get|set>",
+		Short: "Show or modify fields in the config",
+		Long:  "Show or modify fields in the config",
 	}
 
 	rootCmd.AddCommand(configCmd)
@@ -38,7 +37,7 @@ func init() {
 			Run: func(cmd *cobra.Command, args []string) {
 				viper.Set(args[0], args[1])
 				if err := viper.WriteConfig(); err != nil {
-					log.Fatal(err)
+					logger.Fatal(err)
 				}
 			},
 		},

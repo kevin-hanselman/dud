@@ -2,6 +2,7 @@ package index
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/cache"
@@ -16,6 +17,7 @@ func (idx Index) Commit(
 	strat strategy.CheckoutStrategy,
 	committed map[string]bool,
 	inProgress map[string]bool,
+	logger *log.Logger,
 ) error {
 	if committed[stagePath] {
 		return nil
@@ -28,34 +30,36 @@ func (idx Index) Commit(
 	}
 	inProgress[stagePath] = true
 
-	errorPrefix := "stage commit"
 	en, ok := idx[stagePath]
 	if !ok {
-		return fmt.Errorf("status: unknown stage %#v", stagePath)
+		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
+
 	for artPath, art := range en.Stage.Dependencies {
 		ownerPath, upstreamArt, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
 		if err != nil {
-			return errors.Wrap(err, errorPrefix)
+			return err
 		}
 		if ownerPath == "" {
-			// Always skip dependencies. This is also enforced in stage.FromFile,
-			// but most tests obviously don't use FromFile to create Stages to
-			// test against. To be safe, it's best to leave this here.
+			// Always skip the cache for dependencies. This is also enforced in
+			// stage.FromFile, but most tests obviously don't use FromFile to
+			// create Stages to test against. To be safe, it's best to leave
+			// this here.
 			art.SkipCache = true
 			if err := ch.Commit(en.Stage.WorkingDir, art, strat); err != nil {
-				return errors.Wrap(err, errorPrefix)
+				return err
 			}
 		} else {
-			if err := idx.Commit(ownerPath, ch, strat, committed, inProgress); err != nil {
+			if err := idx.Commit(ownerPath, ch, strat, committed, inProgress, logger); err != nil {
 				return err
 			}
 			art.Checksum = upstreamArt.Checksum
 		}
 	}
+	logger.Printf("committing stage %s\n", stagePath)
 	for _, art := range en.Stage.Outputs {
 		if err := ch.Commit(en.Stage.WorkingDir, art, strat); err != nil {
-			return errors.Wrap(err, errorPrefix)
+			return err
 		}
 	}
 	committed[stagePath] = true

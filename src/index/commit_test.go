@@ -1,6 +1,9 @@
 package index
 
 import (
+	"io/ioutil"
+	"log"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/mocks"
@@ -28,6 +31,8 @@ func expectOutputsCommitted(
 func TestCommit(t *testing.T) {
 
 	strat := strategy.LinkStrategy
+	// TODO: Consider checking the logs instead of throwing them away.
+	logger := log.New(ioutil.Discard, "", 0)
 
 	t.Run("disjoint stages with orphan dependency", func(t *testing.T) {
 		orphanArt := artifact.Artifact{Path: "bish.bin"}
@@ -60,7 +65,7 @@ func TestCommit(t *testing.T) {
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Commit("foo.yaml", &mockCache, strat, committed, inProgress); err != nil {
+		if err := idx.Commit("foo.yaml", &mockCache, strat, committed, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -111,7 +116,7 @@ func TestCommit(t *testing.T) {
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Commit("bar.yaml", &mockCache, strat, committed, inProgress); err != nil {
+		if err := idx.Commit("bar.yaml", &mockCache, strat, committed, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -171,7 +176,7 @@ func TestCommit(t *testing.T) {
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Commit("bar.yaml", &mockCache, strat, committed, inProgress); err != nil {
+		if err := idx.Commit("bar.yaml", &mockCache, strat, committed, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -241,7 +246,7 @@ func TestCommit(t *testing.T) {
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Commit("bosh.yaml", &mockCache, strat, committed, inProgress); err != nil {
+		if err := idx.Commit("bosh.yaml", &mockCache, strat, committed, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -304,7 +309,7 @@ func TestCommit(t *testing.T) {
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		err := idx.Commit("c.yaml", &mockCache, strat, committed, inProgress)
+		err := idx.Commit("c.yaml", &mockCache, strat, committed, inProgress, logger)
 		if err == nil {
 			t.Fatal("expected error")
 		}

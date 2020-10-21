@@ -1,6 +1,9 @@
 package index
 
 import (
+	"io/ioutil"
+	"log"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/mocks"
@@ -23,6 +26,8 @@ func expectOutputsCheckedOut(
 func TestCheckout(t *testing.T) {
 
 	strat := strategy.LinkStrategy
+	// TODO: Consider checking the logs instead of throwing them away.
+	logger := log.New(ioutil.Discard, "", 0)
 
 	t.Run("disjoint stages with oprhan dependency", func(t *testing.T) {
 		stgA := stage.Stage{
@@ -50,7 +55,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("foo.yaml", &mockCache, strat, checkedOut, inProgress); err != nil {
+		if err := idx.Checkout("foo.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -94,7 +99,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bar.yaml", &mockCache, strat, checkedOut, inProgress); err != nil {
+		if err := idx.Checkout("bar.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -151,7 +156,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bosh.yaml", &mockCache, strat, checkedOut, inProgress); err != nil {
+		if err := idx.Checkout("bosh.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -199,7 +204,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bar.yaml", &mockCache, strat, checkedOut, inProgress); err != nil {
+		if err := idx.Checkout("bar.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -265,7 +270,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		err := idx.Checkout("c.yaml", &mockCache, strat, checkedOut, inProgress)
+		err := idx.Checkout("c.yaml", &mockCache, strat, checkedOut, inProgress, logger)
 		if err == nil {
 			t.Fatal("expected error")
 		}

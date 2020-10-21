@@ -6,4 +6,4 @@
 [-rw-r--r-- user     user              18]  ./.dud/config
 [-rw-r--r-- user     user              22]  ./.dud/index
 [-rw-r--r-- user     user              56]  ./second.txt
-[-rw-r--r-- user     user              80]  ./second.yaml
+[-rw-r--r-- user     user             111]  ./second.yaml

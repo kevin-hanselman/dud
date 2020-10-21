@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"log"
-
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/stage"
@@ -35,14 +33,14 @@ var commitCmd = &cobra.Command{
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		indexPath := ".dud/index"
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		if len(args) == 0 { // By default, commit all Stages.
@@ -54,18 +52,18 @@ var commitCmd = &cobra.Command{
 		committed := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			err := idx.Commit(path, ch, strat, committed, inProgress)
+			err := idx.Commit(path, ch, strat, committed, inProgress, logger)
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 			lockPath := stage.FilePathForLock(path)
 			if idx[path].Stage.ToFile(lockPath); err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 	},
 }
