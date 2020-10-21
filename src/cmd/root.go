@@ -1,26 +1,39 @@
 package cmd
 
 import (
+	"errors"
 	"log"
+	"os"
 	"path/filepath"
 
+	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
-	cfgFile string
-
 	rootCmd = &cobra.Command{
 		Use:   "dud",
-		Short: "Dud is a tool for storing, versioning, and reproducing big data files",
+		Short: "Dud is a tool for storing, versioning, and reproducing large files",
 		Long: `Dud is a tool to store, version, and reproduce big
-		data files alongside the source code that creates it.`,
+data files alongside source code.`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			// Change working directory to the project root.
+			// This is done here as opposed to in cobra.OnInitialize so `init`
+			// and other commands can override this behavior.
+			rootDir, err := getProjectRootDir()
+			if err != nil {
+				log.Fatal(err)
+			}
+			if err := os.Chdir(rootDir); err != nil {
+				log.Fatal(err)
+			}
+		},
 	}
 )
 
-// Execute is the main entry point to the cobra cli
-func Execute() {
+// Main is the entry point to the cobra CLI.
+func Main() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
@@ -38,15 +51,33 @@ func initConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 
-	defaultCachePath, err := filepath.Abs(".dud/cache")
-	if err != nil {
-		panic(err)
-	}
-	viper.SetDefault("cache", defaultCachePath)
-
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			log.Fatal(err)
+		}
+	}
+}
+
+func getProjectRootDir() (string, error) {
+	dirname, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		dudFolderExists, err := fsutil.Exists(filepath.Join(dirname, ".dud"), false)
+		if err != nil {
+			return "", err
+		}
+
+		if dudFolderExists {
+			return dirname, nil
+		}
+
+		dirname = filepath.Dir(dirname)
+
+		if dirname == "/" {
+			return "", errors.New("no project root directory found")
 		}
 	}
 }

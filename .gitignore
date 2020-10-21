@@ -1,6 +1,7 @@
 *.png
 .tags
 dud
+.dud
 mockery
 
 # test files for benchmarking

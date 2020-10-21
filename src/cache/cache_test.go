@@ -32,11 +32,10 @@ func TestPathForChecksum(t *testing.T) {
 		}
 	})
 
-	t.Run("reject relative paths ", func(t *testing.T) {
-		path := "foo/bar"
-		_, err := NewLocalCache(path)
+	t.Run("reject empty paths", func(t *testing.T) {
+		_, err := NewLocalCache("")
 		if err == nil {
-			t.Fatalf("expected NewLocalCache(%#v) to raise an error (not absolute path)", path)
+			t.Fatal("expected NewLocalCache to raise an error")
 		}
 	})
 }

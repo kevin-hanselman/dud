@@ -3,4 +3,5 @@
 [-rw-r--r-- user     user              55]  ./base.yaml
 [drwxr-xr-x user     user            4096]  ./.dud
 [drwxr-xr-x user     user            4096]  ./.dud/cache
+[-rw-r--r-- user     user              18]  ./.dud/config
 [-rw-r--r-- user     user              10]  ./.dud/index

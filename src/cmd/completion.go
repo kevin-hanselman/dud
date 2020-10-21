@@ -57,4 +57,7 @@ $ dud completion fish > ~/.config/fish/completions/dud.fish
 			cmd.Root().GenFishCompletion(os.Stdout, true)
 		}
 	},
+	// Override rootCmd's PersistentPreRun which changes dir to the project
+	// root.
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 }

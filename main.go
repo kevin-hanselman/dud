@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/kevin-hanselman/dud/src/cmd"
@@ -9,7 +9,8 @@ import (
 
 func main() {
 	if os.Geteuid() == 0 {
-		log.Fatal("refusing to run as root")
+		fmt.Println("refusing to run as root")
+		os.Exit(1)
 	}
-	cmd.Execute()
+	cmd.Main()
 }

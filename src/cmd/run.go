@@ -3,7 +3,6 @@ package cmd
 import (
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -25,16 +24,7 @@ var runCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		rootDir, err := getProjectRootDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := os.Chdir(rootDir); err != nil {
-			log.Fatal(err)
-		}
-		indexPath := filepath.Join(".dud", "index")
-
-		idx, err := index.FromFile(indexPath)
+		idx, err := index.FromFile(".dud/index")
 		if os.IsNotExist(err) {
 			idx = make(index.Index)
 		} else if err != nil {

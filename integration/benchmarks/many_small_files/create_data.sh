@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-num_files=100000
-file_size_kb=1
+num_files=20000
+file_size_kb=100
 out_dir=data
 
 mkdir "$out_dir"

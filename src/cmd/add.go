@@ -3,7 +3,6 @@ package cmd
 import (
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/pkg/errors"
@@ -20,14 +19,7 @@ var addCmd = &cobra.Command{
 	Long:  "Add stages to the index",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		rootDir, err := getProjectRootDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := os.Chdir(rootDir); err != nil {
-			log.Fatal(err)
-		}
-		indexPath := filepath.Join(rootDir, ".dud", "index")
+		indexPath := ".dud/index"
 
 		idx, err := index.FromFile(indexPath)
 		if os.IsNotExist(err) {

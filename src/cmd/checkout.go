@@ -3,8 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -36,18 +34,9 @@ var checkoutCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		rootDir, err := getProjectRootDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := os.Chdir(rootDir); err != nil {
-			log.Fatal(err)
-		}
-		indexPath := filepath.Join(".dud", "index")
-
 		// TODO: forcing a checkout will require a "force load lock"
 		// flag in index.FromFile
-		idx, err := index.FromFile(indexPath)
+		idx, err := index.FromFile(".dud/index")
 		if err != nil {
 			log.Fatal(err)
 		}

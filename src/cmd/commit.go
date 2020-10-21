@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"log"
-	"os"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -28,7 +26,6 @@ var commitCmd = &cobra.Command{
 	Use:   "commit",
 	Short: "Compute the checksum value and move to cache",
 	Long:  "Compute the checksum value and move to cache",
-	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		strat := strategy.LinkStrategy
@@ -41,14 +38,7 @@ var commitCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		rootDir, err := getProjectRootDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := os.Chdir(rootDir); err != nil {
-			log.Fatal(err)
-		}
-		indexPath := filepath.Join(".dud", "index")
+		indexPath := ".dud/index"
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
@@ -72,11 +62,6 @@ var commitCmd = &cobra.Command{
 			if idx[path].Stage.ToFile(lockPath); err != nil {
 				log.Fatal(err)
 			}
-		}
-
-		log.Println("committed:")
-		for stagePath := range committed {
-			log.Printf("  %s\n", stagePath)
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {

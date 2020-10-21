@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -23,10 +24,14 @@ type LocalCache struct {
 
 // NewLocalCache initializes a LocalCache with a valid cache directory.
 func NewLocalCache(dir string) (*LocalCache, error) {
-	if !filepath.IsAbs(dir) {
-		return nil, fmt.Errorf("NewLocalCache: %#v not an absolute path", dir)
+	if dir == "" {
+		return nil, errors.New("cache directory path must be set")
 	}
-	return &LocalCache{dir: dir}, nil
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return nil, err
+	}
+	return &LocalCache{dir: absDir}, nil
 }
 
 // Dir returns the root directory for the LocalCache.

@@ -3,6 +3,7 @@
 [-rw-r--r-- user     user              55]  ./base.yaml
 [drwxr-xr-x user     user            4096]  ./.dud
 [drwxr-xr-x user     user            4096]  ./.dud/cache
+[-rw-r--r-- user     user              18]  ./.dud/config
 [-rw-r--r-- user     user              22]  ./.dud/index
 [-rw-r--r-- user     user              56]  ./second.txt
 [-rw-r--r-- user     user              80]  ./second.yaml

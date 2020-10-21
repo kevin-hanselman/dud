@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -28,17 +27,7 @@ var graphCmd = &cobra.Command{
 	Short: "Print Stage graph in graphviz DOT format",
 	Long:  "Print Stage graph in graphviz DOT format",
 	Run: func(cmd *cobra.Command, args []string) {
-
-		rootDir, err := getProjectRootDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := os.Chdir(rootDir); err != nil {
-			log.Fatal(err)
-		}
-		indexPath := filepath.Join(".dud", "index")
-
-		idx, err := index.FromFile(indexPath)
+		idx, err := index.FromFile(".dud/index")
 		if os.IsNotExist(err) { // TODO: print error instead?
 			idx = make(index.Index)
 		} else if err != nil {
