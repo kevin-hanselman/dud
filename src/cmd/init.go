@@ -14,14 +14,16 @@ func init() {
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "initialize a Dud project",
-	Long:  "Initialize a Dud project by populating a .dud directory in the working directory.",
+	Long: `Initialize a Dud project by populating
+a .dud directory in the working directory.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cacheDir := ".dud/cache"
 		if err := os.MkdirAll(cacheDir, 0755); err != nil {
 			logger.Fatal(err)
 		}
 		viper.Set("cache", cacheDir)
-		if err := viper.WriteConfigAs(".dud/config"); err != nil {
+		// WriteConfig() doesn't work if the file doesn't exist.
+		if err := viper.WriteConfigAs(".dud/config.yaml"); err != nil {
 			logger.Fatal(err)
 		}
 		logger.Println("Initialized .dud directory")

@@ -11,7 +11,7 @@ import (
 // Use an undirected edge to differentiate ownership from a dependency. Faking
 // undirected edges in a directed graph requires the attribute "dir=none".
 // See: https://stackoverflow.com/questions/13236975
-var ownershipEdge = map[string]string{"dir": "none"}
+var ownershipEdge = map[string]string{"dir": "none", "penwidth": "3"}
 var stageNode = map[string]string{"color": "cadetblue1", "style": "filled"}
 var artifactNode = map[string]string{"shape": "box"}
 

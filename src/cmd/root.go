@@ -52,7 +52,7 @@ func initConfig() {
 	if err == nil {
 		viper.AddConfigPath(filepath.Join(rootDir, ".dud"))
 	}
-	viper.SetConfigName("config")
+	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
 
 	if err := viper.ReadInConfig(); err != nil {
