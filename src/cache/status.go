@@ -52,7 +52,7 @@ func quickStatus(
 	if err != nil {
 		return
 	}
-	if status.HasChecksum && status.ChecksumInCache && status.WorkspaceFileStatus == fsutil.Link {
+	if status.HasChecksum && status.ChecksumInCache && status.WorkspaceFileStatus == fsutil.StatusLink {
 		var linkDst string
 		linkDst, err = os.Readlink(workPath)
 		if err != nil {
@@ -70,7 +70,7 @@ func fileArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact
 		return status, errors.Wrap(err, errorPrefix)
 	}
 
-	if status.WorkspaceFileStatus != fsutil.RegularFile {
+	if status.WorkspaceFileStatus != fsutil.StatusRegularFile {
 		return status, nil
 	}
 
@@ -114,7 +114,7 @@ func dirArtifactStatus(
 		return status, manifest, nil
 	}
 
-	if status.WorkspaceFileStatus != fsutil.Directory {
+	if status.WorkspaceFileStatus != fsutil.StatusDirectory {
 		// TODO: Should this be an error?
 		return status, manifest, nil
 	}

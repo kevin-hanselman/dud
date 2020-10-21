@@ -56,7 +56,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 	}
 
 	// verify art.IsDir matches status.WorkspaceFileStatus
-	if art.IsDir != (status.WorkspaceFileStatus == fsutil.Directory) {
+	if art.IsDir != (status.WorkspaceFileStatus == fsutil.StatusDirectory) {
 		t.Fatalf(
 			"artifact.IsDir = %v, but status.WorkspaceFileStatus = %v",
 			art.IsDir,
@@ -78,7 +78,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 	if err != nil {
 		t.Fatal(err)
 	}
-	shouldExist := status.WorkspaceFileStatus != fsutil.Absent
+	shouldExist := status.WorkspaceFileStatus != fsutil.StatusAbsent
 	if workPathExists != shouldExist {
 		t.Fatalf("Exists(%#v) = %#v", workPath, workPathExists)
 	}
@@ -109,7 +109,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 
 	switch status.WorkspaceFileStatus {
 	// verify workPath is a link and matches status.ContentsMatch
-	case fsutil.Link:
+	case fsutil.StatusLink:
 		if status.SkipCache {
 			t.Fatal("WorkspaceFileStatus is Link, but SkipCache is true")
 		}
@@ -122,7 +122,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 			t.Fatalf("%#v links to %#v", workPath, linkDst)
 		}
 	// verify workPath is a regular file and matches status.ContentsMatch
-	case fsutil.RegularFile:
+	case fsutil.StatusRegularFile:
 		isRegFile, err := fsutil.IsRegularFile(workPath)
 		if err != nil {
 			t.Fatal(err)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/pkg/errors"
@@ -41,7 +40,7 @@ func (idx Index) Run(
 	hasDeps := len(en.Stage.Dependencies) > 0
 	doRun := hasCommand && !hasDeps
 	for artPath, art := range en.Stage.Dependencies {
-		ownerPath, _, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
+		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
 		}

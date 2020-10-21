@@ -58,7 +58,7 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 		if _, ok := causeErr.(MissingFromCacheError); !ok {
 			t.Fatalf("expected Checkout to return MissingFromCacheError, got %v", causeErr)
 		}
-	} else if statusStart.WorkspaceFileStatus != fsutil.Absent {
+	} else if statusStart.WorkspaceFileStatus != fsutil.StatusAbsent {
 		// TODO: this clause should change if checkout should be a no-op if up-to-date
 		if !os.IsExist(causeErr) {
 			t.Fatalf("expected Checkout to return Exist error, got %#v", checkoutErr)
@@ -75,9 +75,9 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 		}
 		switch strat {
 		case strategy.CopyStrategy:
-			statusWant.WorkspaceFileStatus = fsutil.RegularFile
+			statusWant.WorkspaceFileStatus = fsutil.StatusRegularFile
 		case strategy.LinkStrategy:
-			statusWant.WorkspaceFileStatus = fsutil.Link
+			statusWant.WorkspaceFileStatus = fsutil.StatusLink
 		}
 	}
 

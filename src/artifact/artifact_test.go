@@ -10,31 +10,31 @@ import (
 func TestFromPath(t *testing.T) {
 
 	t.Run("regular file", func(t *testing.T) {
-		testFromPath(fsutil.RegularFile, false, false, t)
+		testFromPath(fsutil.StatusRegularFile, false, false, t)
 	})
 
 	t.Run("regular file ignores recursive flag", func(t *testing.T) {
-		testFromPath(fsutil.RegularFile, true, false, t)
+		testFromPath(fsutil.StatusRegularFile, true, false, t)
 	})
 
 	t.Run("recursive dir", func(t *testing.T) {
-		testFromPath(fsutil.Directory, true, false, t)
+		testFromPath(fsutil.StatusDirectory, true, false, t)
 	})
 
 	t.Run("non-recursive dir", func(t *testing.T) {
-		testFromPath(fsutil.Directory, false, false, t)
+		testFromPath(fsutil.StatusDirectory, false, false, t)
 	})
 
 	t.Run("error if absent", func(t *testing.T) {
-		testFromPath(fsutil.Absent, false, true, t)
+		testFromPath(fsutil.StatusAbsent, false, true, t)
 	})
 
 	t.Run("error if link", func(t *testing.T) {
-		testFromPath(fsutil.Link, false, true, t)
+		testFromPath(fsutil.StatusLink, false, true, t)
 	})
 
 	t.Run("error if other", func(t *testing.T) {
-		testFromPath(fsutil.Other, false, true, t)
+		testFromPath(fsutil.StatusOther, false, true, t)
 	})
 }
 
@@ -49,7 +49,7 @@ func testFromPath(fileStatus fsutil.FileStatus, isRecursive bool, expectError bo
 	expectedArtifact := &Artifact{
 		Path: path,
 	}
-	if fileStatus == fsutil.Directory {
+	if fileStatus == fsutil.StatusDirectory {
 		expectedArtifact.IsDir = true
 		expectedArtifact.IsRecursive = isRecursive
 	}
@@ -71,7 +71,7 @@ func testFromPath(fileStatus fsutil.FileStatus, isRecursive bool, expectError bo
 func TestArtifactStatusString(t *testing.T) {
 	t.Run("regular file cached up-to-date", func(t *testing.T) {
 		testStatus(
-			Status{WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			Status{WorkspaceFileStatus: fsutil.StatusRegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
 			false,
 			false,
 			"up-to-date",
@@ -81,7 +81,7 @@ func TestArtifactStatusString(t *testing.T) {
 
 	t.Run("regular file not cached up-to-date", func(t *testing.T) {
 		testStatus(
-			Status{WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: false, ContentsMatch: true},
+			Status{WorkspaceFileStatus: fsutil.StatusRegularFile, HasChecksum: true, ChecksumInCache: false, ContentsMatch: true},
 			true,
 			false,
 			"up-to-date (not cached)",
@@ -91,7 +91,7 @@ func TestArtifactStatusString(t *testing.T) {
 
 	t.Run("regular file cached modified", func(t *testing.T) {
 		testStatus(
-			Status{WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: false},
+			Status{WorkspaceFileStatus: fsutil.StatusRegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: false},
 			false,
 			false,
 			"modified",
@@ -101,7 +101,7 @@ func TestArtifactStatusString(t *testing.T) {
 
 	t.Run("regular file not cached modified", func(t *testing.T) {
 		testStatus(
-			Status{WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: false, ContentsMatch: false},
+			Status{WorkspaceFileStatus: fsutil.StatusRegularFile, HasChecksum: true, ChecksumInCache: false, ContentsMatch: false},
 			true,
 			false,
 			"modified (not cached)",
@@ -111,7 +111,7 @@ func TestArtifactStatusString(t *testing.T) {
 
 	t.Run("regular file but IsDir true", func(t *testing.T) {
 		testStatus(
-			Status{WorkspaceFileStatus: fsutil.RegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			Status{WorkspaceFileStatus: fsutil.StatusRegularFile, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
 			true,
 			true,
 			"incorrect file type: RegularFile",
@@ -121,7 +121,7 @@ func TestArtifactStatusString(t *testing.T) {
 
 	t.Run("directory but IsDir false", func(t *testing.T) {
 		testStatus(
-			Status{WorkspaceFileStatus: fsutil.Directory, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			Status{WorkspaceFileStatus: fsutil.StatusDirectory, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
 			false,
 			false,
 			"incorrect file type: Directory",
@@ -131,7 +131,7 @@ func TestArtifactStatusString(t *testing.T) {
 
 	t.Run("directory but SkipCache true", func(t *testing.T) {
 		testStatus(
-			Status{WorkspaceFileStatus: fsutil.Directory, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
+			Status{WorkspaceFileStatus: fsutil.StatusDirectory, HasChecksum: true, ChecksumInCache: true, ContentsMatch: true},
 			true,
 			true,
 			"incorrect file type: Directory (not cached)",

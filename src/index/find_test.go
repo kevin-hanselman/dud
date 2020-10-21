@@ -28,7 +28,7 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		if owner != "foo.yaml" {
-			t.Fatalf("got owner = %v, want foo.yaml", owner)
+			t.Fatalf("got owner = %#v, want foo.yaml", owner)
 		}
 
 		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
@@ -54,7 +54,7 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		if owner != "" {
-			t.Fatalf("got owner = %v, want empty string", owner)
+			t.Fatalf("got owner = %#v, want empty string", owner)
 		}
 	})
 
@@ -75,7 +75,7 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		if owner != "foo.yaml" {
-			t.Fatalf("got owner = %v, want foo.yaml", owner)
+			t.Fatalf("got owner = %#v, want foo.yaml", owner)
 		}
 
 		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
@@ -83,14 +83,14 @@ func TestFindOwner(t *testing.T) {
 		}
 	})
 
-	t.Run("non-zero WorkingDir", func(t *testing.T) {
+	t.Run("working dir doesn't affect artifact paths", func(t *testing.T) {
 		targetArt := artifact.Artifact{Path: "bar.bin"}
 		idx := make(Index)
 		idx["foo.yaml"] = &entry{
 			Stage: stage.Stage{
 				WorkingDir: "foo",
 				Outputs: map[string]*artifact.Artifact{
-					"bar.bin": &targetArt,
+					"foo/bar.bin": &targetArt,
 				},
 			},
 		}
@@ -101,7 +101,7 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		if owner != "foo.yaml" {
-			t.Fatalf("got owner = %v, want foo.yaml", owner)
+			t.Fatalf("got owner = %#v, want foo.yaml", owner)
 		}
 
 		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
@@ -126,7 +126,7 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		if owner != "" {
-			t.Fatalf("got owner = %v, want empty string", owner)
+			t.Fatalf("got owner = %#v, want empty string", owner)
 		}
 	})
 
@@ -147,33 +147,7 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		if owner != "foo.yaml" {
-			t.Fatalf("got owner = %v, want foo.yaml", owner)
-		}
-
-		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {
-			t.Fatalf("artifact -want +got:\n%s", diff)
-		}
-	})
-
-	t.Run("respects relative dirs", func(t *testing.T) {
-		targetArt := artifact.Artifact{Path: "../foo"}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
-				WorkingDir: "baseDir",
-				Outputs: map[string]*artifact.Artifact{
-					"../foo": &targetArt,
-				},
-			},
-		}
-
-		owner, foundArt, err := idx.findOwner("foo")
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if owner != "foo.yaml" {
-			t.Fatalf("got owner = %v, want foo.yaml", owner)
+			t.Fatalf("got owner = %#v, want foo.yaml", owner)
 		}
 
 		if diff := cmp.Diff(&targetArt, foundArt); diff != "" {

@@ -70,7 +70,7 @@ func TestAdd(t *testing.T) {
 			Stage: stage.Stage{
 				WorkingDir: "subDir",
 				Outputs: map[string]*artifact.Artifact{
-					"foo.bin": {Path: "foo.bin"},
+					"subDir/foo.bin": {Path: "subDir/foo.bin"},
 				},
 			},
 		}
@@ -81,6 +81,30 @@ func TestAdd(t *testing.T) {
 		expectedError := "bar.yaml: artifact subDir/foo.bin already owned by foo.yaml"
 		if err.Error() != expectedError {
 			t.Fatalf("\nerror want: %s\nerror got: %s", expectedError, err.Error())
+		}
+	})
+
+	t.Run("working dir should have no effect on artifact paths", func(t *testing.T) {
+		stage.FromFile = func(path string) (stage.Stage, bool, error) {
+			stg := stage.Stage{
+				Outputs: map[string]*artifact.Artifact{
+					"subDir/foo.bin": {Path: "subDir/foo.bin"},
+				},
+			}
+			return stg, false, nil
+		}
+		idx := make(Index)
+		idx["foo.yaml"] = &entry{
+			Stage: stage.Stage{
+				WorkingDir: "subDir",
+				Outputs: map[string]*artifact.Artifact{
+					"foo.bin": {Path: "foo.bin"},
+				},
+			},
+		}
+		err := idx.AddStageFromPath("bar.yaml")
+		if err != nil {
+			t.Fatal(err)
 		}
 	})
 }

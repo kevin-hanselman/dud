@@ -10,16 +10,16 @@ import (
 type FileStatus int
 
 const (
-	// Absent means that the file does not exist.
-	Absent FileStatus = iota
-	// RegularFile means that the file exists as a regular file.
-	RegularFile
-	// Link means that the artifact exists as a link.
-	Link
-	// Directory means that the file exists as a directory.
-	Directory
-	// Other means none of the above.
-	Other
+	// StatusAbsent means that the file does not exist.
+	StatusAbsent FileStatus = iota
+	// StatusRegularFile means that the file exists as a regular file.
+	StatusRegularFile
+	// StatusLink means that the artifact exists as a link.
+	StatusLink
+	// StatusDirectory means that the file exists as a directory.
+	StatusDirectory
+	// StatusOther means none of the above.
+	StatusOther
 )
 
 func (fs FileStatus) String() string {
@@ -70,25 +70,25 @@ func FileStatusFromPath(path string) (FileStatus, error) {
 	fileInfo, err := os.Lstat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return Absent, nil
+			return StatusAbsent, nil
 		}
 		return 0, err
 	}
 	mode := fileInfo.Mode()
 
 	if mode.IsRegular() {
-		return RegularFile, nil
+		return StatusRegularFile, nil
 	}
 
 	if mode.IsDir() {
-		return Directory, nil
+		return StatusDirectory, nil
 	}
 
 	if (mode & os.ModeSymlink) != 0 {
-		return Link, nil
+		return StatusLink, nil
 	}
 
-	return Other, nil
+	return StatusOther, nil
 }
 
 // SameFilesystem returns true if two files live on the same filesystem; it

@@ -31,14 +31,14 @@ func assertCorrectCommand(stg stage.Stage, commands map[string]*exec.Cmd, t *tes
 func TestRun(t *testing.T) {
 
 	upToDate := artifact.Status{
-		WorkspaceFileStatus: fsutil.Link,
+		WorkspaceFileStatus: fsutil.StatusLink,
 		HasChecksum:         true,
 		ChecksumInCache:     true,
 		ContentsMatch:       true,
 	}
 
 	outOfDate := artifact.Status{
-		WorkspaceFileStatus: fsutil.RegularFile,
+		WorkspaceFileStatus: fsutil.StatusRegularFile,
 		HasChecksum:         true,
 		ChecksumInCache:     false,
 		ContentsMatch:       false,
@@ -391,55 +391,6 @@ func TestRun(t *testing.T) {
 		expectedRan := map[string]bool{
 			"bish.yaml": true,
 			"bash.yaml": false,
-			"bosh.yaml": true,
-		}
-		if diff := cmp.Diff(expectedRan, ran); diff != "" {
-			t.Fatalf("committed -want +got:\n%s", diff)
-		}
-	})
-
-	t.Run("handle relative paths to other work dirs", func(t *testing.T) {
-		defer resetRunCommandMock()
-		depA := stage.Stage{
-			WorkingDir: "binDir",
-			Outputs: map[string]*artifact.Artifact{
-				"bish.bin": {Path: "bish.bin"},
-			},
-		}
-		downstream := stage.Stage{
-			WorkingDir: "mainDir",
-			Command:    "echo 'generating bosh.bin'",
-			Dependencies: map[string]*artifact.Artifact{
-				"../binDir/bish.bin": {Path: "../binDir/bish.bin"},
-			},
-			Outputs: map[string]*artifact.Artifact{
-				"../binDir/bosh.bin": {Path: "../binDir/bosh.bin"},
-			},
-		}
-		idx := make(Index)
-		idx["bish.yaml"] = &entry{Stage: depA}
-		idx["bosh.yaml"] = &entry{Stage: downstream}
-
-		mockCache := mocks.Cache{}
-
-		expectStageStatusCalled(&depA, &mockCache, outOfDate)
-
-		ran := make(map[string]bool)
-		inProgress := make(map[string]bool)
-		if err := idx.Run("bosh.yaml", &mockCache, ran, inProgress, logger); err != nil {
-			t.Fatal(err)
-		}
-
-		mockCache.AssertExpectations(t)
-
-		if len(commands) != 1 {
-			t.Fatalf("runCommand called %d times, want 1", len(commands))
-		}
-
-		assertCorrectCommand(downstream, commands, t)
-
-		expectedRan := map[string]bool{
-			"bish.yaml": true,
 			"bosh.yaml": true,
 		}
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {

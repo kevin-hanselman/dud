@@ -138,10 +138,10 @@ func TestWorkspaceStatusFromPathIntegration(t *testing.T) {
 	defer os.Remove("fsutil.go.symlink")
 
 	tests := map[string]FileStatus{
-		"./fsutil_test.go":    RegularFile,
-		"./foobar.txt":        Absent,
-		"../fsutil":           Directory,
-		"./fsutil.go.symlink": Link,
+		"./fsutil_test.go":    StatusRegularFile,
+		"./foobar.txt":        StatusAbsent,
+		"../fsutil":           StatusDirectory,
+		"./fsutil.go.symlink": StatusLink,
 	}
 
 	for path, expectedWorkspaceStatus := range tests {

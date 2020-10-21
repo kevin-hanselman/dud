@@ -34,7 +34,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		}
 
 		expectedStatus := artifact.Status{
-			WorkspaceFileStatus: fsutil.Directory,
+			WorkspaceFileStatus: fsutil.StatusDirectory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       true,
@@ -68,7 +68,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		}
 
 		expectedStatus := artifact.Status{
-			WorkspaceFileStatus: fsutil.Directory,
+			WorkspaceFileStatus: fsutil.StatusDirectory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       true,
@@ -102,7 +102,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		}
 
 		expectedStatus := artifact.Status{
-			WorkspaceFileStatus: fsutil.Directory,
+			WorkspaceFileStatus: fsutil.StatusDirectory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       true,

@@ -3,7 +3,6 @@ package index
 import (
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -36,7 +35,7 @@ func (idx Index) Commit(
 	}
 
 	for artPath, art := range en.Stage.Dependencies {
-		ownerPath, upstreamArt, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
+		ownerPath, upstreamArt, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
 		}

@@ -44,11 +44,11 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 	// By default, expect commit to fail and leave the workspace/cache untouched.
 	statusWant := statusStart.Status
 
-	if statusStart.WorkspaceFileStatus == fsutil.Absent {
+	if statusStart.WorkspaceFileStatus == fsutil.StatusAbsent {
 		if !os.IsNotExist(causeErr) {
 			t.Fatalf("expected Commit to return a NotExist error, got %#v", causeErr)
 		}
-	} else if statusStart.WorkspaceFileStatus != fsutil.RegularFile && !statusStart.ContentsMatch {
+	} else if statusStart.WorkspaceFileStatus != fsutil.StatusRegularFile && !statusStart.ContentsMatch {
 		if causeErr == nil {
 			t.Fatal("expected Commit to return an error")
 		}
@@ -64,12 +64,12 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 			statusWant.ChecksumInCache = true
 			switch strat {
 			case strategy.CopyStrategy:
-				statusWant.WorkspaceFileStatus = fsutil.RegularFile
+				statusWant.WorkspaceFileStatus = fsutil.StatusRegularFile
 			case strategy.LinkStrategy:
-				statusWant.WorkspaceFileStatus = fsutil.Link
+				statusWant.WorkspaceFileStatus = fsutil.StatusLink
 			}
 			// If we started out up-to-date, we shouldn't change workspace state.
-			if statusStart.WorkspaceFileStatus == fsutil.Link && statusStart.ContentsMatch {
+			if statusStart.WorkspaceFileStatus == fsutil.StatusLink && statusStart.ContentsMatch {
 				statusWant.WorkspaceFileStatus = statusStart.WorkspaceFileStatus
 			}
 		}

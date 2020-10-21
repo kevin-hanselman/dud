@@ -16,10 +16,11 @@ import (
 type Stage struct {
 	// The string to be evaluated and executed by a shell.
 	Command string
-	// WorkingDir is a directory path relative to the Dud root directory. An
+	// WorkingDir is the directory in which the Stage's command is executed. It
+	// is a directory path relative to the Dud root directory. An
 	// empty value means the Stage's working directory _is_ the Dud root
-	// directory. All outputs and dependencies of the Stage are themselves
-	// relative to WorkingDir. The Stage's Command is executed in WorkingDir.
+	// directory. WorkingDir only affects the Stage's command; all outputs and
+	// dependencies of the Stage should have paths relative to the project root.
 	WorkingDir string
 	// Dependencies is a set of Artifacts which the Stage's Command needs to
 	// operate. The Artifacts are keyed by their Path for faster lookup.
@@ -189,11 +190,7 @@ func (stg Stage) verifyIntegrity() error {
 	// Second, check if an Artifact is owned by any other (directory) Artifact
 	// in the Stage.
 	for artPath := range allArtifacts {
-		artRelPath, err := filepath.Rel(stg.WorkingDir, artPath)
-		if err != nil {
-			return err
-		}
-		parentArt, ok, err := FindDirArtifactOwnerForPath(artRelPath, allArtifacts)
+		parentArt, ok, err := FindDirArtifactOwnerForPath(artPath, allArtifacts)
 		if err != nil {
 			return err
 		}

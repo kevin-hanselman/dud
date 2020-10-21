@@ -114,7 +114,7 @@ func checkoutDir(
 	if !status.ChecksumInCache {
 		return fmt.Errorf("checkoutDir: checksum %v not found in cache", art.Checksum)
 	}
-	if !(status.WorkspaceFileStatus == fsutil.Absent || status.WorkspaceFileStatus == fsutil.Directory) {
+	if !(status.WorkspaceFileStatus == fsutil.StatusAbsent || status.WorkspaceFileStatus == fsutil.StatusDirectory) {
 		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %s", status.WorkspaceFileStatus)
 	}
 	man, err := readDirManifest(cachePath)

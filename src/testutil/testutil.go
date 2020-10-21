@@ -73,12 +73,12 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 func AllFileTestCases() (out []artifact.ArtifactWithStatus) {
 	allArtifactStatuses := []artifact.Status{}
 	allWorkspaceStatuses := []fsutil.FileStatus{
-		fsutil.Absent,
-		fsutil.RegularFile,
-		fsutil.Link,
+		fsutil.StatusAbsent,
+		fsutil.StatusRegularFile,
+		fsutil.StatusLink,
 	}
 	for _, workspaceStatus := range allWorkspaceStatuses {
-		if workspaceStatus != fsutil.Absent {
+		if workspaceStatus != fsutil.StatusAbsent {
 			allArtifactStatuses = append(
 				allArtifactStatuses,
 				artifact.Status{
@@ -119,7 +119,7 @@ func AllFileTestCases() (out []artifact.ArtifactWithStatus) {
 
 	artWithStatus := artifact.ArtifactWithStatus{
 		Artifact: artifact.Artifact{SkipCache: true},
-		Status:   artifact.Status{WorkspaceFileStatus: fsutil.RegularFile},
+		Status:   artifact.Status{WorkspaceFileStatus: fsutil.StatusRegularFile},
 	}
 	out = append(out, artWithStatus)
 	artWithStatus.HasChecksum = true
@@ -162,21 +162,21 @@ func CreateArtifactTestCase(status artifact.ArtifactWithStatus) (dirs TempDirs, 
 		}
 	}
 
-	if status.WorkspaceFileStatus != fsutil.Absent {
+	if status.WorkspaceFileStatus != fsutil.StatusAbsent {
 		if err = os.Mkdir(filepath.Join(dirs.WorkDir, parentDir), 0755); err != nil {
 			return
 		}
 	}
 
 	switch status.WorkspaceFileStatus {
-	case fsutil.RegularFile:
+	case fsutil.StatusRegularFile:
 		if !status.ContentsMatch {
 			fileContents = []byte("Not the same as in the cache")
 		}
 		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0644); err != nil {
 			return
 		}
-	case fsutil.Link:
+	case fsutil.StatusLink:
 		targetPath := fileCachePath
 		if !status.ContentsMatch {
 			targetPath = "foobar"

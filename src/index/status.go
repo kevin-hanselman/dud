@@ -2,7 +2,6 @@ package index
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/stage"
@@ -36,7 +35,7 @@ func (idx Index) Status(
 	}
 	stageStatus := make(stage.Status)
 	for artPath, art := range en.Stage.Dependencies {
-		ownerPath, _, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
+		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			errors.Wrap(err, "status")
 		}

@@ -10,11 +10,20 @@ import (
 
 // An Artifact is a file or directory that is tracked by Dud.
 type Artifact struct {
-	Checksum    string `yaml:",omitempty"`
-	Path        string
-	IsDir       bool `yaml:"is-dir,omitempty"`
+	// Checksum is the hex digest Artifact's hashed contents. It is used to
+	// locate the Artifact in a Cache.
+	Checksum string `yaml:",omitempty"`
+	// Path is the file path to the Artifact in the workspace. It is always
+	// relative to the project root directory.
+	Path string
+	// If IsDir is true then the Artifact is a directory.
+	IsDir bool `yaml:"is-dir,omitempty"`
+	// If IsRecursive is true then the Artifact is a directory and all sub-directories.
 	IsRecursive bool `yaml:"is-recursive,omitempty"`
-	SkipCache   bool `yaml:"skip-cache,omitempty"`
+	// If SkipCache is true then the Artifact is not stored in the Cache. When
+	// the Artifact is committed, its checksum is updated, but the Artifact is
+	// not moved to the Cache. The checkout operation is a no-op.
+	SkipCache bool `yaml:"skip-cache,omitempty"`
 }
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.
@@ -41,16 +50,16 @@ type ArtifactWithStatus struct {
 }
 
 func (stat ArtifactWithStatus) String() string {
-	isDir := stat.WorkspaceFileStatus == fsutil.Directory
+	isDir := stat.WorkspaceFileStatus == fsutil.StatusDirectory
 	if isDir != stat.IsDir {
 		return fmt.Sprintf("incorrect file type: %s", stat.WorkspaceFileStatus)
 	}
-	isRegularFile := stat.WorkspaceFileStatus == fsutil.RegularFile
+	isRegularFile := stat.WorkspaceFileStatus == fsutil.StatusRegularFile
 	if stat.SkipCache && !isRegularFile {
 		return fmt.Sprintf("incorrect file type: %s (not cached)", stat.WorkspaceFileStatus)
 	}
 	switch stat.WorkspaceFileStatus {
-	case fsutil.Absent:
+	case fsutil.StatusAbsent:
 		if stat.HasChecksum {
 			if stat.ChecksumInCache {
 				return "missing from workspace"
@@ -59,7 +68,7 @@ func (stat ArtifactWithStatus) String() string {
 		}
 		return "unknown artifact"
 
-	case fsutil.RegularFile, fsutil.Directory:
+	case fsutil.StatusRegularFile, fsutil.StatusDirectory:
 		var out strings.Builder
 		if stat.HasChecksum {
 			if stat.ChecksumInCache || stat.SkipCache {
@@ -79,7 +88,7 @@ func (stat ArtifactWithStatus) String() string {
 		}
 		return out.String()
 
-	case fsutil.Link:
+	case fsutil.StatusLink:
 		if stat.HasChecksum {
 			if stat.ChecksumInCache {
 				if stat.ContentsMatch {
@@ -91,7 +100,7 @@ func (stat ArtifactWithStatus) String() string {
 		}
 		return "link with no checksum"
 
-	case fsutil.Other:
+	case fsutil.StatusOther:
 		return "invalid file type"
 	}
 	panic("exited switch unexpectedly")
@@ -109,13 +118,13 @@ func FromPath(path string, isRecursive bool) (art *Artifact, err error) {
 		return
 	}
 	switch status {
-	case fsutil.Absent:
+	case fsutil.StatusAbsent:
 		return art, fmt.Errorf("path %v does not exist", path)
-	case fsutil.Other, fsutil.Link:
+	case fsutil.StatusOther, fsutil.StatusLink:
 		return art, fmt.Errorf("unsupported file type for path %v", path)
 	}
 
-	isDir := status == fsutil.Directory
+	isDir := status == fsutil.StatusDirectory
 	return &Artifact{
 		Checksum:    "",
 		Path:        path,

@@ -39,7 +39,7 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 		}
 
 		expectedStatus := artifact.Status{
-			WorkspaceFileStatus: fsutil.Directory,
+			WorkspaceFileStatus: fsutil.StatusDirectory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       true,

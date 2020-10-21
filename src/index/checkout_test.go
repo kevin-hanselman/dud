@@ -172,57 +172,6 @@ func TestCheckout(t *testing.T) {
 		}
 	})
 
-	t.Run("handle relative paths to other work dirs", func(t *testing.T) {
-		// It's important to create identical copies rather than use the same
-		// pointer in both Stages.
-		linkedArtifactOrig := artifact.Artifact{Path: "foo.bin"}
-		linkedArtifactA := linkedArtifactOrig
-		stgA := stage.Stage{
-			Outputs: map[string]*artifact.Artifact{
-				"foo.bin": &linkedArtifactA,
-			},
-		}
-		linkedArtifactB := linkedArtifactOrig
-		linkedArtifactB.Path = "../foo.bin"
-		stgB := stage.Stage{
-			WorkingDir: "workDir",
-			Dependencies: map[string]*artifact.Artifact{
-				"../foo.bin": &linkedArtifactB,
-			},
-			Outputs: map[string]*artifact.Artifact{
-				"bar.bin": {Path: "bar.bin"},
-			},
-		}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{Stage: stgA}
-		idx["bar.yaml"] = &entry{Stage: stgB}
-
-		mockCache := mocks.Cache{}
-
-		expectOutputsCheckedOut(&stgA, &mockCache, strat)
-		expectOutputsCheckedOut(&stgB, &mockCache, strat)
-
-		checkedOut := make(map[string]bool)
-		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bar.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
-			t.Fatal(err)
-		}
-
-		// The linked Artifact should not be checkedOut as a dependency.
-		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Checkout", stgB.WorkingDir, &linkedArtifactOrig, strat)
-
-		mockCache.AssertExpectations(t)
-
-		expectedCheckedOutSet := map[string]bool{
-			"foo.yaml": true,
-			"bar.yaml": true,
-		}
-		if diff := cmp.Diff(expectedCheckedOutSet, checkedOut); diff != "" {
-			t.Fatalf("checkedOut -want +got:\n%s", diff)
-		}
-	})
-
 	t.Run("cycles are prevented", func(t *testing.T) {
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^

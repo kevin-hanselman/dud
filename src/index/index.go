@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/stage"
@@ -31,15 +30,14 @@ func (idx *Index) AddStageFromPath(path string) error {
 		return err
 	}
 	for artPath := range stg.Outputs {
-		fullPath := filepath.Join(stg.WorkingDir, artPath)
-		ownerPath, _, err := idx.findOwner(fullPath)
+		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
 		} else if ownerPath != "" {
 			return fmt.Errorf(
 				"%s: artifact %s already owned by %s",
 				path,
-				fullPath,
+				artPath,
 				ownerPath,
 			)
 		}
@@ -97,14 +95,10 @@ func FromFile(path string) (Index, error) {
 
 func (idx Index) findOwner(artPath string) (string, *artifact.Artifact, error) {
 	for stagePath, en := range idx {
-		relPath, err := filepath.Rel(en.Stage.WorkingDir, artPath)
-		if err != nil {
-			return "", &artifact.Artifact{}, err
-		}
-		if art, ok := en.Stage.Outputs[relPath]; ok {
+		if art, ok := en.Stage.Outputs[artPath]; ok {
 			return stagePath, art, nil
 		}
-		art, ok, err := stage.FindDirArtifactOwnerForPath(relPath, en.Stage.Outputs)
+		art, ok, err := stage.FindDirArtifactOwnerForPath(artPath, en.Stage.Outputs)
 		if err != nil {
 			return "", art, err
 		}

@@ -343,6 +343,32 @@ func TestFromFile(t *testing.T) {
 		}
 	})
 
+	t.Run("working dir should have no effect on artifact paths", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stgFile := stageFileFormat{
+			WorkingDir: "workDir",
+			Dependencies: []*artifact.Artifact{
+				{Path: "foo", IsDir: true},
+			},
+			Outputs: []*artifact.Artifact{
+				{Path: "foo/bar", IsDir: true},
+			},
+		}
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stgFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, _, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+	})
+
 	t.Run("cleans paths", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stgFile := stageFileFormat{

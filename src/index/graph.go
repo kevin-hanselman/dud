@@ -2,7 +2,6 @@ package index
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/awalterschulze/gographviz"
 
@@ -40,7 +39,7 @@ func (idx Index) Graph(
 
 	graph.SetDir(true) // Ensure the graph is directed.
 	for artPath := range en.Stage.Dependencies {
-		ownerPath, _, err := idx.findOwner(filepath.Join(en.Stage.WorkingDir, artPath))
+		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			errors.Wrap(err, "status")
 		}

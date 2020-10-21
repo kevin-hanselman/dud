@@ -60,13 +60,13 @@ func commitFileArtifact(
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
-	if status.WorkspaceFileStatus == fsutil.Absent {
+	if status.WorkspaceFileStatus == fsutil.StatusAbsent {
 		return errors.Wrap(errors.Wrap(os.ErrNotExist, workPath), errorPrefix)
 	}
 	if status.ContentsMatch {
 		return nil
 	}
-	if status.WorkspaceFileStatus != fsutil.RegularFile {
+	if status.WorkspaceFileStatus != fsutil.StatusRegularFile {
 		return errors.Wrap(errors.New("not a regular file"), errorPrefix)
 	}
 	//srcReader, srcCloser, err := memoryMapOpen(workPath)
