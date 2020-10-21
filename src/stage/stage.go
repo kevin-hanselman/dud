@@ -171,6 +171,9 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 }
 
 func (stg Stage) verifyIntegrity() error {
+	if strings.Contains(stg.WorkingDir, "..") {
+		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
+	}
 	// First, check for direct overlap between Outputs and Dependencies.
 	// Consolidate all Artifacts into a single map to facilitate the next step.
 	allArtifacts := make(map[string]*artifact.Artifact, len(stg.Dependencies)+len(stg.Outputs))
@@ -190,6 +193,9 @@ func (stg Stage) verifyIntegrity() error {
 	// Second, check if an Artifact is owned by any other (directory) Artifact
 	// in the Stage.
 	for artPath := range allArtifacts {
+		if strings.Contains(artPath, "..") {
+			return fmt.Errorf("artifact %s is outside of the project root", artPath)
+		}
 		parentArt, ok, err := FindDirArtifactOwnerForPath(artPath, allArtifacts)
 		if err != nil {
 			return err
@@ -224,6 +230,7 @@ func FilePathForLock(stagePath string) string {
 
 // CreateCommand return an exec.Cmd for the Stage.
 func (stg Stage) CreateCommand() *exec.Cmd {
+	// TODO: Consider always running with "sh" for consistency.
 	shell := os.Getenv("SHELL")
 	if shell == "" {
 		shell = "sh"

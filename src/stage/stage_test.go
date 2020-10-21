@@ -374,7 +374,7 @@ func TestFromFile(t *testing.T) {
 		stgFile := stageFileFormat{
 			WorkingDir: "foo/",
 			Dependencies: []*artifact.Artifact{
-				{Path: "../bish.txt"},
+				{Path: "foo/../bish.txt"},
 			},
 			Outputs: []*artifact.Artifact{
 				{Path: "./bar/", IsDir: true},
@@ -393,7 +393,7 @@ func TestFromFile(t *testing.T) {
 		expectedStage := stageFileFormat{
 			WorkingDir: "foo",
 			Dependencies: []*artifact.Artifact{
-				{Path: "../bish.txt", SkipCache: true},
+				{Path: "bish.txt", SkipCache: true},
 			},
 			Outputs: []*artifact.Artifact{
 				{Path: "bar", IsDir: true},
@@ -409,6 +409,63 @@ func TestFromFile(t *testing.T) {
 		}
 		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
 			t.Fatalf("Stage -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("disallow working dirs outside project root", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stgFile := stageFileFormat{
+			WorkingDir: "foo/../../bar",
+			Outputs: []*artifact.Artifact{
+				{Path: "bar", IsDir: true},
+			},
+		}
+
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stgFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, _, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expcted FromFile to return error")
+		}
+
+		expectedError := "working directory ../bar is outside of the project root"
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("disallow artifact paths outside project root", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stgFile := stageFileFormat{
+			Outputs: []*artifact.Artifact{
+				{Path: "..", IsDir: true},
+			},
+		}
+
+		fromYamlFile = func(path string, v interface{}) error {
+			output := v.(*stageFileFormat)
+			if path == "stage.yaml" {
+				*output = stgFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, _, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expcted FromFile to return error")
+		}
+
+		expectedError := "artifact .. is outside of the project root"
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
 		}
 	})
 }
