@@ -17,7 +17,7 @@ func hashToHexString(h hash.Hash) string {
 // Checksum reads from reader and returns the hash of the bytes as a hex string.
 func Checksum(reader io.Reader, bufSize int64) (string, error) {
 	if bufSize <= 0 {
-		bufSize = int64(1 * datasize.MB)
+		bufSize = int64(64 * datasize.KB)
 	}
 	h := blake3.New()
 	buf := make([]byte, bufSize)

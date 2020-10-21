@@ -1,7 +1,7 @@
 .PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine integration-%
 
 dud: test-all
-	go build -o dud
+	go build -o dud -ldflags "-s -w"
 
 fmt:
 	goimports -w .
@@ -87,5 +87,5 @@ depgraph.png:
 hyperfine: 50mb_random.bin dud
 	hyperfine -L cmd sha1sum,md5sum,sha256sum,b2sum,xxh64sum,'./dud checksum' \
 		'{cmd} $<'
-	hyperfine -L bufsize 1000,10000,100000,1000000,10000000 \
+	hyperfine -L bufsize 4096,8192,16384,32768,65536,131072,262144,524288,1048576 \
 		'./dud checksum -b{bufsize} $<'

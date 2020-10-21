@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
+	"golang.org/x/exp/mmap"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -34,6 +36,16 @@ func (ch *LocalCache) Commit(
 		return commitDirArtifact(context.Background(), ch, workingDir, art, strat)
 	}
 	return commitFileArtifact(ch, workingDir, art, strat)
+}
+
+func memoryMapOpen(path string) (reader io.Reader, closer io.Closer, err error) {
+	readerAt, err := mmap.Open(path)
+	if err != nil {
+		return
+	}
+	reader = io.NewSectionReader(readerAt, 0, math.MaxInt64)
+	closer = readerAt
+	return
 }
 
 func commitFileArtifact(
@@ -57,14 +69,17 @@ func commitFileArtifact(
 	if status.WorkspaceFileStatus != fsutil.RegularFile {
 		return errors.Wrap(errors.New("not a regular file"), errorPrefix)
 	}
+	//srcReader, srcCloser, err := memoryMapOpen(workPath)
 	srcFile, err := os.Open(workPath)
+	var srcReader io.Reader = srcFile
+	var srcCloser io.Closer = srcFile
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
-	defer srcFile.Close()
+	defer srcCloser.Close()
 
 	if art.SkipCache {
-		cksum, err := checksum.Checksum(srcFile, 0)
+		cksum, err := checksum.Checksum(srcReader, 0)
 		if err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}
@@ -81,7 +96,7 @@ func commitFileArtifact(
 		moveFile = workPath
 	}
 
-	cksum, err := ch.commitBytes(srcFile, moveFile)
+	cksum, err := ch.commitBytes(srcReader, moveFile)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}

@@ -20,6 +20,7 @@ require (
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/zeebo/blake3 v0.1.0
+	golang.org/x/exp v0.0.0-20201008143054-e3b2a7f2fdc7
 	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
 	golang.org/x/sys v0.0.0-20201018121011-98379d014ca7 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
