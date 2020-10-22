@@ -11,7 +11,16 @@ import (
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+	runCmd.Flags().BoolVarP(
+		&runSingleStage,
+		"single-stage",
+		"s",
+		false,
+		"don't recursively operate on dependencies",
+	)
 }
+
+var runSingleStage bool
 
 var runCmd = &cobra.Command{
 	Use:   "run",
@@ -39,7 +48,7 @@ var runCmd = &cobra.Command{
 		ran := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			err := idx.Run(path, ch, ran, inProgress, logger)
+			err := idx.Run(path, ch, !runSingleStage, ran, inProgress, logger)
 			if err != nil {
 				logger.Fatal(err)
 			}

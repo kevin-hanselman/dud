@@ -14,6 +14,7 @@ func (idx Index) Checkout(
 	stagePath string,
 	ch cache.Cache,
 	strat strategy.CheckoutStrategy,
+	recursive bool,
 	checkedOut map[string]bool,
 	inProgress map[string]bool,
 	logger *log.Logger,
@@ -39,8 +40,16 @@ func (idx Index) Checkout(
 		}
 		if ownerPath == "" {
 			continue
-		} else {
-			if err := idx.Checkout(ownerPath, ch, strat, checkedOut, inProgress, logger); err != nil {
+		} else if recursive {
+			if err := idx.Checkout(
+				ownerPath,
+				ch,
+				strat,
+				recursive,
+				checkedOut,
+				inProgress,
+				logger,
+			); err != nil {
 				return err
 			}
 		}

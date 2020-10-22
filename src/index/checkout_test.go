@@ -55,7 +55,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("foo.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
+		if err := idx.Checkout("foo.yaml", &mockCache, strat, true, checkedOut, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -99,7 +99,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bar.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
+		if err := idx.Checkout("bar.yaml", &mockCache, strat, true, checkedOut, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -156,7 +156,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bosh.yaml", &mockCache, strat, checkedOut, inProgress, logger); err != nil {
+		if err := idx.Checkout("bosh.yaml", &mockCache, strat, true, checkedOut, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -219,7 +219,7 @@ func TestCheckout(t *testing.T) {
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		err := idx.Checkout("c.yaml", &mockCache, strat, checkedOut, inProgress, logger)
+		err := idx.Checkout("c.yaml", &mockCache, strat, true, checkedOut, inProgress, logger)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -236,6 +236,62 @@ func TestCheckout(t *testing.T) {
 		}
 		if diff := cmp.Diff(expectedInProgress, inProgress); diff != "" {
 			t.Fatalf("inProgress -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("can disable recursion", func(t *testing.T) {
+		// It's important to create identical copies rather than use the same
+		// pointer in both Stages.
+		linkedArtifactOrig := artifact.Artifact{Path: "foo.bin"}
+		linkedArtifactA := linkedArtifactOrig
+		linkedArtifactB := linkedArtifactOrig
+		stgA := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"foo.bin": &linkedArtifactA,
+			},
+		}
+		stgB := stage.Stage{
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.bin": &linkedArtifactB,
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.bin": {Path: "bar.bin"},
+			},
+		}
+		idx := Index{
+			"foo.yaml": &entry{Stage: stgA},
+			"bar.yaml": &entry{Stage: stgB},
+		}
+
+		mockCache := mocks.Cache{}
+
+		expectOutputsCheckedOut(&stgB, &mockCache, strat)
+
+		checkedOut := make(map[string]bool)
+		inProgress := make(map[string]bool)
+		if err := idx.Checkout(
+			"bar.yaml",
+			&mockCache,
+			strat,
+			false,
+			checkedOut,
+			inProgress,
+			logger,
+		); err != nil {
+			t.Fatal(err)
+		}
+
+		// The linked Artifact should not be checkedOut as a dependency.
+		linkedArtifactOrig.SkipCache = true
+		mockCache.AssertNotCalled(t, "Checkout", stgB.WorkingDir, &linkedArtifactOrig, strat)
+
+		mockCache.AssertExpectations(t)
+
+		expectedCheckedOutSet := map[string]bool{
+			"bar.yaml": true,
+		}
+		if diff := cmp.Diff(expectedCheckedOutSet, checkedOut); diff != "" {
+			t.Fatalf("checkedOut -want +got:\n%s", diff)
 		}
 	})
 }

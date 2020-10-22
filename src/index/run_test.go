@@ -76,7 +76,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -111,7 +111,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -145,7 +145,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -181,7 +181,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -226,7 +226,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bar.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bar.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -273,7 +273,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bar.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bar.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -321,7 +321,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bar.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bar.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -376,7 +376,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bosh.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bosh.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -446,7 +446,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		err := idx.Run("c.yaml", &mockCache, ran, inProgress, logger)
+		err := idx.Run("c.yaml", &mockCache, true, ran, inProgress, logger)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -496,7 +496,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bosh.yaml", &mockCache, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bosh.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -510,6 +510,53 @@ func TestRun(t *testing.T) {
 
 		expectedRan := map[string]bool{
 			"bosh.yaml": true,
+		}
+		if diff := cmp.Diff(expectedRan, ran); diff != "" {
+			t.Fatalf("committed -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("can disable recursion", func(t *testing.T) {
+		defer resetRunCommandMock()
+		stgA := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"foo.bin": {Path: "foo.bin"},
+			},
+		}
+		stgB := stage.Stage{
+			Command: "echo 'run stage B'",
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.bin": {Path: "foo.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.bin": {Path: "bar.bin"},
+			},
+		}
+		idx := Index{
+			"foo.yaml": &entry{Stage: stgA},
+			"bar.yaml": &entry{Stage: stgB},
+		}
+
+		mockCache := mocks.Cache{}
+
+		expectStageStatusCalled(&stgB, &mockCache, outOfDate)
+
+		ran := make(map[string]bool)
+		inProgress := make(map[string]bool)
+		if err := idx.Run("bar.yaml", &mockCache, false, ran, inProgress, logger); err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d time(s), want 1", len(commands))
+		}
+
+		assertCorrectCommand(stgB, commands, t)
+
+		expectedRan := map[string]bool{
+			"bar.yaml": true,
 		}
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)

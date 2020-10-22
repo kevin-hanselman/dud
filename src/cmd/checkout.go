@@ -10,10 +10,23 @@ import (
 
 func init() {
 	rootCmd.AddCommand(checkoutCmd)
-	checkoutCmd.Flags().BoolVarP(&useCopyStrategy, "copy", "c", false, "Copy artifacts instead of linking.")
+	checkoutCmd.Flags().BoolVarP(
+		&useCopyStrategy,
+		"copy",
+		"c",
+		false,
+		"copy artifacts instead of linking",
+	)
+	checkoutCmd.Flags().BoolVarP(
+		&checkoutSingleStage,
+		"single-stage",
+		"s",
+		false,
+		"don't recursively operate on dependencies",
+	)
 }
 
-var useCopyStrategy bool
+var useCopyStrategy, checkoutSingleStage bool
 
 var checkoutCmd = &cobra.Command{
 	Use:   "checkout",
@@ -39,6 +52,8 @@ var checkoutCmd = &cobra.Command{
 		}
 
 		if len(args) == 0 {
+			// Ignore checkoutSingleStage flag when no args passed.
+			checkoutSingleStage = false
 			for path := range idx {
 				args = append(args, path)
 			}
@@ -47,7 +62,15 @@ var checkoutCmd = &cobra.Command{
 		checkedOut := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			if err := idx.Checkout(path, ch, strat, checkedOut, inProgress, logger); err != nil {
+			if err := idx.Checkout(
+				path,
+				ch,
+				strat,
+				!checkoutSingleStage,
+				checkedOut,
+				inProgress,
+				logger,
+			); err != nil {
 				logger.Fatal(err)
 			}
 		}

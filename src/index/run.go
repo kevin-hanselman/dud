@@ -18,6 +18,7 @@ var runCommand = func(cmd *exec.Cmd) error {
 func (idx Index) Run(
 	stagePath string,
 	ch cache.Cache,
+	recursive bool,
 	ran map[string]bool,
 	inProgress map[string]bool,
 	logger *log.Logger,
@@ -50,8 +51,8 @@ func (idx Index) Run(
 				return err
 			}
 			doRun = doRun || !artStatus.ContentsMatch
-		} else {
-			if err := idx.Run(ownerPath, ch, ran, inProgress, logger); err != nil {
+		} else if recursive {
+			if err := idx.Run(ownerPath, ch, recursive, ran, inProgress, logger); err != nil {
 				return err
 			}
 			doRun = doRun || ran[ownerPath]
