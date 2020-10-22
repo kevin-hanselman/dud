@@ -3,7 +3,7 @@ package fsutil
 import (
 	"os"
 
-	"github.com/go-yaml/yaml"
+	"gopkg.in/yaml.v3"
 )
 
 // ToYamlFile saves a struct to a YAML file.
@@ -22,6 +22,6 @@ func FromYamlFile(path string, v interface{}) error {
 		return err
 	}
 	decoder := yaml.NewDecoder(file)
-	decoder.SetStrict(true)
+	decoder.KnownFields(true)
 	return decoder.Decode(v)
 }

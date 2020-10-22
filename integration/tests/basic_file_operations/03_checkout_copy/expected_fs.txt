@@ -7,4 +7,4 @@
 [-rw-r--r-- user     user              18]  ./.dud/config.yaml
 [-rw-r--r-- user     user              11]  ./.dud/index
 [-rw-r--r-- user     user              25]  ./stage.yaml
-[-rw-r--r-- user     user             117]  ./stage.yaml.lock
+[-rw-r--r-- user     user             125]  ./stage.yaml.lock

@@ -33,4 +33,4 @@
 [-rw-r--r-- user     user               2]  ./foo/bar/6.txt
 [-rw-r--r-- user     user               2]  ./foo/bar/7.txt
 [-rw-r--r-- user     user              57]  ./stage.yaml
-[-rw-r--r-- user     user             149]  ./stage.yaml.lock
+[-rw-r--r-- user     user             165]  ./stage.yaml.lock

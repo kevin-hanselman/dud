@@ -6,7 +6,6 @@ require (
 	github.com/awalterschulze/gographviz v0.0.0-20201004175929-a1621d071286
 	github.com/c2h5oh/datasize v0.0.0-20200825124411-48ed595a09d2
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/google/go-cmp v0.5.2
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
@@ -24,5 +23,5 @@ require (
 	golang.org/x/sync v0.0.0-20201008141435-b3e1573b7520
 	golang.org/x/sys v0.0.0-20201018121011-98379d014ca7 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )
