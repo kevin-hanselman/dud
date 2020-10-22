@@ -15,6 +15,7 @@ type Status map[string]stage.Status
 func (idx Index) Status(
 	stagePath string,
 	ch cache.Cache,
+	rootDir string,
 	out Status,
 	inProgress map[string]bool,
 ) error {
@@ -40,12 +41,12 @@ func (idx Index) Status(
 			errors.Wrap(err, "status")
 		}
 		if ownerPath == "" {
-			stageStatus[artPath], err = ch.Status(en.Stage.WorkingDir, *art)
+			stageStatus[artPath], err = ch.Status(rootDir, *art)
 			if err != nil {
 				return errors.Wrapf(err, "status: %s", art.Path)
 			}
 		} else {
-			if err := idx.Status(ownerPath, ch, out, inProgress); err != nil {
+			if err := idx.Status(ownerPath, ch, rootDir, out, inProgress); err != nil {
 				return err
 			}
 		}
@@ -53,7 +54,7 @@ func (idx Index) Status(
 
 	for artPath, art := range en.Stage.Outputs {
 		var err error
-		stageStatus[artPath], err = ch.Status(en.Stage.WorkingDir, *art)
+		stageStatus[artPath], err = ch.Status(rootDir, *art)
 		if err != nil {
 			return errors.Wrapf(err, "status: %s", art.Path)
 		}

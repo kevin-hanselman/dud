@@ -13,6 +13,7 @@ import (
 func (idx Index) Checkout(
 	stagePath string,
 	ch cache.Cache,
+	rootDir string,
 	strat strategy.CheckoutStrategy,
 	recursive bool,
 	checkedOut map[string]bool,
@@ -44,6 +45,7 @@ func (idx Index) Checkout(
 			if err := idx.Checkout(
 				ownerPath,
 				ch,
+				rootDir,
 				strat,
 				recursive,
 				checkedOut,
@@ -56,7 +58,7 @@ func (idx Index) Checkout(
 	}
 	logger.Printf("checking out stage %s\n", stagePath)
 	for _, art := range en.Stage.Outputs {
-		if err := ch.Checkout(en.Stage.WorkingDir, art, strat); err != nil {
+		if err := ch.Checkout(rootDir, art, strat); err != nil {
 			return err
 		}
 	}

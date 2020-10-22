@@ -45,10 +45,15 @@ var runCmd = &cobra.Command{
 			}
 		}
 
+		rootDir, err := os.Getwd()
+		if err != nil {
+			logger.Fatal(err)
+		}
+
 		ran := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			err := idx.Run(path, ch, !runSingleStage, ran, inProgress, logger)
+			err := idx.Run(path, ch, rootDir, !runSingleStage, ran, inProgress, logger)
 			if err != nil {
 				logger.Fatal(err)
 			}

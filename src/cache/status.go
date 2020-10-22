@@ -13,15 +13,15 @@ import (
 )
 
 // Status reports the status of an Artifact in the Cache.
-func (ch *LocalCache) Status(workingDir string, art artifact.Artifact) (
+func (ch *LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 	outputStatus artifact.ArtifactWithStatus,
 	err error,
 ) {
 	outputStatus.Artifact = art
 	if art.IsDir {
-		outputStatus.Status, _, err = dirArtifactStatus(ch, workingDir, art)
+		outputStatus.Status, _, err = dirArtifactStatus(ch, workspaceDir, art)
 	} else {
-		outputStatus.Status, err = fileArtifactStatus(ch, workingDir, art)
+		outputStatus.Status, err = fileArtifactStatus(ch, workspaceDir, art)
 	}
 	return
 }
@@ -34,10 +34,10 @@ func quickStatus(
 	// TODO: It may be worth exposing this version of status (bypassing the full
 	// status check) using a CLI flag
 	ch *LocalCache,
-	workingDir string,
+	workspaceDir string,
 	art artifact.Artifact,
 ) (status artifact.Status, cachePath, workPath string, err error) {
-	workPath = filepath.Join(workingDir, art.Path)
+	workPath = filepath.Join(workspaceDir, art.Path)
 	cachePath, err = ch.PathForChecksum(art.Checksum)
 	if err != nil { // An error means the checksum is invalid
 		status.HasChecksum = false
@@ -63,8 +63,8 @@ func quickStatus(
 	return
 }
 
-func fileArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact) (artifact.Status, error) {
-	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
+func fileArtifactStatus(ch *LocalCache, workspaceDir string, art artifact.Artifact) (artifact.Status, error) {
+	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	errorPrefix := "file status"
 	if err != nil {
 		return status, errors.Wrap(err, errorPrefix)
@@ -101,11 +101,11 @@ func fileArtifactStatus(ch *LocalCache, workingDir string, art artifact.Artifact
 
 func dirArtifactStatus(
 	ch *LocalCache,
-	workingDir string,
+	workspaceDir string,
 	art artifact.Artifact,
 ) (artifact.Status, directoryManifest, error) {
 	var manifest directoryManifest
-	status, cachePath, workPath, err := quickStatus(ch, workingDir, art)
+	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
 		return status, manifest, err
 	}

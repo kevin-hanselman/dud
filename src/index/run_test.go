@@ -44,6 +44,8 @@ func TestRun(t *testing.T) {
 		ContentsMatch:       false,
 	}
 
+	rootDir := "project/root"
+
 	var commands map[string]*exec.Cmd
 	var resetRunCommandMock = func() {
 		commands = make(map[string]*exec.Cmd)
@@ -72,11 +74,11 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, upToDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -107,11 +109,11 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -145,7 +147,7 @@ func TestRun(t *testing.T) {
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -177,11 +179,11 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("foo.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("foo.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -221,12 +223,12 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, upToDate)
-		expectStageStatusCalled(&stgB, &mockCache, upToDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bar.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bar.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -267,13 +269,13 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate)
 		// Don't expect downstream Stage status to be checked, as the upstream being
 		// out-of-date will force the run.
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bar.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bar.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -316,12 +318,12 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, upToDate)
-		expectStageStatusCalled(&stgB, &mockCache, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bar.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bar.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -371,12 +373,12 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&depA, &mockCache, outOfDate)
-		expectStageStatusCalled(&depB, &mockCache, upToDate)
+		expectStageStatusCalled(&depA, &mockCache, rootDir, outOfDate)
+		expectStageStatusCalled(&depB, &mockCache, rootDir, upToDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bosh.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bosh.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -442,11 +444,11 @@ func TestRun(t *testing.T) {
 		// Stage D is the only Stage that could possibly be ran successfully.
 		// We mock it to prevent a panic, but we don't enforce that it must be
 		// called (due to random order).
-		expectStageStatusCalled(&stgD, &mockCache, upToDate)
+		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		err := idx.Run("c.yaml", &mockCache, true, ran, inProgress, logger)
+		err := idx.Run("c.yaml", &mockCache, rootDir, true, ran, inProgress, logger)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -491,12 +493,12 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		mockCache.On("Status", "", bish.Artifact).Return(bish, nil).Once()
-		mockCache.On("Status", "", bash.Artifact).Return(bash, nil).Once()
+		mockCache.On("Status", rootDir, bish.Artifact).Return(bish, nil).Once()
+		mockCache.On("Status", rootDir, bash.Artifact).Return(bash, nil).Once()
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bosh.yaml", &mockCache, true, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bosh.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -539,11 +541,11 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgB, &mockCache, outOfDate)
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Run("bar.yaml", &mockCache, false, ran, inProgress, logger); err != nil {
+		if err := idx.Run("bar.yaml", &mockCache, rootDir, false, ran, inProgress, logger); err != nil {
 			t.Fatal(err)
 		}
 

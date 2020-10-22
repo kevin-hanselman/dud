@@ -16,14 +16,14 @@ import (
 // Checkout finds the artifact in the cache and adds a copy of/link to said
 // artifact in the working directory.
 func (cache *LocalCache) Checkout(
-	workingDir string,
+	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
 	if art.IsDir {
-		return checkoutDir(cache, workingDir, art, strat)
+		return checkoutDir(cache, workspaceDir, art, strat)
 	}
-	return checkoutFile(cache, workingDir, art, strat)
+	return checkoutFile(cache, workspaceDir, art, strat)
 }
 
 // InvalidChecksumError represents a error case where a valid checksum was expected
@@ -48,11 +48,11 @@ func (err MissingFromCacheError) Error() string {
 
 func checkoutFile(
 	ch *LocalCache,
-	workingDir string,
+	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	status, cachePath, workPath, err := quickStatus(ch, workingDir, *art)
+	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, *art)
 	errorPrefix := fmt.Sprintf("checkout %#v", workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
@@ -100,11 +100,11 @@ func checkoutFile(
 
 func checkoutDir(
 	ch *LocalCache,
-	workingDir string,
+	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	status, cachePath, workPath, err := quickStatus(ch, workingDir, *art)
+	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, *art)
 	if err != nil {
 		return errors.Wrap(err, "checkoutDir")
 	}

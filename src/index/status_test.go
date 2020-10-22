@@ -14,6 +14,7 @@ import (
 func expectStageStatusCalled(
 	stg *stage.Stage,
 	mockCache *mocks.Cache,
+	rootDir string,
 	artStatus artifact.Status,
 ) stage.Status {
 	stageStatus := make(stage.Status)
@@ -22,7 +23,7 @@ func expectStageStatusCalled(
 			Artifact: *art,
 			Status:   artStatus,
 		}
-		mockCache.On("Status", stg.WorkingDir, *art).Return(stageStatus[artPath], nil).Once()
+		mockCache.On("Status", rootDir, *art).Return(stageStatus[artPath], nil).Once()
 	}
 	return stageStatus
 }
@@ -35,6 +36,8 @@ func TestStatus(t *testing.T) {
 		ChecksumInCache:     true,
 		ContentsMatch:       true,
 	}
+
+	rootDir := "project/root"
 
 	t.Run("disjoint stages", func(t *testing.T) {
 		stgA := stage.Stage{
@@ -54,11 +57,11 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 
 		expectedStatus := make(Status)
-		expectedStatus["foo.yaml"] = expectStageStatusCalled(&stgA, &mockCache, upToDate)
+		expectedStatus["foo.yaml"] = expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)
-		err := idx.Status("foo.yaml", &mockCache, outputStatus, inProgress)
+		err := idx.Status("foo.yaml", &mockCache, rootDir, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -87,8 +90,8 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 
 		expectedStatus := make(Status)
-		expectedStatus["foo.yaml"] = expectStageStatusCalled(&stgA, &mockCache, upToDate)
-		expectedStatus["bar.yaml"] = expectStageStatusCalled(&stgB, &mockCache, upToDate)
+		expectedStatus["foo.yaml"] = expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectedStatus["bar.yaml"] = expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate)
 
 		idx := make(Index)
 		idx["foo.yaml"] = &entry{Stage: stgA}
@@ -96,7 +99,7 @@ func TestStatus(t *testing.T) {
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)
-		err := idx.Status("bar.yaml", &mockCache, outputStatus, inProgress)
+		err := idx.Status("bar.yaml", &mockCache, rootDir, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -140,13 +143,13 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 
 		expectedStatus := make(Status)
-		expectedStatus["a.yaml"] = expectStageStatusCalled(&stgA, &mockCache, upToDate)
-		expectedStatus["b.yaml"] = expectStageStatusCalled(&stgB, &mockCache, upToDate)
-		expectedStatus["c.yaml"] = expectStageStatusCalled(&stgC, &mockCache, upToDate)
+		expectedStatus["a.yaml"] = expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectedStatus["b.yaml"] = expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate)
+		expectedStatus["c.yaml"] = expectStageStatusCalled(&stgC, &mockCache, rootDir, upToDate)
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)
-		err := idx.Status("c.yaml", &mockCache, outputStatus, inProgress)
+		err := idx.Status("c.yaml", &mockCache, rootDir, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -200,11 +203,11 @@ func TestStatus(t *testing.T) {
 		// Stage D is the only Stage that could possibly be committed
 		// successfully. We mock it to prevent a panic, but we don't
 		// enforce that it must be called (due to random order).
-		expectStageStatusCalled(&stgD, &mockCache, upToDate)
+		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate)
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)
-		err := idx.Status("c.yaml", &mockCache, outputStatus, inProgress)
+		err := idx.Status("c.yaml", &mockCache, rootDir, outputStatus, inProgress)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -240,7 +243,7 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 
 		expectedStatus := make(Status)
-		expectedStageStatus := expectStageStatusCalled(&stg, &mockCache, upToDate)
+		expectedStageStatus := expectStageStatusCalled(&stg, &mockCache, rootDir, upToDate)
 
 		orphanArtStatus := artifact.ArtifactWithStatus{
 			Artifact: orphanArt,
@@ -249,11 +252,11 @@ func TestStatus(t *testing.T) {
 		expectedStageStatus["bish.bin"] = orphanArtStatus
 		expectedStatus["foo.yaml"] = expectedStageStatus
 
-		mockCache.On("Status", stg.WorkingDir, orphanArt).Return(orphanArtStatus, nil).Once()
+		mockCache.On("Status", rootDir, orphanArt).Return(orphanArtStatus, nil).Once()
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)
-		err := idx.Status("foo.yaml", &mockCache, outputStatus, inProgress)
+		err := idx.Status("foo.yaml", &mockCache, rootDir, outputStatus, inProgress)
 		if err != nil {
 			t.Fatal(err)
 		}

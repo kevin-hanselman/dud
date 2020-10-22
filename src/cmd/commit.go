@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/stage"
@@ -49,10 +51,15 @@ var commitCmd = &cobra.Command{
 			}
 		}
 
+		rootDir, err := os.Getwd()
+		if err != nil {
+			logger.Fatal(err)
+		}
+
 		committed := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			err := idx.Commit(path, ch, strat, committed, inProgress, logger)
+			err := idx.Commit(path, ch, rootDir, strat, committed, inProgress, logger)
 			if err != nil {
 				logger.Fatal(err)
 			}

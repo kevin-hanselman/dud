@@ -21,10 +21,11 @@ func mockCommit(workDir string, art *artifact.Artifact, strat strategy.CheckoutS
 func expectOutputsCommitted(
 	stg *stage.Stage,
 	mockCache *mocks.Cache,
+	rootDir string,
 	strat strategy.CheckoutStrategy,
 ) {
 	for _, art := range stg.Outputs {
-		mockCache.On("Commit", stg.WorkingDir, art, strat).Return(mockCommit).Once()
+		mockCache.On("Commit", rootDir, art, strat).Return(mockCommit).Once()
 	}
 }
 
@@ -33,6 +34,8 @@ func TestCommit(t *testing.T) {
 	strat := strategy.LinkStrategy
 	// TODO: Consider checking the logs instead of throwing them away.
 	logger := log.New(ioutil.Discard, "", 0)
+
+	rootDir := "project/root"
 
 	t.Run("disjoint stages with orphan dependency", func(t *testing.T) {
 		orphanArt := artifact.Artifact{Path: "bish.bin"}
@@ -57,15 +60,23 @@ func TestCommit(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectOutputsCommitted(&stgA, &mockCache, strat)
+		expectOutputsCommitted(&stgA, &mockCache, rootDir, strat)
 
 		orphanCopy := orphanArt
 		orphanCopy.SkipCache = true
-		mockCache.On("Commit", stgA.WorkingDir, &orphanCopy, strat).Return(mockCommit).Once()
+		mockCache.On("Commit", rootDir, &orphanCopy, strat).Return(mockCommit).Once()
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Commit("foo.yaml", &mockCache, strat, committed, inProgress, logger); err != nil {
+		if err := idx.Commit(
+			"foo.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			committed,
+			inProgress,
+			logger,
+		); err != nil {
 			t.Fatal(err)
 		}
 
@@ -111,18 +122,26 @@ func TestCommit(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectOutputsCommitted(&stgA, &mockCache, strat)
-		expectOutputsCommitted(&stgB, &mockCache, strat)
+		expectOutputsCommitted(&stgA, &mockCache, rootDir, strat)
+		expectOutputsCommitted(&stgB, &mockCache, rootDir, strat)
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Commit("bar.yaml", &mockCache, strat, committed, inProgress, logger); err != nil {
+		if err := idx.Commit(
+			"bar.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			committed,
+			inProgress,
+			logger,
+		); err != nil {
 			t.Fatal(err)
 		}
 
 		// The linked Artifact should not be committed as a dependency.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Commit", stgB.WorkingDir, &linkedArtifactOrig, strat)
+		mockCache.AssertNotCalled(t, "Commit", rootDir, &linkedArtifactOrig, strat)
 
 		mockCache.AssertExpectations(t)
 
@@ -176,13 +195,21 @@ func TestCommit(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectOutputsCommitted(&stgA, &mockCache, strat)
-		expectOutputsCommitted(&stgB, &mockCache, strat)
-		expectOutputsCommitted(&stgC, &mockCache, strat)
+		expectOutputsCommitted(&stgA, &mockCache, rootDir, strat)
+		expectOutputsCommitted(&stgB, &mockCache, rootDir, strat)
+		expectOutputsCommitted(&stgC, &mockCache, rootDir, strat)
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Commit("bosh.yaml", &mockCache, strat, committed, inProgress, logger); err != nil {
+		if err := idx.Commit(
+			"bosh.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			committed,
+			inProgress,
+			logger,
+		); err != nil {
 			t.Fatal(err)
 		}
 
@@ -241,11 +268,19 @@ func TestCommit(t *testing.T) {
 		// Stage D is the only Stage that could possibly be committed
 		// successfully. We mock it to prevent a panic, but we don't
 		// enforce that it must be called (due to random order).
-		expectOutputsCommitted(&stgD, &mockCache, strat)
+		expectOutputsCommitted(&stgD, &mockCache, rootDir, strat)
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		err := idx.Commit("c.yaml", &mockCache, strat, committed, inProgress, logger)
+		err := idx.Commit(
+			"c.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			committed,
+			inProgress,
+			logger,
+		)
 		if err == nil {
 			t.Fatal("expected error")
 		}

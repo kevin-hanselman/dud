@@ -51,10 +51,15 @@ var statusCmd = &cobra.Command{
 			}
 		}
 
+		rootDir, err := os.Getwd()
+		if err != nil {
+			logger.Fatal(err)
+		}
+
 		status := make(index.Status)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
-			err := idx.Status(path, ch, status, inProgress)
+			err := idx.Status(path, ch, rootDir, status, inProgress)
 			if err != nil {
 				logger.Fatal(err)
 			}

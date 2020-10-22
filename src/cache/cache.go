@@ -11,10 +11,10 @@ import (
 
 // A Cache provides a means to store Artifacts.
 type Cache interface {
-	Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
-	Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
+	Commit(workspaceDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
+	Checkout(workspaceDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	PathForChecksum(checksum string) (string, error)
-	Status(workingDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
+	Status(workspaceDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
 }
 
 // A LocalCache is a concrete Cache that uses a directory on a local filesystem.

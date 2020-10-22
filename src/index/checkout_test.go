@@ -16,16 +16,19 @@ import (
 func expectOutputsCheckedOut(
 	stg *stage.Stage,
 	mockCache *mocks.Cache,
+	rootDir string,
 	strat strategy.CheckoutStrategy,
 ) {
 	for _, art := range stg.Outputs {
-		mockCache.On("Checkout", stg.WorkingDir, art, strat).Return(nil).Once()
+		mockCache.On("Checkout", rootDir, art, strat).Return(nil).Once()
 	}
 }
 
 func TestCheckout(t *testing.T) {
 
 	strat := strategy.LinkStrategy
+	rootDir := "project/root"
+
 	// TODO: Consider checking the logs instead of throwing them away.
 	logger := log.New(ioutil.Discard, "", 0)
 
@@ -51,11 +54,20 @@ func TestCheckout(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectOutputsCheckedOut(&stgA, &mockCache, strat)
+		expectOutputsCheckedOut(&stgA, &mockCache, rootDir, strat)
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("foo.yaml", &mockCache, strat, true, checkedOut, inProgress, logger); err != nil {
+		if err := idx.Checkout(
+			"foo.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			true,
+			checkedOut,
+			inProgress,
+			logger,
+		); err != nil {
 			t.Fatal(err)
 		}
 
@@ -94,18 +106,27 @@ func TestCheckout(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectOutputsCheckedOut(&stgA, &mockCache, strat)
-		expectOutputsCheckedOut(&stgB, &mockCache, strat)
+		expectOutputsCheckedOut(&stgA, &mockCache, rootDir, strat)
+		expectOutputsCheckedOut(&stgB, &mockCache, rootDir, strat)
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bar.yaml", &mockCache, strat, true, checkedOut, inProgress, logger); err != nil {
+		if err := idx.Checkout(
+			"bar.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			true,
+			checkedOut,
+			inProgress,
+			logger,
+		); err != nil {
 			t.Fatal(err)
 		}
 
 		// The linked Artifact should not be checkedOut as a dependency.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Checkout", stgB.WorkingDir, &linkedArtifactOrig, strat)
+		mockCache.AssertNotCalled(t, "Checkout", rootDir, &linkedArtifactOrig, strat)
 
 		mockCache.AssertExpectations(t)
 
@@ -150,13 +171,22 @@ func TestCheckout(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectOutputsCheckedOut(&stgA, &mockCache, strat)
-		expectOutputsCheckedOut(&stgB, &mockCache, strat)
-		expectOutputsCheckedOut(&stgC, &mockCache, strat)
+		expectOutputsCheckedOut(&stgA, &mockCache, rootDir, strat)
+		expectOutputsCheckedOut(&stgB, &mockCache, rootDir, strat)
+		expectOutputsCheckedOut(&stgC, &mockCache, rootDir, strat)
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		if err := idx.Checkout("bosh.yaml", &mockCache, strat, true, checkedOut, inProgress, logger); err != nil {
+		if err := idx.Checkout(
+			"bosh.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			true,
+			checkedOut,
+			inProgress,
+			logger,
+		); err != nil {
 			t.Fatal(err)
 		}
 
@@ -215,11 +245,20 @@ func TestCheckout(t *testing.T) {
 		// Stage D is the only Stage that could possibly be checked out
 		// successfully. We mock it to prevent a panic, but we don't enforce
 		// that it must be called (due to random order).
-		expectOutputsCheckedOut(&stgD, &mockCache, strat)
+		expectOutputsCheckedOut(&stgD, &mockCache, rootDir, strat)
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
-		err := idx.Checkout("c.yaml", &mockCache, strat, true, checkedOut, inProgress, logger)
+		err := idx.Checkout(
+			"c.yaml",
+			&mockCache,
+			rootDir,
+			strat,
+			true,
+			checkedOut,
+			inProgress,
+			logger,
+		)
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -265,13 +304,14 @@ func TestCheckout(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectOutputsCheckedOut(&stgB, &mockCache, strat)
+		expectOutputsCheckedOut(&stgB, &mockCache, rootDir, strat)
 
 		checkedOut := make(map[string]bool)
 		inProgress := make(map[string]bool)
 		if err := idx.Checkout(
 			"bar.yaml",
 			&mockCache,
+			rootDir,
 			strat,
 			false,
 			checkedOut,

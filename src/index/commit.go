@@ -13,6 +13,7 @@ import (
 func (idx Index) Commit(
 	stagePath string,
 	ch cache.Cache,
+	rootDir string,
 	strat strategy.CheckoutStrategy,
 	committed map[string]bool,
 	inProgress map[string]bool,
@@ -45,11 +46,19 @@ func (idx Index) Commit(
 			// create Stages to test against. To be safe, it's best to leave
 			// this here.
 			art.SkipCache = true
-			if err := ch.Commit(en.Stage.WorkingDir, art, strat); err != nil {
+			if err := ch.Commit(rootDir, art, strat); err != nil {
 				return err
 			}
 		} else {
-			if err := idx.Commit(ownerPath, ch, strat, committed, inProgress, logger); err != nil {
+			if err := idx.Commit(
+				ownerPath,
+				ch,
+				rootDir,
+				strat,
+				committed,
+				inProgress,
+				logger,
+			); err != nil {
 				return err
 			}
 			art.Checksum = upstreamArt.Checksum
@@ -57,7 +66,7 @@ func (idx Index) Commit(
 	}
 	logger.Printf("committing stage %s\n", stagePath)
 	for _, art := range en.Stage.Outputs {
-		if err := ch.Commit(en.Stage.WorkingDir, art, strat); err != nil {
+		if err := ch.Commit(rootDir, art, strat); err != nil {
 			return err
 		}
 	}

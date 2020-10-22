@@ -18,6 +18,7 @@ var runCommand = func(cmd *exec.Cmd) error {
 func (idx Index) Run(
 	stagePath string,
 	ch cache.Cache,
+	rootDir string,
 	recursive bool,
 	ran map[string]bool,
 	inProgress map[string]bool,
@@ -46,13 +47,13 @@ func (idx Index) Run(
 			return err
 		}
 		if ownerPath == "" {
-			artStatus, err := ch.Status(en.Stage.WorkingDir, *art)
+			artStatus, err := ch.Status(rootDir, *art)
 			if err != nil {
 				return err
 			}
 			doRun = doRun || !artStatus.ContentsMatch
 		} else if recursive {
-			if err := idx.Run(ownerPath, ch, recursive, ran, inProgress, logger); err != nil {
+			if err := idx.Run(ownerPath, ch, rootDir, recursive, ran, inProgress, logger); err != nil {
 				return err
 			}
 			doRun = doRun || ran[ownerPath]
@@ -60,7 +61,7 @@ func (idx Index) Run(
 	}
 	if !doRun {
 		for _, art := range en.Stage.Outputs {
-			artStatus, err := ch.Status(en.Stage.WorkingDir, *art)
+			artStatus, err := ch.Status(rootDir, *art)
 			if err != nil {
 				return err
 			}

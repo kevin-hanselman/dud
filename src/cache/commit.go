@@ -28,14 +28,14 @@ const readDirChunkSize = 1000
 // Commit calculates the checksum of the artifact, moves it to the cache, then
 // performs a checkout.
 func (ch *LocalCache) Commit(
-	workingDir string,
+	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
 	if art.IsDir {
-		return commitDirArtifact(context.Background(), ch, workingDir, art, strat)
+		return commitDirArtifact(context.Background(), ch, workspaceDir, art, strat)
 	}
-	return commitFileArtifact(ch, workingDir, art, strat)
+	return commitFileArtifact(ch, workspaceDir, art, strat)
 }
 
 func memoryMapOpen(path string) (reader io.Reader, closer io.Closer, err error) {
@@ -50,12 +50,12 @@ func memoryMapOpen(path string) (reader io.Reader, closer io.Closer, err error) 
 
 func commitFileArtifact(
 	ch *LocalCache,
-	workingDir string,
+	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
 	// ignore cachePath because the artifact likely has a stale or empty checksum
-	status, _, workPath, err := quickStatus(ch, workingDir, *art)
+	status, _, workPath, err := quickStatus(ch, workspaceDir, *art)
 	errorPrefix := fmt.Sprintf("commit file %s", workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
@@ -114,7 +114,7 @@ func commitFileArtifact(
 				return errors.Wrap(err, errorPrefix)
 			}
 		}
-		return ch.Checkout(workingDir, art, strat)
+		return ch.Checkout(workspaceDir, art, strat)
 	}
 	return nil
 }
@@ -171,12 +171,12 @@ func commitDirManifest(ch *LocalCache, manifest *directoryManifest) (string, err
 func commitDirArtifact(
 	ctx context.Context,
 	ch *LocalCache,
-	workingDir string,
+	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
-	status, oldManifest, err := dirArtifactStatus(ch, workingDir, *art)
+	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func commitDirArtifact(
 		return nil
 	}
 
-	baseDir := filepath.Join(workingDir, art.Path)
+	baseDir := filepath.Join(workspaceDir, art.Path)
 
 	// Using this example as a reference:
 	// https://godoc.org/golang.org/x/sync/errgroup#example-Group--Pipeline
@@ -261,7 +261,7 @@ func commitDirArtifact(
 		close(childArtifacts)
 	}()
 
-	newManifest := &directoryManifest{Path: baseDir}
+	newManifest := &directoryManifest{Path: art.Path}
 	newManifest.Contents = make(map[string]*artifact.Artifact)
 	for childArt := range childArtifacts {
 		newManifest.Contents[childArt.Path] = childArt

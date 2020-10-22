@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -59,12 +61,18 @@ var checkoutCmd = &cobra.Command{
 			}
 		}
 
+		rootDir, err := os.Getwd()
+		if err != nil {
+			logger.Fatal(err)
+		}
+
 		checkedOut := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
 			if err := idx.Checkout(
 				path,
 				ch,
+				rootDir,
 				strat,
 				!checkoutSingleStage,
 				checkedOut,
