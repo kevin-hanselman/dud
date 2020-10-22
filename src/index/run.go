@@ -73,7 +73,9 @@ func (idx Index) Run(
 	}
 	if doRun && hasCommand {
 		logger.Printf("running stage %s\n", stagePath)
-		runCommand(en.Stage.CreateCommand())
+		if err := runCommand(en.Stage.CreateCommand()); err != nil {
+			return err
+		}
 	} else {
 		logger.Printf("nothing to do for stage %s\n", stagePath)
 	}

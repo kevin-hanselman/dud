@@ -41,7 +41,7 @@ func (idx Index) Graph(
 	for artPath := range en.Stage.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
-			errors.Wrap(err, "status")
+			return err
 		}
 		hasOwner := ownerPath != ""
 		// If we're drawing the full graph, always draw an edge to the

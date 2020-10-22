@@ -38,12 +38,12 @@ func (idx Index) Status(
 	for artPath, art := range en.Stage.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
-			errors.Wrap(err, "status")
+			return err
 		}
 		if ownerPath == "" {
 			stageStatus[artPath], err = ch.Status(rootDir, *art)
 			if err != nil {
-				return errors.Wrapf(err, "status: %s", art.Path)
+				return err
 			}
 		} else {
 			if err := idx.Status(ownerPath, ch, rootDir, out, inProgress); err != nil {

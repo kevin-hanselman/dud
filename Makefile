@@ -57,6 +57,14 @@ integration-bench: integration-image
 		-v $(shell pwd)/integration:/integration \
 		dud_integration python /integration/run_benchmarks.py
 
+deep-lint:
+	docker run \
+		--rm \
+		-v $(shell pwd):/app \
+		-w /app \
+		golangci/golangci-lint:latest \
+		golangci-lint run
+
 clean:
 	rm -f *.coverage *.bin depgraph.png mockery
 	go clean ./...

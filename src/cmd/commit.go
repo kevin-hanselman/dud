@@ -64,7 +64,7 @@ var commitCmd = &cobra.Command{
 				logger.Fatal(err)
 			}
 			lockPath := stage.FilePathForLock(path)
-			if idx[path].Stage.ToFile(lockPath); err != nil {
+			if err := idx[path].Stage.ToFile(lockPath); err != nil {
 				logger.Fatal(err)
 			}
 		}
