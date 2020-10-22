@@ -12,7 +12,12 @@ import (
 )
 
 var (
+	// Version is the application version. It is set during compilation using
+	// ldflags.
+	Version string
+
 	rootCmd = &cobra.Command{
+		Version: Version,
 		Use:   "dud",
 		Short: "Dud is a tool for storing, versioning, and reproducing large files",
 		Long: `Dud is a tool to store, version, and reproduce big

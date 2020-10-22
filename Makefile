@@ -1,7 +1,8 @@
 .PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine integration-%
 
 dud: test-all
-	go build -o dud -ldflags "-s -w"
+	go build -o dud \
+		-ldflags "-s -w -X 'github.com/kevin-hanselman/dud/src/cmd.Version=$(shell git rev-parse --short HEAD)'"
 
 fmt:
 	goimports -w .
