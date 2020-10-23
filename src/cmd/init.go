@@ -13,9 +13,9 @@ func init() {
 
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "initialize a Dud project",
-	Long: `Initialize a Dud project by populating
-a .dud directory in the working directory.`,
+	Short: "Initialize a Dud project",
+	Long:  `Init initializes a Dud project in the current directory.`,
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		cacheDir := ".dud/cache"
 		if err := os.MkdirAll(cacheDir, 0755); err != nil {

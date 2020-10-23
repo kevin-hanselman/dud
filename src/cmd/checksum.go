@@ -10,15 +10,18 @@ import (
 
 func init() {
 	rootCmd.AddCommand(checksumCmd)
-	checksumCmd.Flags().Int64VarP(&bufSize, "bufsize", "b", 0, "buffer size")
+	checksumCmd.Flags().Int64VarP(&bufSize, "bufsize", "b", 0, "internal buffer size in bytes")
 }
 
 var bufSize int64
 
 var checksumCmd = &cobra.Command{
-	Use:   "checksum",
-	Short: "Checksum a file or bytes from STDIN",
-	Long:  "Checksum a file or bytes from STDIN",
+	Use:   "checksum [flags] [file]...",
+	Short: "Checksum files or bytes from STDIN",
+	Long: `Checksum reads files (or bytes from STDIN) and prints their checksums.
+
+The CLI is intended to be compatible with the *sum family of command-line tools
+(although this version is currently incomplete).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			checksum, err := checksum.Checksum(os.Stdin, bufSize)

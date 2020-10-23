@@ -2,16 +2,17 @@
 
 set -euo pipefail
 
+# Escaping this awk command is tricky in Bash so I'm sticking with a here doc.
+# Normally I wouldn't mix-and-match here docs with `dud stage new` because it
+# hurts readability, but this is an integration test, so let's kick the tires.
 (
 cat <<'EOF'
 command: awk '{print $1 * 2}' base.txt > second.txt
-dependencies:
-- path: base.txt
-outputs:
-- path: second.txt
 EOF
 ) > second.yaml
 
-dud add second.yaml
+dud stage new -d base.txt -o second.txt >> second.yaml
+
+dud stage add second.yaml
 
 dud run second.yaml

@@ -9,18 +9,16 @@ import (
 
 func init() {
 	configCmd := &cobra.Command{
-		Use:   "config <get|set>",
-		Short: "Show or modify fields in the config",
-		Long:  "Show or modify fields in the config",
+		Use:   "config {get|set}",
+		Short: "Print or modify fields in the config file",
+		Long:  "Config prints or modifies fields in the config file",
 	}
-
-	rootCmd.AddCommand(configCmd)
 
 	configCmd.AddCommand(
 		&cobra.Command{
-			Use:   "get <config field>",
-			Short: "Get the value of a config field",
-			Long:  "Get the value of a config field",
+			Use:   "get config_field",
+			Short: "Get the value of a field in the config file",
+			Long:  "Get the value of a field in the config file",
 			Args:  cobra.ExactArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
 				fmt.Println(viper.Get(args[0]))
@@ -30,9 +28,9 @@ func init() {
 
 	configCmd.AddCommand(
 		&cobra.Command{
-			Use:   "set <config field> <new value>",
-			Short: "Set the value of a config field",
-			Long:  "Set the value of a config field",
+			Use:   "set config_field new_value",
+			Short: "Set the value of a field in the config file",
+			Long:  "Set the value of a field in the config file",
 			Args:  cobra.ExactArgs(2),
 			Run: func(cmd *cobra.Command, args []string) {
 				viper.Set(args[0], args[1])
@@ -42,4 +40,6 @@ func init() {
 			},
 		},
 	)
+
+	rootCmd.AddCommand(configCmd)
 }

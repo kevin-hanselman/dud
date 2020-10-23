@@ -12,4 +12,4 @@ outputs:
 EOF
 ) > data.yaml
 
-dud add data.yaml
+dud stage add data.yaml

@@ -23,6 +23,6 @@ outputs:
 EOF
 ) > stage.yaml
 
-dud add stage.yaml
+dud stage add stage.yaml
 
 dud commit

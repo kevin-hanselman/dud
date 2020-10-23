@@ -27,10 +27,15 @@ func printStageStatus(stagePath string, status stage.Status, isLocked bool) erro
 }
 
 var statusCmd = &cobra.Command{
-	Use:     "status",
+	Use:     "status [flags] [stage_file]...",
 	Aliases: []string{"stat", "st"},
-	Short:   "Print the status of one or more Dud stages.",
-	Long:    "Print the status of one or more Dud stages.",
+	Short:   "Print the state of one or more stages",
+	Long: `Status prints the state of one or more stages.
+
+For each stage file passed in, status will print the current state of the
+stage.  If no stage files are passed in, status will act on all stages in the
+index. By default, status will act recursively on all upstream stages (i.e.
+dependencies).`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
@@ -39,7 +44,7 @@ var statusCmd = &cobra.Command{
 		}
 
 		idx, err := index.FromFile(".dud/index")
-		if os.IsNotExist(err) { // TODO: print error instead?
+		if os.IsNotExist(err) {
 			idx = make(index.Index)
 		} else if err != nil {
 			logger.Fatal(err)
@@ -49,11 +54,6 @@ var statusCmd = &cobra.Command{
 			for path := range idx {
 				args = append(args, path)
 			}
-		}
-
-		rootDir, err := os.Getwd()
-		if err != nil {
-			logger.Fatal(err)
 		}
 
 		status := make(index.Status)

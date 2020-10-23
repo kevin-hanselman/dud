@@ -23,8 +23,14 @@ func init() {
 var runSingleStage bool
 
 var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "Run the given Stage and all upstream Stages.",
+	Use:   "run [flags] [stage_file]...",
+	Short: "Run stages or pipelines",
+	Long: `Run runs stages or pipelines.
+
+For each stage passed in, run executes a stage's command if it is out-of-date.
+f no stage files are passed in, run will act on all stages in the index. By default,
+run will act recursively on all upstream stages (i.e. dependencies), and thus
+will execute a stage's command if any upstream stages are out-of-date.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
@@ -43,11 +49,6 @@ var runCmd = &cobra.Command{
 			for path := range idx {
 				args = append(args, path)
 			}
-		}
-
-		rootDir, err := os.Getwd()
-		if err != nil {
-			logger.Fatal(err)
 		}
 
 		ran := make(map[string]bool)

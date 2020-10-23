@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -31,9 +29,14 @@ func init() {
 var useCopyStrategy, checkoutSingleStage bool
 
 var checkoutCmd = &cobra.Command{
-	Use:   "checkout",
-	Short: "checkout all artifacts from the cache",
-	Long:  "checkout all artifacts from the cache",
+	Use:   "checkout [flags] [stage_file]...",
+	Short: "Load committed artifacts from the cache",
+	Long: `Checkout loads previously committed artifacts from the cache.
+
+For each stage file passed in, checkout attempts to load all output artifacts
+from the cache for the given. If no stage files are passed in, checkout will act on all
+stages in the index. By default, checkout will act recursively on all upstream stages
+(i.e. dependencies).`,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		strat := strategy.LinkStrategy
@@ -59,11 +62,6 @@ var checkoutCmd = &cobra.Command{
 			for path := range idx {
 				args = append(args, path)
 			}
-		}
-
-		rootDir, err := os.Getwd()
-		if err != nil {
-			logger.Fatal(err)
 		}
 
 		checkedOut := make(map[string]bool)

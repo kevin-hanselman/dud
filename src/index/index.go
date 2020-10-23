@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/stage"
@@ -83,7 +84,11 @@ func FromFile(path string) (Index, error) {
 	scanner := bufio.NewScanner(file)
 	idx = make(Index)
 	for scanner.Scan() {
-		if err := idx.AddStageFromPath(scanner.Text()); err != nil {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		if err := idx.AddStageFromPath(line); err != nil {
 			return idx, err
 		}
 	}

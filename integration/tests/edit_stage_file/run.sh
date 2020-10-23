@@ -5,19 +5,14 @@ dud init
 
 echo 'foo' > foo.txt
 
-(
-cat <<EOF
-outputs:
-- path: foo.txt
-EOF
-) > stage.yaml
+dud stage new -o foo.txt > stage.yaml
 
-dud add stage.yaml
+dud stage add stage.yaml
 
 dud commit
 
 echo 'bar' > bar.txt
 
-echo '- path: bar.txt' >> stage.yaml
+dud stage new -o foo.txt -o bar.txt > stage.yaml
 
 dud commit

@@ -2,16 +2,10 @@
 
 set -euo pipefail
 
-(
-cat <<EOF
-command: seq 1 20 > base.txt
-outputs:
-- path: base.txt
-EOF
-) > base.yaml
-
 dud init
 
-dud add base.yaml
+dud stage new -o base.txt 'seq 1 20 > base.txt' > base.yaml
+
+dud stage add base.yaml
 
 dud run base.yaml

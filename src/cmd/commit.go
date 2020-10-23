@@ -23,9 +23,15 @@ func init() {
 }
 
 var commitCmd = &cobra.Command{
-	Use:   "commit",
-	Short: "Compute the checksum value and move to cache",
-	Long:  "Compute the checksum value and move to cache",
+	Use:   "commit [flags] [stage_file]...",
+	Short: "Save artifacts to the cache and record their checksums",
+	Long: `Commit saves artifacts to the cache and record their checksums.
+
+For each stage file passed in, commit saves all output artifacts in the cache
+and records their checksums in a stage lock file. If no stage files are passed
+in, commit will act on all stages in the index. By default, commit will act
+recursively on all upstream stages (i.e. dependencies).`,
+
 	Run: func(cmd *cobra.Command, args []string) {
 
 		strat := strategy.LinkStrategy
@@ -51,11 +57,6 @@ var commitCmd = &cobra.Command{
 			}
 		}
 
-		rootDir, err := os.Getwd()
-		if err != nil {
-			logger.Fatal(err)
-		}
-
 		committed := make(map[string]bool)
 		for _, path := range args {
 			inProgress := make(map[string]bool)
@@ -63,8 +64,11 @@ var commitCmd = &cobra.Command{
 			if err != nil {
 				logger.Fatal(err)
 			}
-			lockPath := stage.FilePathForLock(path)
-			if err := idx[path].Stage.ToFile(lockPath); err != nil {
+			lockFile, err := os.Create(stage.FilePathForLock(path))
+			if err != nil {
+				logger.Fatal(err)
+			}
+			if err := idx[path].Stage.Serialize(lockFile); err != nil {
 				logger.Fatal(err)
 			}
 		}

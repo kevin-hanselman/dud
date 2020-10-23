@@ -6,13 +6,8 @@ dud init
 
 echo 'foo' > bar.txt
 
-(
-cat <<EOF
-outputs:
-- path: bar.txt
-EOF
-) > stage.yaml
+dud stage new -o bar.txt > stage.yaml
 
-dud add stage.yaml
+dud stage add stage.yaml
 
 dud commit --copy

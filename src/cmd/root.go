@@ -17,16 +17,13 @@ var (
 	Version string
 
 	rootCmd = &cobra.Command{
-		Version: Version,
-		Use:   "dud",
-		Short: "Dud is a tool for storing, versioning, and reproducing large files",
-		Long: `Dud is a tool to store, version, and reproduce big
-data files alongside source code.`,
+		Long: `Dud is a tool to for storing, versioning, and reproducing large files alongside source code.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Change working directory to the project root.
 			// This is done here as opposed to in cobra.OnInitialize so `init`
 			// and other commands can override this behavior.
-			rootDir, err := getProjectRootDir()
+			var err error
+			rootDir, err = getProjectRootDir()
 			if err != nil {
 				logger.Fatal(err)
 			}
@@ -38,6 +35,9 @@ data files alongside source code.`,
 
 	// This is the Logger for the entire application.
 	logger *log.Logger
+
+	// This is the project root directory.
+	rootDir string
 )
 
 // Main is the entry point to the cobra CLI.
@@ -50,6 +50,15 @@ func Main() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
+
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Print version and exit",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			logger.Println(Version)
+		},
+	})
 }
 
 func initConfig() {

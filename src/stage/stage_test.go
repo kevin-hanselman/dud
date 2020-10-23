@@ -11,7 +11,7 @@ import (
 func TestFromFile(t *testing.T) {
 
 	fromYamlFileOrig := fromYamlFile
-	fromYamlFile = func(path string, v interface{}) error {
+	fromYamlFile = func(path string, output *stageFileFormat) error {
 		panic("Mock not implemented")
 	}
 	var resetFromYamlFileMock = func() { fromYamlFile = fromYamlFileOrig }
@@ -19,8 +19,7 @@ func TestFromFile(t *testing.T) {
 	t.Run("loads stage file if no lock file found", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		expectedStage := Stage{WorkingDir: "foo", Command: "echo 'bar'"}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = expectedStage.toFileFormat()
 				return nil
@@ -71,8 +70,7 @@ func TestFromFile(t *testing.T) {
 				},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stg.toFileFormat()
 			} else {
@@ -125,8 +123,7 @@ func TestFromFile(t *testing.T) {
 				},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stg.toFileFormat()
 			} else {
@@ -166,8 +163,7 @@ func TestFromFile(t *testing.T) {
 				},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stg.toFileFormat()
 			} else {
@@ -228,8 +224,7 @@ func TestFromFile(t *testing.T) {
 				},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stg.toFileFormat()
 			} else {
@@ -278,8 +273,7 @@ func TestFromFile(t *testing.T) {
 				{Path: "foo.txt"},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stgFile
 				return nil
@@ -303,8 +297,7 @@ func TestFromFile(t *testing.T) {
 				{Path: "foo", IsDir: true},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stgFile
 				return nil
@@ -328,8 +321,7 @@ func TestFromFile(t *testing.T) {
 				{Path: "foo/bar", IsDir: true},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stgFile
 				return nil
@@ -354,8 +346,7 @@ func TestFromFile(t *testing.T) {
 				{Path: "foo/bar", IsDir: true},
 			},
 		}
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stgFile
 				return nil
@@ -381,8 +372,7 @@ func TestFromFile(t *testing.T) {
 			},
 		}
 
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stgFile
 				return nil
@@ -421,8 +411,7 @@ func TestFromFile(t *testing.T) {
 			},
 		}
 
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stgFile
 				return nil
@@ -449,8 +438,7 @@ func TestFromFile(t *testing.T) {
 			},
 		}
 
-		fromYamlFile = func(path string, v interface{}) error {
-			output := v.(*stageFileFormat)
+		fromYamlFile = func(path string, output *stageFileFormat) error {
 			if path == "stage.yaml" {
 				*output = stgFile
 				return nil

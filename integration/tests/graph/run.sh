@@ -3,22 +3,10 @@ set -euo pipefail
 
 dud init
 
-(
-cat <<EOF
-outputs:
-- path: foo.txt
-EOF
-) > foo.yaml
+dud stage new -o foo.txt > foo.yaml
 
-(
-cat <<EOF
-dependencies:
-- path: foo.txt
-outputs:
-- path: bar.txt
-EOF
-) > bar.yaml
+dud stage new -d foo.txt -o bar.txt > bar.yaml
 
-dud add *.yaml
+dud stage add *.yaml
 
 dud graph | dot -Tdot

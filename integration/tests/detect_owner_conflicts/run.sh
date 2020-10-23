@@ -3,21 +3,11 @@ set -euo pipefail
 
 dud init
 
-(
-cat <<EOF
-outputs:
-- path: foo.txt
-EOF
-) > foo.yaml
+dud stage new -o foo.txt > foo.yaml
 
-(
-cat <<EOF
-outputs:
-- path: bar.txt
-EOF
-) > bar.yaml
+dud stage new -o bar.txt > bar.yaml
 
-dud add *.yaml
+dud stage add *.yaml
 
 sed -i 's/foo/bar/' foo.yaml
 

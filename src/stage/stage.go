@@ -2,13 +2,15 @@ package stage
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
-	"github.com/kevin-hanselman/dud/src/fsutil"
+
+	"gopkg.in/yaml.v3"
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
@@ -106,8 +108,15 @@ func sameish(stgA, stgB Stage) bool {
 	return true
 }
 
-// for mocking
-var fromYamlFile = fsutil.FromYamlFile
+var fromYamlFile = func(path string, sff *stageFileFormat) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	decoder := yaml.NewDecoder(file)
+	decoder.KnownFields(true)
+	return decoder.Decode(sff)
+}
 
 // FromFile loads a Stage from a file. If a lock file for the Stage exists,
 // this function uses any Artifact.Checksums it can from the lock file.
@@ -167,10 +176,10 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 		}
 	}
 
-	return stg, same, stg.verifyIntegrity()
+	return stg, same, stg.validate()
 }
 
-func (stg Stage) verifyIntegrity() error {
+func (stg Stage) validate() error {
 	if strings.Contains(stg.WorkingDir, "..") {
 		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
 	}
@@ -211,11 +220,9 @@ func (stg Stage) verifyIntegrity() error {
 	return nil
 }
 
-// ToFile writes a Stage to the given file path. It is important to use this
-// method instead of bare fsutil.ToYamlFile because a Stage file is converted
-// to a simplified format when stored on disk.
-func (stg *Stage) ToFile(path string) error {
-	return fsutil.ToYamlFile(path, stg.toFileFormat())
+// Serialize writes a Stage to the given writer.
+func (stg *Stage) Serialize(writer io.Writer) error {
+	return yaml.NewEncoder(writer).Encode(stg.toFileFormat())
 }
 
 // FilePathForLock returns the lock file path given a Stage path.
