@@ -22,15 +22,15 @@
 [-rw-r--r-- user     user              18]  ./.dud/config.yaml
 [-rw-r--r-- user     user              11]  ./.dud/index
 [drwxr-xr-x user     user            4096]  ./foo
-[lrwxrwxrwx user     user             122]  ./foo/1.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
-[lrwxrwxrwx user     user             122]  ./foo/2.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
-[lrwxrwxrwx user     user             122]  ./foo/3.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
-[lrwxrwxrwx user     user             122]  ./foo/4.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
-[lrwxrwxrwx user     user             122]  ./foo/5.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
+[lrwxrwxrwx user     user             138]  ./foo/1.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
+[lrwxrwxrwx user     user             138]  ./foo/2.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
+[lrwxrwxrwx user     user             138]  ./foo/3.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
+[lrwxrwxrwx user     user             138]  ./foo/4.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
+[lrwxrwxrwx user     user             138]  ./foo/5.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
 [drwxr-xr-x user     user            4096]  ./foo/bar
-[lrwxrwxrwx user     user             122]  ./foo/bar/4.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
-[lrwxrwxrwx user     user             122]  ./foo/bar/5.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
-[lrwxrwxrwx user     user             122]  ./foo/bar/6.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/1f/ad12e6bdb0d30895fb817b05d8fd97be199d01a4e489433629778eae97d314
-[lrwxrwxrwx user     user             122]  ./foo/bar/7.txt -> /home/user/basic_directory_ops_recursive/repo/.dud/cache/de/dc9531a3ea216ed967a15ede743b4e4d1e9181bf24204cdd6c316171daa2e8
+[lrwxrwxrwx user     user             138]  ./foo/bar/4.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
+[lrwxrwxrwx user     user             138]  ./foo/bar/5.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
+[lrwxrwxrwx user     user             138]  ./foo/bar/6.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/1f/ad12e6bdb0d30895fb817b05d8fd97be199d01a4e489433629778eae97d314
+[lrwxrwxrwx user     user             138]  ./foo/bar/7.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/de/dc9531a3ea216ed967a15ede743b4e4d1e9181bf24204cdd6c316171daa2e8
 [-rw-r--r-- user     user              57]  ./stage.yaml
 [-rw-r--r-- user     user             165]  ./stage.yaml.lock

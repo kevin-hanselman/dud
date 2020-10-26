@@ -6,8 +6,9 @@ import shutil
 import sys
 
 
-DIFF_CMD = 'diff -b --color=always'
-FS_CMD = 'tree -afisupg --noreport'
+DIFF_CMD = 'git diff --no-index -b --color=always'
+# Replace the user and group names with a generic "user".
+FS_CMD = 'tree -afisupg --noreport | sed "s/$(whoami)/user/g"'
 
 
 def run_test(*, repo_dir, test_def_dir, pin=False):
@@ -127,6 +128,16 @@ if __name__ == '__main__':
     if not cli_args.test_dirs:
         script_dir = os.path.dirname(os.path.realpath(__file__))
         cli_args.test_dirs = glob.iglob(os.path.join(script_dir, 'tests', '*'))
+
+    # Using a fixed path is important for consistent filesystem listing output
+    # on different systems. For the same reason the umask must be fixed to
+    # ensure new files and directories show the same permissions.
+    working_dir = '/tmp/dud_integration_tests'
+    os.makedirs(working_dir, exist_ok=True)
+    os.chdir(working_dir)
+    # Default group and others to read-only. Ubuntu's default is apparently
+    # 0o0002 (see: https://askubuntu.com/a/44548).
+    os.umask(0o0022)
 
     all_successful = True
     for test_def_dir in normalize_paths(cli_args.test_dirs):

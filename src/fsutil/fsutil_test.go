@@ -2,7 +2,6 @@ package fsutil
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -178,12 +177,7 @@ func TestSameFilesystemIntegration(t *testing.T) {
 	})
 
 	t.Run("different fs", func(t *testing.T) {
-		tempFile, err := ioutil.TempFile("", "")
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer os.Remove(tempFile.Name())
-		pathA := tempFile.Name()
+		pathA := "/dev/null"
 		pathB := "fsutil.go"
 		sameFs, err := SameFilesystem(pathA, pathB)
 		if err != nil {

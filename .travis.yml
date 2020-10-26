@@ -1,0 +1,21 @@
+language: go
+
+# Ubuntu 20.04 uses Python 3.6 as the default Python, which we need in the
+# integration test scripts.
+dist: focal
+
+go:
+  - "1.15"
+
+env:
+  - GO111MODULE=on
+
+before_install:
+  - sudo apt-get install -y graphviz tree
+
+before_script:
+  - export GOBIN=$GOPATH/bin
+  - export PATH=$PATH:$GOBIN
+
+script:
+  - make integration-test

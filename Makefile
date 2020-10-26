@@ -1,14 +1,43 @@
-.PHONY: fmt lint test test-all %-test-cov clean tidy loc mocks hyperfine integration-%
+.PHONY: fmt lint test% %-test-cov clean tidy loc mocks hyperfine integration-% docker%
+
+docker_image = dud-dev
+base_dir = $(shell pwd)
+GOPATH ?= ~/go
+GOBIN ?= $(GOPATH)/bin
 
 dud: test-all
 	go build -o dud \
 		-ldflags "-s -w -X 'github.com/kevin-hanselman/dud/src/cmd.Version=$(shell git rev-parse --short HEAD)'"
 
-fmt:
+$(GOBIN)/dud: dud
+	cp dud $(GOBIN)
+
+# Create an interactive session in the development Docker image.
+docker: docker-image
+	docker run \
+		--rm \
+		-it \
+		-v $(shell pwd):/dud \
+		$(docker_image)
+
+# Run any rule in this Makefile in the development Docker image.
+docker-%: docker-image
+	docker run \
+		--rm \
+		-v $(shell pwd):/dud \
+		$(docker_image) make $(patsubst docker-%,%,$@)
+
+docker-image:
+	docker build \
+		-t $(docker_image) \
+		-f ./integration/Dockerfile \
+		.
+
+fmt: $(GOBIN)/goimports
 	goimports -w .
 	gofmt -s -w .
 
-lint:
+lint: $(GOBIN)/golint
 	go vet ./...
 	golint ./...
 
@@ -16,7 +45,7 @@ test: fmt lint
 	go test -short ./...
 
 test-all: fmt lint
-	go test -race ./...
+	go test -cover -race ./...
 
 bench: test
 	go test ./... -benchmem -bench .
@@ -33,30 +62,12 @@ int-test.coverage:
 all-test.coverage:
 	go test ./... -coverprofile=$@
 
-integration-image: dud
-	docker build \
-		-t dud_integration \
-		-f ./integration/Dockerfile \
-		.
+integration-test: $(GOBIN)/dud
+	python $(base_dir)/integration/run_tests.py
 
-integration-env: integration-image
-	docker run \
-		--rm \
-		-it \
-		-v $(shell pwd)/integration:/integration \
-		dud_integration
-
-integration-test: integration-image
-	docker run \
-		--rm \
-		-v $(shell pwd)/integration:/integration \
-		dud_integration python /integration/run_tests.py
-
-integration-bench: integration-image
-	docker run \
-		--rm \
-		-v $(shell pwd)/integration:/integration \
-		dud_integration python /integration/run_benchmarks.py
+integration-bench: $(GOBIN)/dud
+	mkdir -p ~/dud_integration_benchmarks
+	cd ~/dud_integration_benchmarks && python $(base_dir)/integration/run_benchmarks.py
 
 deep-lint:
 	docker run \
@@ -67,8 +78,9 @@ deep-lint:
 		golangci-lint run
 
 clean:
-	rm -f *.coverage *.bin depgraph.png mockery
+	rm -f *.coverage *.bin depgraph.png mockery $(GOBIN)/dud
 	go clean ./...
+	docker rmi $(docker_image)
 
 tidy:
 	go mod tidy -v
@@ -98,3 +110,9 @@ hyperfine: 50mb_random.bin dud
 		'{cmd} $<'
 	hyperfine -L bufsize 4096,8192,16384,32768,65536,131072,262144,524288,1048576 \
 		'./dud checksum -b{bufsize} $<'
+
+$(GOBIN)/goimports:
+	go install golang.org/x/tools/cmd/goimports
+
+$(GOBIN)/golint:
+	go install golang.org/x/lint/golint
