@@ -50,7 +50,7 @@ Add a stage to extract the data.
 ```
 $ mkdir cifar-10-batches-py
 
-$ dud stage new -d cifar-10-python.tar.gz -o cifar-1-batches-py -- \
+$ dud stage new -d cifar-10-python.tar.gz -o cifar-10-batches-py -- \
   tar -xf cifar-10-python.tar.gz | tee extract_cifar.yaml
 command: tar -xf cifar-10-python.tar.gz
 working-dir: .
