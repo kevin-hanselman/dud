@@ -58,6 +58,9 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Println(Version)
 		},
+		// Override rootCmd's PersistentPreRun which changes dir to the project
+		// root.
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	})
 }
 
