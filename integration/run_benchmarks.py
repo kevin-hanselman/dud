@@ -35,7 +35,8 @@ def _run(cmd, working_dir):
             shell=True,
             cwd=working_dir,
             check=True,
-            capture_output=True,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
         )
     except subprocess.CalledProcessError as proc:
         print(proc)

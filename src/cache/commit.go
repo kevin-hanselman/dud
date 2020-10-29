@@ -16,6 +16,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
+	"github.com/schollz/progressbar/v3"
 	"golang.org/x/exp/mmap"
 	"golang.org/x/sync/errgroup"
 )
@@ -32,10 +33,12 @@ func (ch *LocalCache) Commit(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
+	pb := progressbar.DefaultBytes(-1, fmt.Sprintf("committing %s", art.Path))
+	defer fmt.Println()
 	if art.IsDir {
-		return commitDirArtifact(context.Background(), ch, workspaceDir, art, strat)
+		return commitDirArtifact(context.Background(), ch, workspaceDir, art, strat, pb)
 	}
-	return commitFileArtifact(ch, workspaceDir, art, strat)
+	return commitFileArtifact(ch, workspaceDir, art, strat, pb)
 }
 
 func memoryMapOpen(path string) (reader io.Reader, closer io.Closer, err error) {
@@ -53,6 +56,7 @@ func commitFileArtifact(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	pb *progressbar.ProgressBar,
 ) error {
 	// ignore cachePath because the artifact likely has a stale or empty checksum
 	status, _, workPath, err := quickStatus(ch, workspaceDir, *art)
@@ -71,7 +75,7 @@ func commitFileArtifact(
 	}
 	//srcReader, srcCloser, err := memoryMapOpen(workPath)
 	srcFile, err := os.Open(workPath)
-	var srcReader io.Reader = srcFile
+	var srcReader io.Reader = io.TeeReader(srcFile, pb)
 	var srcCloser io.Closer = srcFile
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
@@ -174,6 +178,7 @@ func commitDirArtifact(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	pb *progressbar.ProgressBar,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
 	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art)
@@ -236,11 +241,18 @@ func commitDirArtifact(
 					}
 					childArt.IsDir = true
 					childArt.IsRecursive = true
-					if err := commitDirArtifact(groupCtx, ch, baseDir, childArt, strat); err != nil {
+					if err := commitDirArtifact(
+						groupCtx,
+						ch,
+						baseDir,
+						childArt,
+						strat,
+						pb,
+					); err != nil {
 						return err
 					}
 				} else {
-					if err := commitFileArtifact(ch, baseDir, childArt, strat); err != nil {
+					if err := commitFileArtifact(ch, baseDir, childArt, strat, pb); err != nil {
 						return err
 					}
 				}
