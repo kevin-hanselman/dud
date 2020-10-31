@@ -18,7 +18,7 @@ func init() {
 		"copy artifacts instead of linking",
 	)
 	checkoutCmd.Flags().BoolVarP(
-		&checkoutSingleStage,
+		&disableRecursion,
 		"single-stage",
 		"s",
 		false,
@@ -26,7 +26,7 @@ func init() {
 	)
 }
 
-var useCopyStrategy, checkoutSingleStage bool
+var useCopyStrategy, disableRecursion bool
 
 var checkoutCmd = &cobra.Command{
 	Use:   "checkout [flags] [stage_file]...",
@@ -57,8 +57,8 @@ stages in the index. By default, checkout will act recursively on all upstream s
 		}
 
 		if len(args) == 0 {
-			// Ignore checkoutSingleStage flag when no args passed.
-			checkoutSingleStage = false
+			// Ignore disableRecursion flag when no args passed.
+			disableRecursion = false
 			for path := range idx {
 				args = append(args, path)
 			}
@@ -72,7 +72,7 @@ stages in the index. By default, checkout will act recursively on all upstream s
 				ch,
 				rootDir,
 				strat,
-				!checkoutSingleStage,
+				!disableRecursion,
 				checkedOut,
 				inProgress,
 				logger,

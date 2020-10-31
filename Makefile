@@ -94,7 +94,7 @@ mockery:
 		| tar -zxvf - mockery
 
 mocks: mockery
-	./mockery --all
+	./mockery --all --output src/mocks
 
 # The awk command removes all graph edge definitions that don't include dud
 depgraph.png:

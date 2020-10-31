@@ -20,24 +20,27 @@ func (cache *LocalCache) Checkout(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
+	if art.SkipCache {
+		return nil
+	}
 	if art.IsDir {
 		return checkoutDir(cache, workspaceDir, art, strat)
 	}
 	return checkoutFile(cache, workspaceDir, art, strat)
 }
 
-// InvalidChecksumError represents a error case where a valid checksum was expected
+// InvalidChecksumError is an error case where a valid checksum was expected
 // but not found.
 type InvalidChecksumError struct {
-	invalidChecksum string
+	checksum string
 }
 
 func (err InvalidChecksumError) Error() string {
-	return fmt.Sprintf("invalid checksum: %#v", err.invalidChecksum)
+	return fmt.Sprintf("invalid checksum: %#v", err.checksum)
 }
 
-// MissingFromCacheError represents an error case where the cache file was
-// expected but not found.
+// MissingFromCacheError is an error case where a cache file was expected but
+// not found.
 type MissingFromCacheError struct {
 	checksum string
 }
@@ -57,9 +60,7 @@ func checkoutFile(
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
-	if art.SkipCache {
-		return nil
-	}
+	cachePath = filepath.Join(ch.dir, cachePath)
 	if !status.HasChecksum {
 		return errors.Wrap(InvalidChecksumError{art.Checksum}, errorPrefix)
 	}
@@ -106,8 +107,9 @@ func checkoutDir(
 ) error {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, *art)
 	if err != nil {
-		return errors.Wrap(err, "checkoutDir")
+		return err
 	}
+	cachePath = filepath.Join(ch.dir, cachePath)
 	if !status.HasChecksum {
 		return fmt.Errorf("checkoutDir: artifact has invalid checksum: %v", art.Checksum)
 	}
@@ -119,11 +121,11 @@ func checkoutDir(
 	}
 	man, err := readDirManifest(cachePath)
 	if err != nil {
-		return errors.Wrap(err, "checkoutDir")
+		return err
 	}
 	for _, childArt := range man.Contents {
 		if err := ch.Checkout(workPath, childArt, strat); err != nil {
-			return errors.Wrap(err, "checkoutDir")
+			return err
 		}
 	}
 	return nil

@@ -15,6 +15,8 @@ type Cache interface {
 	Checkout(workspaceDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
 	PathForChecksum(checksum string) (string, error)
 	Status(workspaceDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
+	Fetch(workspaceDir, remoteSrc string, art artifact.Artifact) error
+	Push(workspaceDir, remoteDst string, art artifact.Artifact) error
 }
 
 // A LocalCache is a concrete Cache that uses a directory on a local filesystem.
@@ -54,7 +56,7 @@ func (ch *LocalCache) PathForChecksum(checksum string) (string, error) {
 	if len(checksum) < 3 {
 		return "", fmt.Errorf("invalid checksum: %#v", checksum)
 	}
-	return filepath.Join(ch.dir, checksum[:2], checksum[2:]), nil
+	return filepath.Join(checksum[:2], checksum[2:]), nil
 }
 
 type directoryManifest struct {

@@ -16,6 +16,7 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 		t.Skip()
 	}
 
+	// TODO: add more tests
 	t.Run("committed and absent from workspace", func(t *testing.T) {
 		dirs, art, cache := setupDirTest(t)
 		defer os.RemoveAll(dirs.CacheDir)

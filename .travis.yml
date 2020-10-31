@@ -12,6 +12,7 @@ env:
 
 before_install:
   - sudo apt-get install -y graphviz tree
+  - curl https://rclone.org/install.sh | sudo bash
 
 before_script:
   - export GOBIN=$GOPATH/bin

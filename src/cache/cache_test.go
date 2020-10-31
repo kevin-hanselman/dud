@@ -19,7 +19,7 @@ func TestPathForChecksum(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		want := filepath.Join("/foo", "12", "3456789")
+		want := filepath.Join("12", "3456789")
 		if cachePath != want {
 			t.Fatalf("cache.PathForChecksum(%#v) = %#v, want %#v", checksum, cachePath, want)
 		}

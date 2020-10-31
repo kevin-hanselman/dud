@@ -17,7 +17,9 @@ var (
 	Version string
 
 	rootCmd = &cobra.Command{
-		Long: `Dud is a tool to for storing, versioning, and reproducing large files alongside source code.`,
+		Use: "dud",
+		Long: `Dud is a tool to for storing, versioning, and reproducing large files alongside
+source code.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Change working directory to the project root.
 			// This is done here as opposed to in cobra.OnInitialize so `init`

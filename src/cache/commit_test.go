@@ -3,6 +3,7 @@ package cache
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -94,6 +95,7 @@ func testCachePermissions(cache *LocalCache, art artifact.Artifact, t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
+	fileCachePath = filepath.Join(cache.dir, fileCachePath)
 	cachedFileInfo, err := os.Stat(fileCachePath)
 	if err != nil {
 		t.Fatal(err)

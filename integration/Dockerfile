@@ -10,6 +10,7 @@ RUN pacman -Sy --noconfirm --needed \
         jq \
         python \
         python-pip \
+        rclone \
         sudo \
         tree \
         xxhash \

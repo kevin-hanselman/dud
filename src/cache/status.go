@@ -30,7 +30,7 @@ func (ch *LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 // However, this function will set ContentsMatch if the workspace file is
 // a link and the other status booleans are true; checking to see if a link
 // points to the cache is, as this function suggests, quick.
-func quickStatus(
+var quickStatus = func(
 	// TODO: It may be worth exposing this version of status (bypassing the full
 	// status check) using a CLI flag
 	ch *LocalCache,
@@ -39,11 +39,13 @@ func quickStatus(
 ) (status artifact.Status, cachePath, workPath string, err error) {
 	workPath = filepath.Join(workspaceDir, art.Path)
 	cachePath, err = ch.PathForChecksum(art.Checksum)
+	absCachePath := filepath.Join(ch.dir, cachePath)
 	if err != nil { // An error means the checksum is invalid
 		status.HasChecksum = false
 	} else {
 		status.HasChecksum = true
-		status.ChecksumInCache, err = fsutil.Exists(cachePath, false) // TODO: check for regular file?
+		// TODO: check for regular file?
+		status.ChecksumInCache, err = fsutil.Exists(absCachePath, false)
 		if err != nil {
 			return
 		}
@@ -58,7 +60,7 @@ func quickStatus(
 		if err != nil {
 			return
 		}
-		status.ContentsMatch = linkDst == cachePath
+		status.ContentsMatch = linkDst == absCachePath
 	}
 	return
 }
@@ -69,6 +71,7 @@ func fileArtifactStatus(ch *LocalCache, workspaceDir string, art artifact.Artifa
 	if err != nil {
 		return status, errors.Wrap(err, errorPrefix)
 	}
+	cachePath = filepath.Join(ch.dir, cachePath)
 
 	if status.WorkspaceFileStatus != fsutil.StatusRegularFile {
 		return status, nil
@@ -109,6 +112,7 @@ func dirArtifactStatus(
 	if err != nil {
 		return status, manifest, err
 	}
+	cachePath = filepath.Join(ch.dir, cachePath)
 
 	if !(status.HasChecksum && status.ChecksumInCache) {
 		return status, manifest, nil

@@ -149,6 +149,7 @@ func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, er
 	if err != nil {
 		return "", err
 	}
+	cachePath = filepath.Join(ch.dir, cachePath)
 	dstDir := filepath.Dir(cachePath)
 	if err = os.MkdirAll(dstDir, 0755); err != nil {
 		return "", err

@@ -15,13 +15,13 @@ type Cache struct {
 	mock.Mock
 }
 
-// Checkout provides a mock function with given fields: workingDir, art, strat
-func (_m *Cache) Checkout(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-	ret := _m.Called(workingDir, art, strat)
+// Checkout provides a mock function with given fields: workspaceDir, art, strat
+func (_m *Cache) Checkout(workspaceDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	ret := _m.Called(workspaceDir, art, strat)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, *artifact.Artifact, strategy.CheckoutStrategy) error); ok {
-		r0 = rf(workingDir, art, strat)
+		r0 = rf(workspaceDir, art, strat)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -29,13 +29,27 @@ func (_m *Cache) Checkout(workingDir string, art *artifact.Artifact, strat strat
 	return r0
 }
 
-// Commit provides a mock function with given fields: workingDir, art, strat
-func (_m *Cache) Commit(workingDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
-	ret := _m.Called(workingDir, art, strat)
+// Commit provides a mock function with given fields: workspaceDir, art, strat
+func (_m *Cache) Commit(workspaceDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+	ret := _m.Called(workspaceDir, art, strat)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, *artifact.Artifact, strategy.CheckoutStrategy) error); ok {
-		r0 = rf(workingDir, art, strat)
+		r0 = rf(workspaceDir, art, strat)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Fetch provides a mock function with given fields: workspaceDir, remoteSrc, art
+func (_m *Cache) Fetch(workspaceDir string, remoteSrc string, art artifact.Artifact) error {
+	ret := _m.Called(workspaceDir, remoteSrc, art)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, artifact.Artifact) error); ok {
+		r0 = rf(workspaceDir, remoteSrc, art)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -64,20 +78,34 @@ func (_m *Cache) PathForChecksum(checksum string) (string, error) {
 	return r0, r1
 }
 
-// Status provides a mock function with given fields: workingDir, art
-func (_m *Cache) Status(workingDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error) {
-	ret := _m.Called(workingDir, art)
+// Push provides a mock function with given fields: workspaceDir, remoteDst, art
+func (_m *Cache) Push(workspaceDir string, remoteDst string, art artifact.Artifact) error {
+	ret := _m.Called(workspaceDir, remoteDst, art)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string, artifact.Artifact) error); ok {
+		r0 = rf(workspaceDir, remoteDst, art)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Status provides a mock function with given fields: workspaceDir, art
+func (_m *Cache) Status(workspaceDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error) {
+	ret := _m.Called(workspaceDir, art)
 
 	var r0 artifact.ArtifactWithStatus
 	if rf, ok := ret.Get(0).(func(string, artifact.Artifact) artifact.ArtifactWithStatus); ok {
-		r0 = rf(workingDir, art)
+		r0 = rf(workspaceDir, art)
 	} else {
 		r0 = ret.Get(0).(artifact.ArtifactWithStatus)
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, artifact.Artifact) error); ok {
-		r1 = rf(workingDir, art)
+		r1 = rf(workspaceDir, art)
 	} else {
 		r1 = ret.Error(1)
 	}
