@@ -1,0 +1,31 @@
+name: build-and-test
+on: [push]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.15'
+
+      - name: Set environment variables
+        shell: bash
+        run: |
+          export GO111MODULE=on
+
+      - name: Install test dependencies
+        shell: bash
+        run: |
+          sudo apt-get install -y graphviz tree
+          curl https://rclone.org/install.sh | sudo bash
+
+      - name: Build and run all tests
+        shell: bash
+        run: |
+          make integration-test

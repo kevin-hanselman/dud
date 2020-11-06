@@ -6,9 +6,13 @@ import shutil
 import sys
 
 
-DIFF_CMD = 'git diff --no-index -b --color=always'
-# Replace the user and group names with a generic "user".
-FS_CMD = 'tree -afisupg --noreport | sed "s/$(whoami)/user/g"'
+DIFF_CMD = 'git diff --no-index -b --word-diff=color --color=always'
+# Replace the username with a generic "user" for compatibility across systems.
+# Strangely, --sort=version is needed to exactly match the output of the Github
+# Action runner. The Github Action runner's output seems unphased by a manual
+# '| sort -k4'. It may have something to do with hidden files being sorted
+# differently on different systems?
+FS_CMD = 'tree -afisup --sort=version --noreport | sed "s/$(whoami)/user/"'
 
 
 def run_test(*, repo_dir, test_def_dir, pin=False):

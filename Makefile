@@ -1,4 +1,4 @@
-.PHONY: fmt lint test% %-test-cov clean tidy loc mocks hyperfine integration-% docker%
+.PHONY: install fmt lint test% %-test-cov clean tidy loc mocks hyperfine integration-% docker%
 
 docker_image = dud-dev
 base_dir = $(shell pwd)
@@ -8,6 +8,8 @@ GOBIN ?= $(GOPATH)/bin
 dud: test-all
 	go build -o dud \
 		-ldflags "-s -w -X 'github.com/kevin-hanselman/dud/src/cmd.Version=$(shell git rev-parse --short HEAD)'"
+
+install: $(GOBIN)/dud
 
 $(GOBIN)/dud: dud
 	cp dud $(GOBIN)

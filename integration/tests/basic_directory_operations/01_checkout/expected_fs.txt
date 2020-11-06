@@ -1,31 +1,31 @@
 .
-[drwxr-xr-x user     user            4096]  ./.dud
-[drwxr-xr-x user     user            4096]  ./.dud/cache
-[drwxr-xr-x user     user            4096]  ./.dud/cache/00
-[-r--r--r-- user     user               2]  ./.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
-[drwxr-xr-x user     user            4096]  ./.dud/cache/44
-[-r--r--r-- user     user             803]  ./.dud/cache/44/2050c6897c561852a66a63d9b7e05552f3e7f86186c6570c95cbb305c915c3
-[drwxr-xr-x user     user            4096]  ./.dud/cache/49
-[-r--r--r-- user     user               2]  ./.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
-[drwxr-xr-x user     user            4096]  ./.dud/cache/50
-[-r--r--r-- user     user               2]  ./.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
-[drwxr-xr-x user     user            4096]  ./.dud/cache/b9
-[-r--r--r-- user     user               2]  ./.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
-[drwxr-xr-x user     user            4096]  ./.dud/cache/ec
-[-r--r--r-- user     user               2]  ./.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
-[-rw-r--r-- user     user             376]  ./.dud/config.yaml
-[-rw-r--r-- user     user              11]  ./.dud/index
-[-rw-r--r-- user     user             208]  ./.dud/rclone.conf
-[drwxr-xr-x user     user            4096]  ./foo
-[lrwxrwxrwx user     user             135]  ./foo/1.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
-[lrwxrwxrwx user     user             135]  ./foo/2.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
-[lrwxrwxrwx user     user             135]  ./foo/3.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
-[lrwxrwxrwx user     user             135]  ./foo/4.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
-[lrwxrwxrwx user     user             135]  ./foo/5.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
-[drwxr-xr-x user     user            4096]  ./foo/bar
-[-rw-r--r-- user     user               2]  ./foo/bar/4.txt
-[-rw-r--r-- user     user               2]  ./foo/bar/5.txt
-[-rw-r--r-- user     user               2]  ./foo/bar/6.txt
-[-rw-r--r-- user     user               2]  ./foo/bar/7.txt
-[-rw-r--r-- user     user              59]  ./stage.yaml
-[-rw-r--r-- user     user             140]  ./stage.yaml.lock
+[drwxr-xr-x user            4096]  ./.dud
+[drwxr-xr-x user            4096]  ./.dud/cache
+[drwxr-xr-x user            4096]  ./.dud/cache/00
+[-r--r--r-- user               2]  ./.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
+[drwxr-xr-x user            4096]  ./.dud/cache/44
+[-r--r--r-- user             803]  ./.dud/cache/44/2050c6897c561852a66a63d9b7e05552f3e7f86186c6570c95cbb305c915c3
+[drwxr-xr-x user            4096]  ./.dud/cache/49
+[-r--r--r-- user               2]  ./.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
+[drwxr-xr-x user            4096]  ./.dud/cache/50
+[-r--r--r-- user               2]  ./.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
+[drwxr-xr-x user            4096]  ./.dud/cache/b9
+[-r--r--r-- user               2]  ./.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
+[drwxr-xr-x user            4096]  ./.dud/cache/ec
+[-r--r--r-- user               2]  ./.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
+[-rw-r--r-- user             376]  ./.dud/config.yaml
+[-rw-r--r-- user              11]  ./.dud/index
+[-rw-r--r-- user             208]  ./.dud/rclone.conf
+[drwxr-xr-x user            4096]  ./foo
+[lrwxrwxrwx user             135]  ./foo/1.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
+[lrwxrwxrwx user             135]  ./foo/2.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
+[lrwxrwxrwx user             135]  ./foo/3.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
+[lrwxrwxrwx user             135]  ./foo/4.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
+[lrwxrwxrwx user             135]  ./foo/5.txt -> /tmp/dud_integration_tests/basic_directory_operations/repo/.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
+[drwxr-xr-x user            4096]  ./foo/bar
+[-rw-r--r-- user               2]  ./foo/bar/4.txt
+[-rw-r--r-- user               2]  ./foo/bar/5.txt
+[-rw-r--r-- user               2]  ./foo/bar/6.txt
+[-rw-r--r-- user               2]  ./foo/bar/7.txt
+[-rw-r--r-- user              59]  ./stage.yaml
+[-rw-r--r-- user             140]  ./stage.yaml.lock

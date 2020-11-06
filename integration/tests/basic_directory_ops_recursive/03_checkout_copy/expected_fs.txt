@@ -1,37 +1,37 @@
 .
-[drwxr-xr-x user     user            4096]  ./.dud
-[drwxr-xr-x user     user            4096]  ./.dud/cache
-[drwxr-xr-x user     user            4096]  ./.dud/cache/00
-[-r--r--r-- user     user               2]  ./.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
-[drwxr-xr-x user     user            4096]  ./.dud/cache/1f
-[-r--r--r-- user     user               2]  ./.dud/cache/1f/ad12e6bdb0d30895fb817b05d8fd97be199d01a4e489433629778eae97d314
-[drwxr-xr-x user     user            4096]  ./.dud/cache/49
-[-r--r--r-- user     user               2]  ./.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
-[drwxr-xr-x user     user            4096]  ./.dud/cache/50
-[-r--r--r-- user     user               2]  ./.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
-[drwxr-xr-x user     user            4096]  ./.dud/cache/9a
-[-r--r--r-- user     user             952]  ./.dud/cache/9a/4f4e06e7d7bfb5f6ec729ba7ab55f62ed31b564045f8e132b9afcd98027572
-[drwxr-xr-x user     user            4096]  ./.dud/cache/b9
-[-r--r--r-- user     user               2]  ./.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
-[drwxr-xr-x user     user            4096]  ./.dud/cache/ce
-[-r--r--r-- user     user             648]  ./.dud/cache/ce/7e0618edc4c35ecfe38379a256954ba3257e6ece77ac1b5ab8c4d28eac5d9f
-[drwxr-xr-x user     user            4096]  ./.dud/cache/de
-[-r--r--r-- user     user               2]  ./.dud/cache/de/dc9531a3ea216ed967a15ede743b4e4d1e9181bf24204cdd6c316171daa2e8
-[drwxr-xr-x user     user            4096]  ./.dud/cache/ec
-[-r--r--r-- user     user               2]  ./.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
-[-rw-r--r-- user     user             376]  ./.dud/config.yaml
-[-rw-r--r-- user     user              11]  ./.dud/index
-[-rw-r--r-- user     user             208]  ./.dud/rclone.conf
-[drwxr-xr-x user     user            4096]  ./foo
-[-rw-r--r-- user     user               2]  ./foo/1.txt
-[-rw-r--r-- user     user               2]  ./foo/2.txt
-[-rw-r--r-- user     user               2]  ./foo/3.txt
-[-rw-r--r-- user     user               2]  ./foo/4.txt
-[-rw-r--r-- user     user               2]  ./foo/5.txt
-[drwxr-xr-x user     user            4096]  ./foo/bar
-[-rw-r--r-- user     user               2]  ./foo/bar/4.txt
-[-rw-r--r-- user     user               2]  ./foo/bar/5.txt
-[-rw-r--r-- user     user               2]  ./foo/bar/6.txt
-[-rw-r--r-- user     user               2]  ./foo/bar/7.txt
-[-rw-r--r-- user     user              57]  ./stage.yaml
-[-rw-r--r-- user     user             165]  ./stage.yaml.lock
+[drwxr-xr-x user            4096]  ./.dud
+[drwxr-xr-x user            4096]  ./.dud/cache
+[drwxr-xr-x user            4096]  ./.dud/cache/00
+[-r--r--r-- user               2]  ./.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c
+[drwxr-xr-x user            4096]  ./.dud/cache/1f
+[-r--r--r-- user               2]  ./.dud/cache/1f/ad12e6bdb0d30895fb817b05d8fd97be199d01a4e489433629778eae97d314
+[drwxr-xr-x user            4096]  ./.dud/cache/9a
+[-r--r--r-- user             952]  ./.dud/cache/9a/4f4e06e7d7bfb5f6ec729ba7ab55f62ed31b564045f8e132b9afcd98027572
+[drwxr-xr-x user            4096]  ./.dud/cache/49
+[-r--r--r-- user               2]  ./.dud/cache/49/124bf4f7f37328738ac34216a60dcd5f58bb198c5c3f6719b6becafb7e7882
+[drwxr-xr-x user            4096]  ./.dud/cache/50
+[-r--r--r-- user               2]  ./.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
+[drwxr-xr-x user            4096]  ./.dud/cache/b9
+[-r--r--r-- user               2]  ./.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde
+[drwxr-xr-x user            4096]  ./.dud/cache/ce
+[-r--r--r-- user             648]  ./.dud/cache/ce/7e0618edc4c35ecfe38379a256954ba3257e6ece77ac1b5ab8c4d28eac5d9f
+[drwxr-xr-x user            4096]  ./.dud/cache/de
+[-r--r--r-- user               2]  ./.dud/cache/de/dc9531a3ea216ed967a15ede743b4e4d1e9181bf24204cdd6c316171daa2e8
+[drwxr-xr-x user            4096]  ./.dud/cache/ec
+[-r--r--r-- user               2]  ./.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
+[-rw-r--r-- user             376]  ./.dud/config.yaml
+[-rw-r--r-- user              11]  ./.dud/index
+[-rw-r--r-- user             208]  ./.dud/rclone.conf
+[drwxr-xr-x user            4096]  ./foo
+[-rw-r--r-- user               2]  ./foo/1.txt
+[-rw-r--r-- user               2]  ./foo/2.txt
+[-rw-r--r-- user               2]  ./foo/3.txt
+[-rw-r--r-- user               2]  ./foo/4.txt
+[-rw-r--r-- user               2]  ./foo/5.txt
+[drwxr-xr-x user            4096]  ./foo/bar
+[-rw-r--r-- user               2]  ./foo/bar/4.txt
+[-rw-r--r-- user               2]  ./foo/bar/5.txt
+[-rw-r--r-- user               2]  ./foo/bar/6.txt
+[-rw-r--r-- user               2]  ./foo/bar/7.txt
+[-rw-r--r-- user              57]  ./stage.yaml
+[-rw-r--r-- user             165]  ./stage.yaml.lock

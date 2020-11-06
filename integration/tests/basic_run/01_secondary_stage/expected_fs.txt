@@ -1,10 +1,10 @@
 .
-[-rw-r--r-- user     user              51]  ./base.txt
-[-rw-r--r-- user     user              74]  ./base.yaml
-[drwxr-xr-x user     user            4096]  ./.dud
-[drwxr-xr-x user     user            4096]  ./.dud/cache
-[-rw-r--r-- user     user             376]  ./.dud/config.yaml
-[-rw-r--r-- user     user              22]  ./.dud/index
-[-rw-r--r-- user     user             208]  ./.dud/rclone.conf
-[-rw-r--r-- user     user              56]  ./second.txt
-[-rw-r--r-- user     user             134]  ./second.yaml
+[drwxr-xr-x user            4096]  ./.dud
+[drwxr-xr-x user            4096]  ./.dud/cache
+[-rw-r--r-- user             376]  ./.dud/config.yaml
+[-rw-r--r-- user              22]  ./.dud/index
+[-rw-r--r-- user             208]  ./.dud/rclone.conf
+[-rw-r--r-- user              51]  ./base.txt
+[-rw-r--r-- user              74]  ./base.yaml
+[-rw-r--r-- user              56]  ./second.txt
+[-rw-r--r-- user             134]  ./second.yaml
