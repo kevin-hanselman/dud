@@ -34,7 +34,7 @@ func (ch *LocalCache) Commit(
 	strat strategy.CheckoutStrategy,
 ) error {
 	pb := progressbar.DefaultBytes(-1, fmt.Sprintf("committing %s", art.Path))
-	defer fmt.Println()
+	defer pb.Finish()
 	if art.IsDir {
 		return commitDirArtifact(context.Background(), ch, workspaceDir, art, strat, pb)
 	}

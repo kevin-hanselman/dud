@@ -15,9 +15,10 @@ var validFields = []string{
 
 func init() {
 	configCmd := &cobra.Command{
-		Use:   "config {get|set}",
-		Short: "Print or modify fields in the config file",
-		Long:  "Config prints or modifies fields in the config file",
+		Use:              "config {get|set}",
+		Short:            "Print or modify fields in the config file",
+		Long:             "Config prints or modifies fields in the config file",
+		PersistentPreRun: requireInitializedProject,
 	}
 
 	configCmd.AddCommand(

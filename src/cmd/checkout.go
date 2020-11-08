@@ -37,6 +37,7 @@ For each stage file passed in, checkout attempts to load all output artifacts
 from the cache for the given. If no stage files are passed in, checkout will act on all
 stages in the index. By default, checkout will act recursively on all upstream stages
 (i.e. dependencies).`,
+	PreRun: requireInitializedProject,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		strat := strategy.LinkStrategy

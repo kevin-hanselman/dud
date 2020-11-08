@@ -113,9 +113,10 @@ func init() {
 	)
 
 	stageCmd := &cobra.Command{
-		Use:   "stage",
-		Short: "Commands for interacting with stages and the index",
-		Long:  "Stage is a group of sub-commands for interacting with stage and the index.",
+		Use:              "stage",
+		Short:            "Commands for interacting with stages and the index",
+		Long:             "Stage is a group of sub-commands for interacting with stage and the index.",
+		PersistentPreRun: requireInitializedProject,
 	}
 	stageCmd.AddCommand(newStageCmd)
 	stageCmd.AddCommand(addStageCmd)

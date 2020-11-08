@@ -50,9 +50,5 @@ cache: %s
 			logger.Println(`Dud project initialized.
 See .dud/config.yaml and .dud/rclone.conf to customize the project.`)
 		},
-		// Override rootCmd's PersistentPreRun which changes dir to the project
-		// root. Obviously this command would fail if we have yet to set the
-		// project root directory.
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	})
 }

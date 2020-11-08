@@ -8,7 +8,6 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(pushCmd)
 	pushCmd.Flags().BoolVarP(
 		&disableRecursion,
 		"single-stage",
@@ -16,6 +15,7 @@ func init() {
 		false,
 		"don't recursively operate on dependencies",
 	)
+	rootCmd.AddCommand(pushCmd)
 }
 
 var pushCmd = &cobra.Command{
@@ -27,6 +27,7 @@ For each stage passed in, push uploads the stage's committed outputs to the
 remote cache specified in the Dud config file. If no stage files are passed
 in, push will act on all stages in the index. By default, push will act
 recursively on all upstream stages (i.e. dependencies).`,
+	PreRun: requireInitializedProject,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))

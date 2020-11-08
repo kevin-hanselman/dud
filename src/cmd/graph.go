@@ -35,6 +35,7 @@ generate images of the stage graph. For example:
 
 dud graph | dot -Tpng -o dud.png
 `,
+	PreRun: requireInitializedProject,
 	Run: func(cmd *cobra.Command, args []string) {
 		idx, err := index.FromFile(".dud/index")
 		if os.IsNotExist(err) { // TODO: print error instead?

@@ -8,7 +8,10 @@ import (
 
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"github.com/felixge/fgprof"
 )
 
 var (
@@ -20,17 +23,26 @@ var (
 		Use: "dud",
 		Long: `Dud is a tool to for storing, versioning, and reproducing large files alongside
 source code.`,
+		// TODO: Ensure we always close profilingOutput to prevent resource
+		// leaks. This probably requires all sub-commands not to call
+		// logger.Fatal() and to leave all exit paths to the root command.
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			// Change working directory to the project root.
-			// This is done here as opposed to in cobra.OnInitialize so `init`
-			// and other commands can override this behavior.
-			var err error
-			rootDir, err = getProjectRootDir()
-			if err != nil {
-				logger.Fatal(err)
+			if profile {
+				logger.Println("enabled CPU profiling")
+				profilingOutput, err := os.Create("dud.prof")
+				if err != nil {
+					logger.Fatal(err)
+				}
+				stopProfiling = fgprof.Start(profilingOutput, fgprof.FormatPprof)
 			}
-			if err := os.Chdir(rootDir); err != nil {
-				logger.Fatal(err)
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			if profile {
+				defer profilingOutput.Close()
+				logger.Println("writing CPU profiling to dud.prof")
+				if err := stopProfiling(); err != nil {
+					logger.Fatal(err)
+				}
 			}
 		},
 	}
@@ -40,18 +52,23 @@ source code.`,
 
 	// This is the project root directory.
 	rootDir string
+
+	profile         bool
+	profilingOutput *os.File
+	stopProfiling   func() error
 )
 
 // Main is the entry point to the cobra CLI.
 func Main() {
-	logger = log.New(os.Stdout, "", 0)
+	logger = log.New(os.Stderr, "", 0)
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err)
 	}
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	// This must be a global flag, not one associated with the root Command.
+	pflag.BoolVar(&profile, "profile", false, "enable profiling")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
@@ -60,24 +77,22 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Println(Version)
 		},
-		// Override rootCmd's PersistentPreRun which changes dir to the project
-		// root.
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 	})
 }
 
-func initConfig() {
-	rootDir, err := getProjectRootDir()
-	if err == nil {
-		viper.AddConfigPath(filepath.Join(rootDir, ".dud"))
+func requireInitializedProject(cmd *cobra.Command, args []string) {
+	var err error
+	rootDir, err = getProjectRootDir()
+	if err != nil {
+		logger.Fatal(err)
 	}
-	viper.SetConfigName("config.yaml")
-	viper.SetConfigType("yaml")
+	if err := os.Chdir(rootDir); err != nil {
+		logger.Fatal(err)
+	}
+	viper.SetConfigFile(filepath.Join(rootDir, ".dud", "config.yaml"))
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			logger.Fatal(err)
-		}
+		logger.Fatal(err)
 	}
 }
 

@@ -44,7 +44,4 @@ The CLI is intended to be compatible with the *sum family of command-line tools
 			fmt.Printf("%s  %s\n", checksum, path)
 		}
 	},
-	// Override rootCmd's PersistentPreRun which changes dir to the project
-	// root.
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {},
 }
