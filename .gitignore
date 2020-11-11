@@ -6,7 +6,8 @@ mockery
 # test files for benchmarking
 *.bin
 integration/*/data/
-*.prof
+*.pprof
+*.trace
 
 # Binaries for programs and plugins
 *.exe

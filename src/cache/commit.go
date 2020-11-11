@@ -83,7 +83,7 @@ func commitFileArtifact(
 	defer srcCloser.Close()
 
 	if art.SkipCache {
-		cksum, err := checksum.Checksum(srcReader, 0)
+		cksum, err := checksum.Checksum(srcReader, []byte{})
 		if err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}
@@ -141,7 +141,7 @@ func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, er
 		moveFile = tempFile.Name()
 	}
 
-	cksum, err := checksum.Checksum(reader, 0)
+	cksum, err := checksum.Checksum(reader, []byte{})
 	if err != nil {
 		return "", err
 	}

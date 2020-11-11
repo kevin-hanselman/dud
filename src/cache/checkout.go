@@ -84,7 +84,7 @@ func checkoutFile(
 		}
 		defer dstFile.Close()
 
-		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), 0)
+		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), []byte{})
 		if err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}

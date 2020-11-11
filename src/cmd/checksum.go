@@ -10,10 +10,10 @@ import (
 
 func init() {
 	rootCmd.AddCommand(checksumCmd)
-	checksumCmd.Flags().Int64VarP(&bufSize, "bufsize", "b", 0, "internal buffer size in bytes")
+	checksumCmd.Flags().IntVarP(&bufSize, "bufsize", "b", 0, "internal buffer size in bytes")
 }
 
-var bufSize int64
+var bufSize int
 
 var checksumCmd = &cobra.Command{
 	Use:   "checksum [flags] [file]...",
@@ -23,8 +23,9 @@ var checksumCmd = &cobra.Command{
 The CLI is intended to be compatible with the *sum family of command-line tools
 (although this version is currently incomplete).`,
 	Run: func(cmd *cobra.Command, args []string) {
+		buffer := make([]byte, bufSize)
 		if len(args) == 0 {
-			checksum, err := checksum.Checksum(os.Stdin, bufSize)
+			checksum, err := checksum.Checksum(os.Stdin, buffer)
 			if err != nil {
 				logger.Fatal(err)
 			}
@@ -37,7 +38,7 @@ The CLI is intended to be compatible with the *sum family of command-line tools
 			if err != nil {
 				logger.Fatal(err)
 			}
-			checksum, err := checksum.Checksum(file, bufSize)
+			checksum, err := checksum.Checksum(file, buffer)
 			if err != nil {
 				logger.Fatal(err)
 			}

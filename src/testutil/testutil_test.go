@@ -138,7 +138,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 			if err != nil {
 				t.Fatal(err)
 			}
-			workspaceFileChecksum, err := checksum.Checksum(fileReader, 0)
+			workspaceFileChecksum, err := checksum.Checksum(fileReader, []byte{})
 			if err != nil {
 				t.Fatal(err)
 			}

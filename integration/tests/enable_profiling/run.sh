@@ -5,7 +5,14 @@ dud init
 
 dud --profile status
 
-if [ $(wc -l dud.prof) -eq 0 ]; then
-    echo 'dud.prof is empty' 1>&2
+if ! test -s dud.pprof; then
+    echo 'profiling output does not exist or is empty' 1>&2
+    exit 1
+fi
+
+dud --trace status
+
+if ! test -s dud.trace; then
+    echo 'tracing output does not exist or is empty' 1>&2
     exit 1
 fi

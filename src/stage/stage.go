@@ -185,6 +185,7 @@ func (stg Stage) validate() error {
 	}
 	// First, check for direct overlap between Outputs and Dependencies.
 	// Consolidate all Artifacts into a single map to facilitate the next step.
+	// TODO: Only consolidate Artifacts with IsDir = true?
 	allArtifacts := make(map[string]*artifact.Artifact, len(stg.Dependencies)+len(stg.Outputs))
 	for artPath, art := range stg.Outputs {
 		if _, ok := stg.Dependencies[artPath]; ok {
@@ -237,12 +238,7 @@ func FilePathForLock(stagePath string) string {
 
 // CreateCommand return an exec.Cmd for the Stage.
 func (stg Stage) CreateCommand() *exec.Cmd {
-	// TODO: Consider always running with "sh" for consistency.
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "sh"
-	}
-	cmd := exec.Command(shell, "-c", stg.Command)
+	cmd := exec.Command("sh", "-c", stg.Command)
 	cmd.Dir = filepath.Clean(stg.WorkingDir)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

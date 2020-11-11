@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"runtime/trace"
+
 	"github.com/felixge/fgprof"
 )
 
@@ -23,26 +25,41 @@ var (
 		Use: "dud",
 		Long: `Dud is a tool to for storing, versioning, and reproducing large files alongside
 source code.`,
-		// TODO: Ensure we always close profilingOutput to prevent resource
+		// TODO: Ensure we always close debugOutput to prevent resource
 		// leaks. This probably requires all sub-commands not to call
 		// logger.Fatal() and to leave all exit paths to the root command.
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if profile {
-				logger.Println("enabled CPU profiling")
-				profilingOutput, err := os.Create("dud.prof")
+			if doProfile && doTrace {
+				logger.Fatal(errors.New("cannot enable both profiling and tracing"))
+			}
+			if doProfile {
+				logger.Println("enabled profiling")
+				debugOutput, err := os.Create("dud.pprof")
 				if err != nil {
 					logger.Fatal(err)
 				}
-				stopProfiling = fgprof.Start(profilingOutput, fgprof.FormatPprof)
+				stopProfiling = fgprof.Start(debugOutput, fgprof.FormatPprof)
+				fgprof.Start(debugOutput, fgprof.FormatPprof)
+			} else if doTrace {
+				logger.Println("enabled tracing")
+				debugOutput, err := os.Create("dud.trace")
+				if err != nil {
+					logger.Fatal(err)
+				}
+				trace.Start(debugOutput)
 			}
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			if profile {
-				defer profilingOutput.Close()
-				logger.Println("writing CPU profiling to dud.prof")
+			if doProfile {
+				defer debugOutput.Close()
+				logger.Println("writing profiling output to dud.pprof")
 				if err := stopProfiling(); err != nil {
 					logger.Fatal(err)
 				}
+			} else if doTrace {
+				defer debugOutput.Close()
+				logger.Println("writing tracing output to dud.trace")
+				trace.Stop()
 			}
 		},
 	}
@@ -53,9 +70,9 @@ source code.`,
 	// This is the project root directory.
 	rootDir string
 
-	profile         bool
-	profilingOutput *os.File
-	stopProfiling   func() error
+	doProfile, doTrace bool
+	debugOutput        *os.File
+	stopProfiling      func() error
 )
 
 // Main is the entry point to the cobra CLI.
@@ -68,7 +85,8 @@ func Main() {
 
 func init() {
 	// This must be a global flag, not one associated with the root Command.
-	pflag.BoolVar(&profile, "profile", false, "enable profiling")
+	pflag.BoolVar(&doProfile, "profile", false, "enable profiling")
+	pflag.BoolVar(&doTrace, "trace", false, "enable tracing")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:   "version",
