@@ -26,7 +26,6 @@ source code.
 * [dud completion]({{< relref "dud_completion.md" >}})	 - Generate shell completion script
 * [dud config]({{< relref "dud_config.md" >}})	 - Print or modify fields in the config file
 * [dud fetch]({{< relref "dud_fetch.md" >}})	 - Fetch committed artifacts to the default remote cache
-* [dud gen-docs]({{< relref "dud_gen-docs.md" >}})	 - Generate Markdown documentation for this command
 * [dud graph]({{< relref "dud_graph.md" >}})	 - Print stage graph in graphviz DOT format
 * [dud init]({{< relref "dud_init.md" >}})	 - Initialize a Dud project
 * [dud push]({{< relref "dud_push.md" >}})	 - Push committed artifacts to the default remote cache

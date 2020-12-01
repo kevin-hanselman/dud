@@ -12,10 +12,12 @@ install: $(GOBIN)/dud
 
 .PHONY: cli-docs
 cli-docs: dud
+	rm -rf hugo/content/docs/cli/dud*.md
 	./dud gen-docs hugo/content/docs/cli
 
 .PHONY: docs
 docs: cli-docs
+	rm -rf ./docs/*
 	cd hugo && hugo --minify
 
 $(GOBIN)/dud: dud

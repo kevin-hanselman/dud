@@ -101,9 +101,10 @@ func init() {
 	})
 
 	rootCmd.AddCommand(&cobra.Command{
-		Use:   "gen-docs",
-		Short: "Generate Markdown documentation for this command",
-		Args:  cobra.ExactArgs(1),
+		Use:    "gen-docs",
+		Short:  "Generate Markdown documentation for this command",
+		Hidden: true,
+		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			linkHandler := func(name string) string {

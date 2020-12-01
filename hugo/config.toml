@@ -1,4 +1,4 @@
-baseURL = "https://kevin-hanselman.github.io/dud"
+baseURL = "https://kevin-hanselman.github.io/dud/"
 languageCode = "en-us"
 title = "Dud"
 theme = "book"
