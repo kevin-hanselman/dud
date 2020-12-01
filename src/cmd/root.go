@@ -2,12 +2,15 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
@@ -94,6 +97,31 @@ func init() {
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Println(Version)
+		},
+	})
+
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "gen-docs",
+		Short: "Generate Markdown documentation for this command",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			linkHandler := func(name string) string {
+				// See: https://gohugo.io/content-management/cross-references/
+				return fmt.Sprintf(`{{< relref "%s" >}}`, name)
+			}
+
+			filePrepender := func(filename string) string {
+				name := filepath.Base(filename)
+				base := strings.TrimSuffix(name, filepath.Ext(name))
+				return fmt.Sprintf("---\ntitle: %s\n---\n", strings.Replace(base, "_", " ", -1))
+			}
+
+			dir := args[0]
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return err
+			}
+			return doc.GenMarkdownTreeCustom(rootCmd, dir, filePrepender, linkHandler)
 		},
 	})
 }

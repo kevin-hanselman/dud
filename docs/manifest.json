@@ -1,0 +1,15 @@
+{
+  "name": "Dud",
+  "short_name": "Dud",
+  "start_url": "/dud/",
+  "scope": "/dud/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/dud/favicon.svg",
+      "sizes": "512x512"
+    }
+  ]
+}
