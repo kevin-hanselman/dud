@@ -8,13 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Use an undirected edge to differentiate ownership from a dependency. Faking
-// undirected edges in a directed graph requires the attribute "dir=none".
-// See: https://stackoverflow.com/questions/13236975
-var ownershipEdge = map[string]string{"dir": "none", "penwidth": "3"}
-var stageNode = map[string]string{"color": "cadetblue1", "style": "filled"}
-var artifactNode = map[string]string{"shape": "box"}
-
 // Graph creates a dependency graph starting from the given Stage.
 func (idx Index) Graph(
 	stagePath string,
@@ -22,9 +15,20 @@ func (idx Index) Graph(
 	graph *gographviz.Escape,
 	onlyStages bool,
 ) error {
-	if graph.IsNode(stagePath) {
-		return nil
+	// A subgraph MUST start with "cluster" for its "label" attribute to be displayed.
+	// Intuitive, I know.
+	// See: https://stackoverflow.com/a/7586857/857893
+	stageSubgraphName := "cluster_" + stagePath
+	if onlyStages {
+		if graph.IsNode(stagePath) {
+			return nil
+		}
+	} else {
+		if graph.IsSubGraph(stageSubgraphName) {
+			return nil
+		}
 	}
+
 	// If we've visited this Stage but haven't recorded its status (the check
 	// above), then we're in a cycle.
 	if inProgress[stagePath] {
@@ -38,6 +42,7 @@ func (idx Index) Graph(
 	}
 
 	graph.SetDir(true) // Ensure the graph is directed.
+	graph.AddAttr(graph.Name, "rankdir", "LR")
 	for artPath := range en.Stage.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
@@ -49,9 +54,9 @@ func (idx Index) Graph(
 		// one exists.
 		if !onlyStages {
 			if !graph.IsNode(artPath) {
-				graph.AddNode(graph.Name, artPath, artifactNode)
+				graph.AddNode(graph.Name, artPath, nil)
 			}
-			if err := graph.AddEdge(stagePath, artPath, true, nil); err != nil {
+			if err := graph.AddEdge(stageSubgraphName, artPath, true, nil); err != nil {
 				return err
 			}
 		} else if hasOwner {
@@ -65,15 +70,25 @@ func (idx Index) Graph(
 			}
 		}
 	}
-	if !onlyStages {
+	if onlyStages {
+		if err := graph.AddNode(graph.Name, stagePath, nil); err != nil {
+			return err
+		}
+	} else {
 		for artPath := range en.Stage.Outputs {
-			graph.AddNode(graph.Name, artPath, artifactNode)
-			if err := graph.AddEdge(stagePath, artPath, true, ownershipEdge); err != nil {
+			if err := graph.AddNode(stageSubgraphName, artPath, nil); err != nil {
 				return err
 			}
 		}
+		err := graph.AddSubGraph(
+			graph.Name,
+			stageSubgraphName,
+			map[string]string{"label": stagePath},
+		)
+		if err != nil {
+			return err
+		}
 	}
-	graph.AddNode(graph.Name, stagePath, stageNode)
 	delete(inProgress, stagePath)
 	return nil
 }
