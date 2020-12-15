@@ -8,6 +8,7 @@ RUN pacman -Sy --noconfirm --needed \
         graphviz \
         hyperfine \
         jq \
+        jupyter \
         python \
         python-pip \
         rclone \

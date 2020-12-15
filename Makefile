@@ -3,7 +3,7 @@ base_dir = $(shell pwd)
 GOPATH ?= ~/go
 GOBIN ?= $(GOPATH)/bin
 
-dud: test-all
+dud: test
 	go build -o dud \
 		-ldflags "-s -w -X 'github.com/kevin-hanselman/dud/src/cmd.Version=$(shell git rev-parse --short HEAD)'"
 
@@ -12,12 +12,10 @@ install: $(GOBIN)/dud
 
 .PHONY: cli-docs
 cli-docs: dud
-	rm -rf hugo/content/docs/cli/dud*.md
 	./dud gen-docs hugo/content/docs/cli
 
 .PHONY: docs
 docs: cli-docs
-	rm -rf ./docs/*
 	cd hugo && hugo --minify
 
 $(GOBIN)/dud: dud
@@ -29,6 +27,7 @@ docker: docker-image
 	docker run \
 		--rm \
 		-it \
+		-p 8888:8888 \
 		-v $(shell pwd):/dud \
 		$(docker_image)
 
@@ -36,6 +35,7 @@ docker: docker-image
 docker-%: docker-image
 	docker run \
 		--rm \
+		-p 8888:8888 \
 		-v $(shell pwd):/dud \
 		$(docker_image) make $(patsubst docker-%,%,$@)
 
@@ -56,15 +56,19 @@ lint: $(GOBIN)/golint
 	golint ./...
 
 .PHONY: test-%
-test: fmt lint
+test-short: fmt lint
 	go test -short ./...
 
-test-all: fmt lint
+test: fmt lint
 	go test -cover -race ./...
 
 .PHONY: bench
 bench: test
 	go test ./... -benchmem -bench .
+
+.PHONY: jupyter
+jupyter: $(GOBIN)/dud
+	jupyter notebook -y --ip=0.0.0.0 ./notebooks/
 
 .PHONY: %-test-cov
 %-test-cov: %-test.coverage
@@ -98,6 +102,7 @@ deep-lint:
 
 .PHONY: clean
 clean:
+	rm -rf hugo/content/docs/cli/dud*.md ./docs/*
 	rm -f *.coverage *.bin depgraph.png mockery $(GOBIN)/dud
 	go clean ./...
 	docker rmi $(docker_image)
@@ -108,8 +113,8 @@ tidy:
 
 .PHONY: loc
 loc:
-	tokei --sort lines --exclude 'mocks/'
-	tokei --sort lines --exclude 'mocks/' --exclude '*_test.go'
+	tokei --sort lines --exclude 'src/mocks/' ./src/ ./integration/
+	tokei --sort lines --exclude 'src/mocks/' --exclude '*_test.go' ./src/ ./integration/
 
 mockery:
 	curl -L https://github.com/vektra/mockery/releases/download/v2.2.1/mockery_2.2.1_Linux_x86_64.tar.gz \
