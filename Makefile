@@ -66,9 +66,18 @@ test: fmt lint
 bench: test
 	go test ./... -benchmem -bench .
 
-.PHONY: jupyter
-jupyter: $(GOBIN)/dud
+.PHONY: serve-jupyter
+serve-jupyter: $(GOBIN)/dud
 	jupyter notebook -y --ip=0.0.0.0 ./notebooks/
+
+# xargs trims whitespace from the hostname below
+.PHONY: serve-hugo
+serve-hugo:
+	cd hugo && \
+	hugo server \
+		--disableFastRender \
+		--bind 0.0.0.0 \
+		--baseUrl $(shell hostname -i | xargs)/dud/
 
 .PHONY: %-test-cov
 %-test-cov: %-test.coverage
@@ -105,7 +114,10 @@ clean:
 	rm -rf hugo/content/docs/cli/dud*.md ./docs/*
 	rm -f *.coverage *.bin depgraph.png mockery $(GOBIN)/dud
 	go clean ./...
-	docker rmi $(docker_image)
+
+.PHONY: clean-docker
+clean-docker:
+	docker rmi -f $(docker_image)
 
 .PHONY: tidy
 tidy:

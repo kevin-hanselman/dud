@@ -30,12 +30,12 @@ func (idx Index) Status(
 	}
 	inProgress[stagePath] = true
 
-	en, ok := idx[stagePath]
+	stg, ok := idx[stagePath]
 	if !ok {
 		return fmt.Errorf("status: unknown stage %#v", stagePath)
 	}
 	stageStatus := make(stage.Status)
-	for artPath, art := range en.Stage.Dependencies {
+	for artPath, art := range stg.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
@@ -52,7 +52,7 @@ func (idx Index) Status(
 		}
 	}
 
-	for artPath, art := range en.Stage.Outputs {
+	for artPath, art := range stg.Outputs {
 		var err error
 		stageStatus[artPath], err = ch.Status(rootDir, *art)
 		if err != nil {

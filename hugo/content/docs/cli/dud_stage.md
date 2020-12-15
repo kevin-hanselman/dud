@@ -26,5 +26,5 @@ Stage is a group of sub-commands for interacting with stage and the index.
 
 * [dud]({{< relref "dud.md" >}})	 - 
 * [dud stage add]({{< relref "dud_stage_add.md" >}})	 - Add one or more stage files to the stage index
-* [dud stage new]({{< relref "dud_stage_new.md" >}})	 - Create a stage from the command-line and print it
+* [dud stage gen]({{< relref "dud_stage_gen.md" >}})	 - Generate Stage YAML using the CLI
 

@@ -11,8 +11,8 @@ import (
 func TestAdd(t *testing.T) {
 
 	stageFromFileOrig := stage.FromFile
-	stage.FromFile = func(path string) (stage.Stage, bool, error) {
-		return stage.Stage{}, false, nil
+	stage.FromFile = func(path string) (stage.Stage, error) {
+		return stage.Stage{}, nil
 	}
 	defer func() { stage.FromFile = stageFromFileOrig }()
 
@@ -35,7 +35,7 @@ func TestAdd(t *testing.T) {
 		path := "foo/bar.dud"
 
 		var stg stage.Stage
-		idx[path] = &entry{Stage: stg}
+		idx[path] = &stg
 
 		if err := idx.AddStageFromPath(path); err == nil {
 			t.Fatal("expected error")
@@ -46,8 +46,8 @@ func TestAdd(t *testing.T) {
 		idx := make(Index)
 		path := "foo/bar.dud"
 
-		stage.FromFile = func(path string) (stage.Stage, bool, error) {
-			return stage.Stage{}, false, os.ErrNotExist
+		stage.FromFile = func(path string) (stage.Stage, error) {
+			return stage.Stage{}, os.ErrNotExist
 		}
 
 		err := idx.AddStageFromPath(path)
@@ -57,17 +57,16 @@ func TestAdd(t *testing.T) {
 	})
 
 	t.Run("error if new stage declares already owned outputs", func(t *testing.T) {
-		stage.FromFile = func(path string) (stage.Stage, bool, error) {
+		stage.FromFile = func(path string) (stage.Stage, error) {
 			stg := stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"subDir/foo.bin": {Path: "subDir/foo.bin"},
 				},
 			}
-			return stg, false, nil
+			return stg, nil
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				WorkingDir: "subDir",
 				Outputs: map[string]*artifact.Artifact{
 					"subDir/foo.bin": {Path: "subDir/foo.bin"},
@@ -85,17 +84,16 @@ func TestAdd(t *testing.T) {
 	})
 
 	t.Run("working dir should have no effect on artifact paths", func(t *testing.T) {
-		stage.FromFile = func(path string) (stage.Stage, bool, error) {
+		stage.FromFile = func(path string) (stage.Stage, error) {
 			stg := stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"subDir/foo.bin": {Path: "subDir/foo.bin"},
 				},
 			}
-			return stg, false, nil
+			return stg, nil
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				WorkingDir: "subDir",
 				Outputs: map[string]*artifact.Artifact{
 					"foo.bin": {Path: "foo.bin"},

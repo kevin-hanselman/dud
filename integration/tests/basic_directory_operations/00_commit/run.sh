@@ -14,7 +14,7 @@ for n in $(seq 4 7); do
     echo "$n" > "foo/bar/$n.txt"
 done
 
-dud stage new -o foo > stage.yaml
+dud stage gen -o foo > stage.yaml
 
 dud stage add stage.yaml
 

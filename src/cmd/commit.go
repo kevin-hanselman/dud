@@ -5,7 +5,6 @@ import (
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
-	"github.com/kevin-hanselman/dud/src/stage"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -64,11 +63,12 @@ recursively on all upstream stages (i.e. dependencies).`,
 			if err != nil {
 				logger.Fatal(err)
 			}
-			lockFile, err := os.Create(stage.FilePathForLock(path))
+			stageFile, err := os.Create(path)
+			defer stageFile.Close()
 			if err != nil {
 				logger.Fatal(err)
 			}
-			if err := idx[path].Stage.Serialize(lockFile); err != nil {
+			if err := idx[path].Serialize(stageFile); err != nil {
 				logger.Fatal(err)
 			}
 		}

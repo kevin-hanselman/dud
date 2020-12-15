@@ -6,6 +6,7 @@ RUN pacman -Sy --noconfirm --needed \
         git \
         go \
         graphviz \
+        hugo \
         hyperfine \
         jq \
         jupyter \

@@ -28,12 +28,12 @@ func (idx Index) Fetch(
 	}
 	inProgress[stagePath] = true
 
-	en, ok := idx[stagePath]
+	stg, ok := idx[stagePath]
 	if !ok {
 		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
 
-	for artPath := range en.Stage.Dependencies {
+	for artPath := range stg.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
@@ -56,7 +56,7 @@ func (idx Index) Fetch(
 		}
 	}
 	logger.Printf("fetching stage %s\n", stagePath)
-	for _, art := range en.Stage.Outputs {
+	for _, art := range stg.Outputs {
 		if err := ch.Fetch(rootDir, remote, *art); err != nil {
 			return err
 		}

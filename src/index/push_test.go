@@ -48,8 +48,8 @@ func TestPush(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"foo.yaml": &entry{Stage: stgA},
-			"bar.yaml": &entry{Stage: stgB},
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
 		}
 
 		mockCache := mocks.Cache{}
@@ -101,8 +101,8 @@ func TestPush(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"foo.yaml": &entry{Stage: stgA},
-			"bar.yaml": &entry{Stage: stgB},
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
 		}
 
 		mockCache := mocks.Cache{}
@@ -166,9 +166,9 @@ func TestPush(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"bish.yaml": &entry{Stage: stgA},
-			"bash.yaml": &entry{Stage: stgB},
-			"bosh.yaml": &entry{Stage: stgC},
+			"bish.yaml": &stgA,
+			"bash.yaml": &stgB,
+			"bosh.yaml": &stgC,
 		}
 
 		mockCache := mocks.Cache{}
@@ -238,10 +238,10 @@ func TestPush(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"a.yaml": &entry{Stage: stgA},
-			"b.yaml": &entry{Stage: stgB},
-			"c.yaml": &entry{Stage: stgC},
-			"d.yaml": &entry{Stage: stgD},
+			"a.yaml": &stgA,
+			"b.yaml": &stgB,
+			"c.yaml": &stgC,
+			"d.yaml": &stgD,
 		}
 
 		mockCache := mocks.Cache{}
@@ -301,8 +301,8 @@ func TestPush(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"foo.yaml": &entry{Stage: stgA},
-			"bar.yaml": &entry{Stage: stgB},
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
 		}
 
 		mockCache := mocks.Cache{}

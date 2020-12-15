@@ -10,23 +10,16 @@ import (
 	"github.com/kevin-hanselman/dud/src/stage"
 )
 
-type entry struct {
-	// IsLocked is true if the Stage in this entry is a locked version; i.e. it
-	// has checksummed dependencies and outputs.
-	IsLocked bool
-	Stage    stage.Stage
-}
-
 // An Index holds an exhaustive set of Stages for a repository.
 // TODO: Not threadsafe
-type Index map[string]*entry
+type Index map[string]*stage.Stage
 
 // AddStageFromPath adds a Stage at the given file path to the Index.
 func (idx *Index) AddStageFromPath(path string) error {
 	if _, ok := (*idx)[path]; ok {
 		return fmt.Errorf("stage %s already in index", path)
 	}
-	stg, isLock, err := stage.FromFile(path)
+	stg, err := stage.FromFile(path)
 	if err != nil {
 		return err
 	}
@@ -43,10 +36,7 @@ func (idx *Index) AddStageFromPath(path string) error {
 			)
 		}
 	}
-	(*idx)[path] = &entry{
-		IsLocked: isLock,
-		Stage:    stg,
-	}
+	(*idx)[path] = &stg
 	return nil
 }
 
@@ -99,11 +89,11 @@ func FromFile(path string) (Index, error) {
 }
 
 func (idx Index) findOwner(artPath string) (string, *artifact.Artifact, error) {
-	for stagePath, en := range idx {
-		if art, ok := en.Stage.Outputs[artPath]; ok {
+	for stagePath, stg := range idx {
+		if art, ok := stg.Outputs[artPath]; ok {
 			return stagePath, art, nil
 		}
-		art, ok, err := stage.FindDirArtifactOwnerForPath(artPath, en.Stage.Outputs)
+		art, ok, err := stage.FindDirArtifactOwnerForPath(artPath, stg.Outputs)
 		if err != nil {
 			return "", art, err
 		}

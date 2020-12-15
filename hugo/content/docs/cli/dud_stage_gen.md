@@ -1,28 +1,32 @@
 ---
-title: dud stage new
+title: dud stage gen
 ---
-## dud stage new
+## dud stage gen
 
-Create a stage from the command-line and print it
+Generate Stage YAML using the CLI
 
 ### Synopsis
 
-Stage creates a stage from the command-line and prints it to STDOUT.
+Gen generates a Stage YAML file and prints it to STDOUT.
 
 The output of this command can be redirected to a file and modified further as
-needed. For example:
-
-dud stage -o data/ python download_data.py > download.yaml
+needed.
 
 ```
-dud stage new [flags]
+dud stage gen [flags]
+```
+
+### Examples
+
+```
+dud stage gen -o data/ python download_data.py > download.yaml
 ```
 
 ### Options
 
 ```
   -d, --dep strings       one or more dependent files or directories
-  -h, --help              help for new
+  -h, --help              help for gen
   -o, --out strings       one or more output files or directories
   -w, --work-dir string   working directory for the stage's command
 ```

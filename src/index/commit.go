@@ -30,12 +30,12 @@ func (idx Index) Commit(
 	}
 	inProgress[stagePath] = true
 
-	en, ok := idx[stagePath]
+	stg, ok := idx[stagePath]
 	if !ok {
 		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
 
-	for artPath, art := range en.Stage.Dependencies {
+	for artPath, art := range stg.Dependencies {
 		ownerPath, upstreamArt, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
@@ -65,7 +65,7 @@ func (idx Index) Commit(
 		}
 	}
 	logger.Printf("committing stage %s\n", stagePath)
-	for _, art := range en.Stage.Outputs {
+	for _, art := range stg.Outputs {
 		if err := ch.Commit(rootDir, art, strat); err != nil {
 			return err
 		}

@@ -56,8 +56,8 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"foo.yaml": &entry{Stage: stgA},
-			"bar.yaml": &entry{Stage: stgB},
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
 		}
 
 		t.Run("only stages", func(t *testing.T) {
@@ -117,8 +117,8 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"foo.yaml": &entry{Stage: stgA},
-			"bar.yaml": &entry{Stage: stgB},
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
 		}
 
 		t.Run("only stages", func(t *testing.T) {
@@ -192,9 +192,9 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"a.yaml": &entry{Stage: stgA},
-			"b.yaml": &entry{Stage: stgB},
-			"c.yaml": &entry{Stage: stgC},
+			"a.yaml": &stgA,
+			"b.yaml": &stgB,
+			"c.yaml": &stgC,
 		}
 
 		t.Run("only stages", func(t *testing.T) {
@@ -284,10 +284,10 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"a.yaml": &entry{Stage: stgA},
-			"b.yaml": &entry{Stage: stgB},
-			"c.yaml": &entry{Stage: stgC},
-			"d.yaml": &entry{Stage: stgD},
+			"a.yaml": &stgA,
+			"b.yaml": &stgB,
+			"c.yaml": &stgC,
+			"d.yaml": &stgD,
 		}
 
 		onlyStages := true

@@ -15,9 +15,9 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 }
 
-func printStageStatus(stagePath string, status stage.Status, isLocked bool) error {
+func printStageStatus(stagePath string, status stage.Status) error {
 	// TODO: use text/tabwriter?
-	fmt.Printf("%s  (lock file up-to-date: %t)\n", stagePath, isLocked)
+	fmt.Println(stagePath)
 	for path, artStatus := range status {
 		if _, err := fmt.Printf("  %s  %s\n", path, artStatus); err != nil {
 			return err
@@ -67,7 +67,7 @@ dependencies).`,
 		}
 
 		for path, stageStatus := range status {
-			if err := printStageStatus(path, stageStatus, idx[path].IsLocked); err != nil {
+			if err := printStageStatus(path, stageStatus); err != nil {
 				logger.Fatal(err)
 			}
 		}

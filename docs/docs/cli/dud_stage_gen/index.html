@@ -5,17 +5,19 @@
   <meta name="generator" content="Hugo 0.79.0" />
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="dud config set #  Set the value of a field in the config file
-Synopsis #  Set the value of a field in the config file
-dud config set config_field new_value [flags] Options #   -h, --help help for set Options inherited from parent commands #   --profile enable profiling --trace enable tracing SEE ALSO #   dud config	- Print or modify fields in the config file  ">
-<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="dud config set" />
-<meta property="og:description" content="dud config set #  Set the value of a field in the config file
-Synopsis #  Set the value of a field in the config file
-dud config set config_field new_value [flags] Options #   -h, --help help for set Options inherited from parent commands #   --profile enable profiling --trace enable tracing SEE ALSO #   dud config	- Print or modify fields in the config file  " />
+<meta name="description" content="dud stage gen #  Generate Stage YAML using the CLI
+Synopsis #  Gen generates a Stage YAML file and prints it to STDOUT.
+The output of this command can be redirected to a file and modified further as needed.
+dud stage gen [flags] Examples #  dud stage gen -o data/ python download_data.py &gt; download.yaml Options #   -d, --dep strings one or more dependent files or directories -h, --help help for gen -o, --out strings one or more output files or directories -w, --work-dir string working directory for the stage&#39;s command Options inherited from parent commands #   --profile enable profiling --trace enable tracing SEE ALSO #   dud stage	- Commands for interacting with stages and the index  ">
+<meta name="theme-color" content="#FFFFFF"><meta property="og:title" content="dud stage gen" />
+<meta property="og:description" content="dud stage gen #  Generate Stage YAML using the CLI
+Synopsis #  Gen generates a Stage YAML file and prints it to STDOUT.
+The output of this command can be redirected to a file and modified further as needed.
+dud stage gen [flags] Examples #  dud stage gen -o data/ python download_data.py &gt; download.yaml Options #   -d, --dep strings one or more dependent files or directories -h, --help help for gen -o, --out strings one or more output files or directories -w, --work-dir string working directory for the stage&#39;s command Options inherited from parent commands #   --profile enable profiling --trace enable tracing SEE ALSO #   dud stage	- Commands for interacting with stages and the index  " />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://kevin-hanselman.github.io/dud/docs/cli/dud_config_set/" />
-<meta property="article:modified_time" content="2020-12-14T21:34:37-05:00" />
-<title>dud config set | Dud</title>
+<meta property="og:url" content="https://kevin-hanselman.github.io/dud/docs/cli/dud_stage_gen/" />
+
+<title>dud stage gen | Dud</title>
 <link rel="manifest" href="/dud/manifest.json">
 <link rel="icon" href="/dud/favicon.png" type="image/x-icon">
 <link rel="stylesheet" href="/dud/book.min.09a284f5a03730d86dde350d2c062b1514e48fdfebba7763941c0674ef65748f.css" integrity="sha256-CaKE9aA3MNht3jUNLAYrFRTkj9/rundjlBwGdO9ldI8=">
@@ -179,7 +181,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   
-    <a href="https://kevin-hanselman.github.io/dud/docs/cli/dud_config_set/" class=" active">dud config set</a>
+    <a href="https://kevin-hanselman.github.io/dud/docs/cli/dud_config_set/" class="">dud config set</a>
   
 
         </li>
@@ -283,7 +285,7 @@ https://github.com/alex-shpak/hugo-book
   
 
   
-    <a href="https://kevin-hanselman.github.io/dud/docs/cli/dud_stage_gen/" class="">dud stage gen</a>
+    <a href="https://kevin-hanselman.github.io/dud/docs/cli/dud_stage_gen/" class=" active">dud stage gen</a>
   
 
         </li>
@@ -355,7 +357,7 @@ https://github.com/alex-shpak/hugo-book
     <img src="/dud/svg/menu.svg" class="book-icon" alt="Menu" />
   </label>
 
-  <strong>dud config set</strong>
+  <strong>dud stage gen</strong>
 
   <label for="toc-control">
     
@@ -370,9 +372,10 @@ https://github.com/alex-shpak/hugo-book
     
   <nav id="TableOfContents">
   <ul>
-    <li><a href="#dud-config-set">dud config set</a>
+    <li><a href="#dud-stage-gen">dud stage gen</a>
       <ul>
         <li><a href="#synopsis">Synopsis</a></li>
+        <li><a href="#examples">Examples</a></li>
         <li><a href="#options">Options</a></li>
         <li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
         <li><a href="#see-also">SEE ALSO</a></li>
@@ -389,22 +392,32 @@ https://github.com/alex-shpak/hugo-book
 
       
       
-  <article class="markdown"><h2 id="dud-config-set">
-  dud config set
-  <a class="anchor" href="#dud-config-set">#</a>
+  <article class="markdown"><h2 id="dud-stage-gen">
+  dud stage gen
+  <a class="anchor" href="#dud-stage-gen">#</a>
 </h2>
-<p>Set the value of a field in the config file</p>
+<p>Generate Stage YAML using the CLI</p>
 <h3 id="synopsis">
   Synopsis
   <a class="anchor" href="#synopsis">#</a>
 </h3>
-<p>Set the value of a field in the config file</p>
-<pre><code>dud config set config_field new_value [flags]
+<p>Gen generates a Stage YAML file and prints it to STDOUT.</p>
+<p>The output of this command can be redirected to a file and modified further as
+needed.</p>
+<pre><code>dud stage gen [flags]
+</code></pre><h3 id="examples">
+  Examples
+  <a class="anchor" href="#examples">#</a>
+</h3>
+<pre><code>dud stage gen -o data/ python download_data.py &gt; download.yaml
 </code></pre><h3 id="options">
   Options
   <a class="anchor" href="#options">#</a>
 </h3>
-<pre><code>  -h, --help   help for set
+<pre><code>  -d, --dep strings       one or more dependent files or directories
+  -h, --help              help for gen
+  -o, --out strings       one or more output files or directories
+  -w, --work-dir string   working directory for the stage's command
 </code></pre><h3 id="options-inherited-from-parent-commands">
   Options inherited from parent commands
   <a class="anchor" href="#options-inherited-from-parent-commands">#</a>
@@ -416,7 +429,7 @@ https://github.com/alex-shpak/hugo-book
   <a class="anchor" href="#see-also">#</a>
 </h3>
 <ul>
-<li><a href="/dud/docs/cli/dud_config/">dud config</a>	 - Print or modify fields in the config file</li>
+<li><a href="/dud/docs/cli/dud_stage/">dud stage</a>	 - Commands for interacting with stages and the index</li>
 </ul>
 </article>
  
@@ -427,12 +440,6 @@ https://github.com/alex-shpak/hugo-book
   <div class="flex flex-wrap justify-between">
 
 
-
-  <div><a class="flex align-center" href="https://github.com/kevin-hanselman/dud/commit/eab1858f74bcc2de7b8f1499bcebf59e5e0b821a" title='Last modified by Kevin Hanselman | Dec 14, 2020' target="_blank" rel="noopener">
-      <img src="/dud/svg/calendar.svg" class="book-icon" alt="Calendar" />
-      <span>Dec 14, 2020</span>
-    </a>
-  </div>
 
 
 
@@ -458,9 +465,10 @@ https://github.com/alex-shpak/hugo-book
       
   <nav id="TableOfContents">
   <ul>
-    <li><a href="#dud-config-set">dud config set</a>
+    <li><a href="#dud-stage-gen">dud stage gen</a>
       <ul>
         <li><a href="#synopsis">Synopsis</a></li>
+        <li><a href="#examples">Examples</a></li>
         <li><a href="#options">Options</a></li>
         <li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
         <li><a href="#see-also">SEE ALSO</a></li>

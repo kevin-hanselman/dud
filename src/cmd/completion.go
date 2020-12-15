@@ -54,13 +54,17 @@ To load completions for each session, execute once:
 	ValidArgs:             []string{"bash", "zsh", "fish"},
 	Args:                  cobra.ExactValidArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		var err error
 		switch args[0] {
 		case "bash":
-			cmd.Root().GenBashCompletion(os.Stdout)
+			err = cmd.Root().GenBashCompletion(os.Stdout)
 		case "zsh":
-			cmd.Root().GenZshCompletion(os.Stdout)
+			err = cmd.Root().GenZshCompletion(os.Stdout)
 		case "fish":
-			cmd.Root().GenFishCompletion(os.Stdout, true)
+			err = cmd.Root().GenFishCompletion(os.Stdout, true)
+		}
+		if err != nil {
+			logger.Fatal(err)
 		}
 	},
 }

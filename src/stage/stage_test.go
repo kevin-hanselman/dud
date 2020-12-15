@@ -16,184 +16,6 @@ func TestFromFile(t *testing.T) {
 	}
 	var resetFromYamlFileMock = func() { fromYamlFile = fromYamlFileOrig }
 
-	t.Run("loads stage file if no lock file found", func(t *testing.T) {
-		defer resetFromYamlFileMock()
-		expectedStage := Stage{WorkingDir: "foo", Command: "echo 'bar'"}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
-			if path == "stage.yaml" {
-				*output = expectedStage.toFileFormat()
-				return nil
-			}
-			return os.ErrNotExist
-		}
-
-		outputStage, isLock, err := FromFile("stage.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if isLock {
-			t.Fatal("FromFile returned isLock = true")
-		}
-		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
-		}
-	})
-
-	t.Run("falls back to stage when differences in artifacts", func(t *testing.T) {
-		defer resetFromYamlFileMock()
-		stg := Stage{
-			WorkingDir: "foo/bar",
-			Command:    "echo 'bar'",
-			Outputs: map[string]*artifact.Artifact{
-				"bish.txt": {Path: "bish.txt"},
-				"bash.txt": {Path: "bash.txt"},
-				"bosh":     {Path: "bosh", IsDir: true},
-			},
-		}
-		lockedStage := Stage{
-			WorkingDir: "foo",
-			Command:    "echo 'bar'",
-			Outputs: map[string]*artifact.Artifact{
-				"bish.txt": {
-					Checksum: "abcdef",
-					Path:     "bish.txt",
-				},
-				"bosh": {
-					Checksum:    "ghijkl",
-					Path:        "bosh",
-					IsDir:       true,
-					IsRecursive: true,
-				},
-				"deleted_from_stage.txt": {
-					Checksum: "ghijkl",
-					Path:     "deleted_from_stage.txt",
-				},
-			},
-		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
-			if path == "stage.yaml" {
-				*output = stg.toFileFormat()
-			} else {
-				*output = lockedStage.toFileFormat()
-			}
-			return nil
-		}
-
-		outputStage, isLock, err := FromFile("stage.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if isLock {
-			t.Fatal("FromFile returned isLock = true")
-		}
-
-		expectedStage := Stage{
-			WorkingDir: "foo/bar",
-			Command:    "echo 'bar'",
-			Outputs: map[string]*artifact.Artifact{
-				"bish.txt": {
-					Path:     "bish.txt",
-					Checksum: "abcdef",
-				},
-				"bash.txt": {Path: "bash.txt"},
-				"bosh":     {Path: "bosh", IsDir: true},
-			},
-		}
-		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
-		}
-	})
-
-	t.Run("loads lock file if lock file found and equivalent", func(t *testing.T) {
-		defer resetFromYamlFileMock()
-		stg := Stage{
-			WorkingDir: "foo",
-			Command:    "echo 'bar'",
-			Outputs: map[string]*artifact.Artifact{
-				"bar.txt": {Path: "bar.txt"},
-			},
-		}
-		lockedStage := Stage{
-			WorkingDir: "foo",
-			Command:    "echo 'bar'",
-			Outputs: map[string]*artifact.Artifact{
-				"bar.txt": {
-					Checksum: "abcdef",
-					Path:     "bar.txt",
-				},
-			},
-		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
-			if path == "stage.yaml" {
-				*output = stg.toFileFormat()
-			} else {
-				*output = lockedStage.toFileFormat()
-			}
-			return nil
-		}
-
-		outputStage, isLock, err := FromFile("stage.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !isLock {
-			t.Fatal("FromFile returned isLock = false")
-		}
-		if diff := cmp.Diff(lockedStage, outputStage); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
-		}
-	})
-
-	t.Run("same/isLocked is false when only Stage metadata changes", func(t *testing.T) {
-		defer resetFromYamlFileMock()
-		stg := Stage{
-			WorkingDir: "foo",
-			Command:    "echo 'new command'",
-			Outputs: map[string]*artifact.Artifact{
-				"bar.txt": {Path: "bar.txt"},
-			},
-		}
-		lockedStage := Stage{
-			WorkingDir: "foo",
-			Command:    "echo 'bar'",
-			Outputs: map[string]*artifact.Artifact{
-				"bar.txt": {
-					Checksum: "abcdef",
-					Path:     "bar.txt",
-				},
-			},
-		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
-			if path == "stage.yaml" {
-				*output = stg.toFileFormat()
-			} else {
-				*output = lockedStage.toFileFormat()
-			}
-			return nil
-		}
-		expectedStage := Stage{
-			WorkingDir: "foo",
-			Command:    "echo 'new command'",
-			Outputs: map[string]*artifact.Artifact{
-				"bar.txt": {
-					Checksum: "abcdef",
-					Path:     "bar.txt",
-				},
-			},
-		}
-
-		outputStage, isLock, err := FromFile("stage.yaml")
-		if err != nil {
-			t.Fatal(err)
-		}
-		if isLock {
-			t.Fatal("FromFile returned isLock = true")
-		}
-		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
-			t.Fatalf("Stage -want +got:\n%s", diff)
-		}
-	})
-
 	t.Run("skipCache is always true for dependencies", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stg := Stage{
@@ -207,29 +29,8 @@ func TestFromFile(t *testing.T) {
 				"bar.txt": {Path: "bar.txt", SkipCache: true},
 			},
 		}
-		lockedStage := Stage{
-			WorkingDir: "foo",
-			Command:    "echo 'bar'",
-			Dependencies: map[string]*artifact.Artifact{
-				"foo.txt": {
-					Path:      "foo.txt",
-					SkipCache: true,
-					Checksum:  "foo_checksum",
-				},
-			},
-			Outputs: map[string]*artifact.Artifact{
-				"bar.txt": {
-					Path:     "bar.txt",
-					Checksum: "bar_checksum",
-				},
-			},
-		}
 		fromYamlFile = func(path string, output *stageFileFormat) error {
-			if path == "stage.yaml" {
-				*output = stg.toFileFormat()
-			} else {
-				*output = lockedStage.toFileFormat()
-			}
+			*output = stg.toFileFormat()
 			return nil
 		}
 		expectedStage := Stage{
@@ -239,7 +40,6 @@ func TestFromFile(t *testing.T) {
 				"foo.txt": {
 					Path:      "foo.txt",
 					SkipCache: true,
-					Checksum:  "foo_checksum",
 				},
 				"bish.txt": {Path: "bish.txt", SkipCache: true},
 			},
@@ -251,12 +51,9 @@ func TestFromFile(t *testing.T) {
 			},
 		}
 
-		outputStage, isLock, err := FromFile("stage.yaml")
+		outputStage, err := FromFile("stage.yaml")
 		if err != nil {
 			t.Fatal(err)
-		}
-		if isLock {
-			t.Fatal("FromFile returned isLock = true")
 		}
 		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
 			t.Fatalf("Stage -want +got:\n%s", diff)
@@ -281,7 +78,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, _, err := FromFile("stage.yaml")
+		_, err := FromFile("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -305,7 +102,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, _, err := FromFile("stage.yaml")
+		_, err := FromFile("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -329,7 +126,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, _, err := FromFile("stage.yaml")
+		_, err := FromFile("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -354,7 +151,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, _, err := FromFile("stage.yaml")
+		_, err := FromFile("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -390,12 +187,9 @@ func TestFromFile(t *testing.T) {
 			},
 		}.toStage()
 
-		outputStage, isLock, err := FromFile("stage.yaml")
+		outputStage, err := FromFile("stage.yaml")
 		if err != nil {
 			t.Fatal(err)
-		}
-		if isLock {
-			t.Fatal("FromFile returned isLock = true")
 		}
 		if diff := cmp.Diff(expectedStage, outputStage); diff != "" {
 			t.Fatalf("Stage -want +got:\n%s", diff)
@@ -419,7 +213,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, _, err := FromFile("stage.yaml")
+		_, err := FromFile("stage.yaml")
 		if err == nil {
 			t.Fatal("expcted FromFile to return error")
 		}
@@ -446,7 +240,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, _, err := FromFile("stage.yaml")
+		_, err := FromFile("stage.yaml")
 		if err == nil {
 			t.Fatal("expcted FromFile to return error")
 		}
@@ -456,13 +250,4 @@ func TestFromFile(t *testing.T) {
 			t.Fatalf("error -want +got:\n%s", diff)
 		}
 	})
-}
-
-func TestFilePathForLock(t *testing.T) {
-	input := "foo/bar.yaml"
-	want := "foo/bar.yaml.lock"
-	got := FilePathForLock(input)
-	if got != want {
-		t.Fatalf("FilePathForLock(%#v) = %#v, want %#v", input, got, want)
-	}
 }

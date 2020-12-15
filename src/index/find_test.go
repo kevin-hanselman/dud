@@ -12,9 +12,8 @@ func TestFindOwner(t *testing.T) {
 
 	t.Run("single stage", func(t *testing.T) {
 		targetArt := artifact.Artifact{Path: "bar.bin"}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo.bin": {Path: "foo.bin"},
 					"bar.bin": &targetArt,
@@ -37,9 +36,8 @@ func TestFindOwner(t *testing.T) {
 	})
 
 	t.Run("no owner", func(t *testing.T) {
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo.bin": {Path: "foo.bin"},
 					"bar.bin": {Path: "bar.bin"},
@@ -60,9 +58,8 @@ func TestFindOwner(t *testing.T) {
 
 	t.Run("file in dir artifact", func(t *testing.T) {
 		targetArt := artifact.Artifact{Path: "foo", IsDir: true, IsRecursive: false}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo": &targetArt,
 				},
@@ -85,9 +82,8 @@ func TestFindOwner(t *testing.T) {
 
 	t.Run("working dir doesn't affect artifact paths", func(t *testing.T) {
 		targetArt := artifact.Artifact{Path: "bar.bin"}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				WorkingDir: "foo",
 				Outputs: map[string]*artifact.Artifact{
 					"foo/bar.bin": &targetArt,
@@ -110,9 +106,8 @@ func TestFindOwner(t *testing.T) {
 	})
 
 	t.Run("file in sub-dir of non-recursive dir artifact", func(t *testing.T) {
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo": {Path: "foo", IsDir: true, IsRecursive: false},
 				},
@@ -132,9 +127,8 @@ func TestFindOwner(t *testing.T) {
 
 	t.Run("file in sub-dir of recursive dir artifact", func(t *testing.T) {
 		targetArt := artifact.Artifact{Path: "foo", IsDir: true, IsRecursive: true}
-		idx := make(Index)
-		idx["foo.yaml"] = &entry{
-			Stage: stage.Stage{
+		idx := Index{
+			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
 					"foo": &targetArt,
 				},

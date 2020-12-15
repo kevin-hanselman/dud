@@ -33,15 +33,15 @@ func (idx Index) Run(
 	}
 	inProgress[stagePath] = true
 
-	en, ok := idx[stagePath]
+	stg, ok := idx[stagePath]
 	if !ok {
 		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
 
-	hasCommand := en.Stage.Command != ""
-	hasDeps := len(en.Stage.Dependencies) > 0
+	hasCommand := stg.Command != ""
+	hasDeps := len(stg.Dependencies) > 0
 	doRun := hasCommand && !hasDeps
-	for artPath, art := range en.Stage.Dependencies {
+	for artPath, art := range stg.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
@@ -60,7 +60,7 @@ func (idx Index) Run(
 		}
 	}
 	if !doRun {
-		for _, art := range en.Stage.Outputs {
+		for _, art := range stg.Outputs {
 			artStatus, err := ch.Status(rootDir, *art)
 			if err != nil {
 				return err
@@ -73,7 +73,7 @@ func (idx Index) Run(
 	}
 	if doRun && hasCommand {
 		logger.Printf("running stage %s\n", stagePath)
-		if err := runCommand(en.Stage.CreateCommand()); err != nil {
+		if err := runCommand(stg.CreateCommand()); err != nil {
 			return err
 		}
 	} else {

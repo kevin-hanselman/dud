@@ -49,7 +49,9 @@ source code.`,
 				if err != nil {
 					logger.Fatal(err)
 				}
-				trace.Start(debugOutput)
+				if err := trace.Start(debugOutput); err != nil {
+					logger.Fatal(err)
+				}
 			}
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {

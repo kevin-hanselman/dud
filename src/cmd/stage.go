@@ -13,15 +13,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var newStageCmd = &cobra.Command{
-	Use:   "new",
-	Short: "Create a stage from the command-line and print it",
-	Long: `Stage creates a stage from the command-line and prints it to STDOUT.
+var genStageCmd = &cobra.Command{
+	Use:   "gen",
+	Short: "Generate Stage YAML using the CLI",
+	Long: `Gen generates a Stage YAML file and prints it to STDOUT.
 
 The output of this command can be redirected to a file and modified further as
-needed. For example:
-
-dud stage -o data/ python download_data.py > download.yaml`,
+needed.`,
+	Example: `dud stage gen -o data/ python download_data.py > download.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		stageWorkingDir, err := rel(rootDir, stageWorkingDir)
 		if err != nil {
@@ -47,7 +46,9 @@ dud stage -o data/ python download_data.py > download.yaml`,
 			}
 			stage.Dependencies[art.Path] = art
 		}
-		stage.Serialize(os.Stdout)
+		if err := stage.Serialize(os.Stdout); err != nil {
+			logger.Fatal(err)
+		}
 	},
 }
 
@@ -88,7 +89,7 @@ var (
 )
 
 func init() {
-	newStageCmd.Flags().StringSliceVarP(
+	genStageCmd.Flags().StringSliceVarP(
 		&stageOutputs,
 		"out",
 		"o",
@@ -96,7 +97,7 @@ func init() {
 		"one or more output files or directories",
 	)
 
-	newStageCmd.Flags().StringSliceVarP(
+	genStageCmd.Flags().StringSliceVarP(
 		&stageDependencies,
 		"dep",
 		"d",
@@ -104,7 +105,7 @@ func init() {
 		"one or more dependent files or directories",
 	)
 
-	newStageCmd.Flags().StringVarP(
+	genStageCmd.Flags().StringVarP(
 		&stageWorkingDir,
 		"work-dir",
 		"w",
@@ -118,7 +119,7 @@ func init() {
 		Long:             "Stage is a group of sub-commands for interacting with stage and the index.",
 		PersistentPreRun: requireInitializedProject,
 	}
-	stageCmd.AddCommand(newStageCmd)
+	stageCmd.AddCommand(genStageCmd)
 	stageCmd.AddCommand(addStageCmd)
 	rootCmd.AddCommand(stageCmd)
 }

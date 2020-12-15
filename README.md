@@ -17,7 +17,7 @@ Add some data and tell Dud to track it.
 ```
 $ curl -O https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 
-$ dud stage new -o cifar-10-python.tar.gz | tee cifar.yaml
+$ dud stage gen -o cifar-10-python.tar.gz | tee cifar.yaml
 working-dir: .
 outputs:
     - path: cifar-10-python.tar.gz
@@ -25,7 +25,7 @@ outputs:
 $ dud stage add cifar.yaml
 
 $ dud status
-cifar.yaml  (lock file up-to-date: false)
+cifar.yaml
   cifar-10-python.tar.gz  uncommitted
 ```
 
@@ -35,22 +35,21 @@ $ dud commit
 committing stage cifar.yaml
 
 $ dud status
-cifar.yaml  (lock file up-to-date: true)
+cifar.yaml
   cifar-10-python.tar.gz  up-to-date (link)
 
 $ ls -l
 total 12
 lrwxrwxrwx 1 user user  93 Oct 23 16:34 cifar-10-python.tar.gz ->
 /home/user/cifar/.dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
--rw-r--r-- 1 user user  59 Oct 23 16:32 cifar.yaml
--rw-r--r-- 1 user user 140 Oct 23 16:34 cifar.yaml.lock
+-rw-r--r-- 1 user user 140 Oct 23 16:32 cifar.yaml
 ```
 
 Add a stage to extract the data.
 ```
 $ mkdir cifar-10-batches-py
 
-$ dud stage new -d cifar-10-python.tar.gz -o cifar-10-batches-py -- \
+$ dud stage gen -d cifar-10-python.tar.gz -o cifar-10-batches-py -- \
   tar -xf cifar-10-python.tar.gz | tee extract_cifar.yaml
 command: tar -xf cifar-10-python.tar.gz
 working-dir: .
@@ -70,9 +69,9 @@ nothing to do for stage cifar.yaml
 running stage extract_cifar.yaml
 
 $ dud status
-cifar.yaml  (lock file up-to-date: true)
+cifar.yaml
   cifar-10-python.tar.gz  up-to-date (link)
-extract_cifar.yaml  (lock file up-to-date: false)
+extract_cifar.yaml
   cifar-10-batches-py  uncommitted
 
 $ dud commit
@@ -80,9 +79,9 @@ committing stage cifar.yaml
 committing stage extract_cifar.yaml
 
 $ dud status
-cifar.yaml  (lock file up-to-date: true)
+cifar.yaml
   cifar-10-python.tar.gz  up-to-date (link)
-extract_cifar.yaml  (lock file up-to-date: true)
+extract_cifar.yaml
   cifar-10-batches-py  up-to-date
 ```
 

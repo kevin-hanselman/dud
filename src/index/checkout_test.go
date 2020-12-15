@@ -49,8 +49,8 @@ func TestCheckout(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["foo.yaml"] = &entry{Stage: stgA}
-		idx["bar.yaml"] = &entry{Stage: stgB}
+		idx["foo.yaml"] = &stgA
+		idx["bar.yaml"] = &stgB
 
 		mockCache := mocks.Cache{}
 
@@ -101,8 +101,8 @@ func TestCheckout(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["foo.yaml"] = &entry{Stage: stgA}
-		idx["bar.yaml"] = &entry{Stage: stgB}
+		idx["foo.yaml"] = &stgA
+		idx["bar.yaml"] = &stgB
 
 		mockCache := mocks.Cache{}
 
@@ -165,9 +165,9 @@ func TestCheckout(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["bish.yaml"] = &entry{Stage: stgA}
-		idx["bash.yaml"] = &entry{Stage: stgB}
-		idx["bosh.yaml"] = &entry{Stage: stgC}
+		idx["bish.yaml"] = &stgA
+		idx["bash.yaml"] = &stgB
+		idx["bosh.yaml"] = &stgC
 
 		mockCache := mocks.Cache{}
 
@@ -236,10 +236,10 @@ func TestCheckout(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["a.yaml"] = &entry{Stage: stgA}
-		idx["b.yaml"] = &entry{Stage: stgB}
-		idx["c.yaml"] = &entry{Stage: stgC}
-		idx["d.yaml"] = &entry{Stage: stgD}
+		idx["a.yaml"] = &stgA
+		idx["b.yaml"] = &stgB
+		idx["c.yaml"] = &stgC
+		idx["d.yaml"] = &stgD
 
 		mockCache := mocks.Cache{}
 		// Stage D is the only Stage that could possibly be checked out
@@ -298,8 +298,8 @@ func TestCheckout(t *testing.T) {
 			},
 		}
 		idx := Index{
-			"foo.yaml": &entry{Stage: stgA},
-			"bar.yaml": &entry{Stage: stgB},
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
 		}
 
 		mockCache := mocks.Cache{}

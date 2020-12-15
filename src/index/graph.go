@@ -48,7 +48,7 @@ func (idx Index) Graph(
 	}
 	inProgress[stagePath] = true
 
-	en, ok := idx[stagePath]
+	stg, ok := idx[stagePath]
 	if !ok {
 		return fmt.Errorf("status: unknown stage %#v", stagePath)
 	}
@@ -62,7 +62,7 @@ func (idx Index) Graph(
 	// Must be true for edges to be directly connected to a subgraph.
 	// See: https://stackoverflow.com/a/2012106/857893
 	graph.AddAttr(graph.Name, "compound", "true")
-	for artPath := range en.Stage.Dependencies {
+	for artPath := range stg.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
@@ -103,7 +103,7 @@ func (idx Index) Graph(
 			return err
 		}
 	} else {
-		for artPath := range en.Stage.Outputs {
+		for artPath := range stg.Outputs {
 			if err := graph.AddNode(stageSubgraphName, artPath, nil); err != nil {
 				return err
 			}
@@ -113,7 +113,7 @@ func (idx Index) Graph(
 		if err != nil {
 			return err
 		}
-		tmpl.Execute(&buf, stageNode{Path: stagePath, Command: en.Stage.Command})
+		tmpl.Execute(&buf, stageNode{Path: stagePath, Command: stg.Command})
 		if err := graph.AddSubGraph(
 			graph.Name,
 			stageSubgraphName,

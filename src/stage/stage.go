@@ -92,22 +92,6 @@ func (sff stageFileFormat) toStage() (stg Stage) {
 	return
 }
 
-func sameish(stgA, stgB Stage) bool {
-	if stgA.Command != stgB.Command {
-		return false
-	}
-	if stgA.WorkingDir != stgB.WorkingDir {
-		return false
-	}
-	if len(stgA.Outputs) != len(stgB.Outputs) {
-		return false
-	}
-	if len(stgA.Dependencies) != len(stgB.Dependencies) {
-		return false
-	}
-	return true
-}
-
 var fromYamlFile = func(path string, sff *stageFileFormat) error {
 	file, err := os.Open(path)
 	if err != nil {
@@ -120,18 +104,21 @@ var fromYamlFile = func(path string, sff *stageFileFormat) error {
 
 // FromFile loads a Stage from a file. If a lock file for the Stage exists,
 // this function uses any Artifact.Checksums it can from the lock file.
-var FromFile = func(stagePath string) (Stage, bool, error) {
+var FromFile = func(stagePath string) (Stage, error) {
 	var (
-		stg, locked Stage
-		sff         stageFileFormat
+		stg Stage
+		sff stageFileFormat
 	)
 	if err := fromYamlFile(stagePath, &sff); err != nil {
-		return stg, false, err
+		return stg, err
 	}
-	// Clean all user-editable paths. Assume that the lock file has not been
-	// tampered with. (We may consider relaxing that assumption at some point.)
+	// Clean all user-editable paths.
 	for i, art := range sff.Dependencies {
 		art.Path = filepath.Clean(art.Path)
+		// Dependencies are only committed-to/checked-out-of the Cache if they are an
+		// output of (i.e. owned by) another Stage, in which case said owner
+		// Stage is responsible for interacting with the Cache.
+		art.SkipCache = true
 		sff.Dependencies[i] = art
 	}
 	for i, art := range sff.Outputs {
@@ -141,42 +128,7 @@ var FromFile = func(stagePath string) (Stage, bool, error) {
 	sff.WorkingDir = filepath.Clean(sff.WorkingDir)
 	stg = sff.toStage()
 
-	// Wipe any output from the previous deserialization.
-	// This is important and hard to unit test.
-	sff = stageFileFormat{}
-
-	lockPath := FilePathForLock(stagePath)
-	err := fromYamlFile(lockPath, &sff)
-	if err != nil && !os.IsNotExist(err) {
-		return locked, false, err
-	}
-	locked = sff.toStage()
-
-	same := sameish(stg, locked)
-
-	for artPath, art := range stg.Dependencies {
-		// Dependencies are only committed-to/checked-out-of the Cache if they are an
-		// output of (i.e. owned by) another Stage, in which case said owner
-		// Stage is responsible for interacting with the Cache.
-		art.SkipCache = true
-		lockedArt, ok := locked.Dependencies[artPath]
-		if ok && art.IsEquivalent(*lockedArt) {
-			stg.Dependencies[artPath] = lockedArt
-		} else {
-			same = false
-		}
-	}
-
-	for artPath, art := range stg.Outputs {
-		lockedArt, ok := locked.Outputs[artPath]
-		if ok && art.IsEquivalent(*lockedArt) {
-			stg.Outputs[artPath] = lockedArt
-		} else {
-			same = false
-		}
-	}
-
-	return stg, same, stg.validate()
+	return stg, stg.validate()
 }
 
 func (stg Stage) validate() error {

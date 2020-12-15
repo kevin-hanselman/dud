@@ -51,8 +51,8 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["foo.yaml"] = &entry{Stage: stgA}
-		idx["bar.yaml"] = &entry{Stage: stgB}
+		idx["foo.yaml"] = &stgA
+		idx["bar.yaml"] = &stgB
 
 		mockCache := mocks.Cache{}
 
@@ -94,8 +94,8 @@ func TestStatus(t *testing.T) {
 		expectedStatus["bar.yaml"] = expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate)
 
 		idx := make(Index)
-		idx["foo.yaml"] = &entry{Stage: stgA}
-		idx["bar.yaml"] = &entry{Stage: stgB}
+		idx["foo.yaml"] = &stgA
+		idx["bar.yaml"] = &stgB
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)
@@ -136,9 +136,9 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["a.yaml"] = &entry{Stage: stgA}
-		idx["b.yaml"] = &entry{Stage: stgB}
-		idx["c.yaml"] = &entry{Stage: stgC}
+		idx["a.yaml"] = &stgA
+		idx["b.yaml"] = &stgB
+		idx["c.yaml"] = &stgC
 
 		mockCache := mocks.Cache{}
 
@@ -194,10 +194,10 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["a.yaml"] = &entry{Stage: stgA}
-		idx["b.yaml"] = &entry{Stage: stgB}
-		idx["c.yaml"] = &entry{Stage: stgC}
-		idx["d.yaml"] = &entry{Stage: stgD}
+		idx["a.yaml"] = &stgA
+		idx["b.yaml"] = &stgB
+		idx["c.yaml"] = &stgC
+		idx["d.yaml"] = &stgD
 
 		mockCache := mocks.Cache{}
 		// Stage D is the only Stage that could possibly be committed
@@ -238,7 +238,7 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		idx := make(Index)
-		idx["foo.yaml"] = &entry{Stage: stg}
+		idx["foo.yaml"] = &stg
 
 		mockCache := mocks.Cache{}
 
