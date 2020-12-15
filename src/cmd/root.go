@@ -65,6 +65,7 @@ source code.`,
 				trace.Stop()
 			}
 		},
+		DisableAutoGenTag: true,
 	}
 
 	// This is the Logger for the entire application.

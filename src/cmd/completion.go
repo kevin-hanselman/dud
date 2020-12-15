@@ -13,36 +13,42 @@ func init() {
 var completionCmd = &cobra.Command{
 	Use:   "completion {bash|zsh|fish}",
 	Short: "Generate shell completion script",
-	Long: `To load completions:
+	Long: `Completion generates a completion script for the given shell.
 
-Bash:
+#### Bash
 
-$ source <(dud completion bash)
+    $ source <(dud completion bash)
 
-# To load completions for each session, execute once:
-Linux:
-$ dud completion bash > /etc/bash_completion.d/dud
-MacOS:
-$ dud completion bash > /usr/local/etc/bash_completion.d/dud
+To load completions for each session, execute once:
 
-Zsh:
+On Linux:
 
-# If shell completion is not already enabled in your environment you will need
-# to enable it.  You can execute the following once:
+    $ dud completion bash > /etc/bash_completion.d/dud
 
-$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+On MacOS:
 
-# To load completions for each session, execute once:
-$ dud completion zsh > "${fpath[1]}/_dud"
+    $ dud completion bash > /usr/local/etc/bash_completion.d/dud
 
-# You will need to start a new shell for this setup to take effect.
+#### Zsh
 
-Fish:
+If shell completion is not already enabled in your environment you will need to
+enable it. You can execute the following once:
 
-$ dud completion fish | source
+    $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
-# To load completions for each session, execute once:
-$ dud completion fish > ~/.config/fish/completions/dud.fish
+To load completions for each session, execute once:
+
+    $ dud completion zsh > "${fpath[1]}/_dud"
+
+You will need to start a new shell for this setup to take effect.
+
+#### Fish
+
+    $ dud completion fish | source
+
+To load completions for each session, execute once:
+
+    $ dud completion fish > ~/.config/fish/completions/dud.fish
 `,
 	DisableFlagsInUseLine: true,
 	ValidArgs:             []string{"bash", "zsh", "fish"},
