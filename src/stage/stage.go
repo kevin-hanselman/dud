@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/checksum"
 
 	"gopkg.in/yaml.v3"
 )
@@ -16,7 +18,11 @@ import (
 // A Stage holds all information required to reproduce data. It is the primary
 // building block of Dud pipelines.
 type Stage struct {
-	// The string to be evaluated and executed by a shell.
+	// Checksum is the checksum of the Stage definition excluding Artifact
+	// checksums. This checksum is used to determine when a Stage definition
+	// has been modified by the user.
+	Checksum string
+	// Command is the string to be evaluated and executed by a shell.
 	Command string
 	// WorkingDir is the directory in which the Stage's command is executed. It
 	// is a directory path relative to the Dud root directory. An
@@ -33,16 +39,32 @@ type Stage struct {
 }
 
 type stageFileFormat struct {
+	Checksum     string               `yaml:",omitempty"`
 	Command      string               `yaml:",omitempty"`
 	WorkingDir   string               `yaml:"working-dir,omitempty"`
 	Dependencies []*artifact.Artifact `yaml:",omitempty"`
 	Outputs      []*artifact.Artifact
 }
 
-// Status is a map of Artifact Paths to statuses
-type Status map[string]artifact.ArtifactWithStatus
+// Status holds everything necessary to qualify the state of a Stage.
+type Status struct {
+	// HasChecksum is true if the Stage had a non-empty Checksum field.
+	HasChecksum bool
+	// ChecksumMatches is true if the checksum of the Stage's definition
+	// matches its Checksum field.
+	ChecksumMatches bool
+	ArtifactStatus  map[string]artifact.ArtifactWithStatus
+}
+
+// NewStatus initializes a new Status object.
+func NewStatus() Status {
+	s := Status{}
+	s.ArtifactStatus = make(map[string]artifact.ArtifactWithStatus)
+	return s
+}
 
 func (stg Stage) toFileFormat() (out stageFileFormat) {
+	out.Checksum = stg.Checksum
 	out.Command = stg.Command
 	out.WorkingDir = stg.WorkingDir
 
@@ -50,6 +72,11 @@ func (stg Stage) toFileFormat() (out stageFileFormat) {
 		out.Dependencies = make([]*artifact.Artifact, len(stg.Dependencies))
 		var i int = 0
 		for _, art := range stg.Dependencies {
+			// SkipCache is implicitly true for all dependencies. It's
+			// redundant and noisy to write it to the Stage file, so we hide
+			// it (making use of the 'omitempty' YAML directive) and set
+			// SkipCache to true when loading the file (see FromFile).
+			art.SkipCache = false
 			out.Dependencies[i] = art
 			i++
 		}
@@ -67,6 +94,7 @@ func (stg Stage) toFileFormat() (out stageFileFormat) {
 }
 
 func (sff stageFileFormat) toStage() (stg Stage) {
+	stg.Checksum = sff.Checksum
 	stg.Command = sff.Command
 	stg.WorkingDir = sff.WorkingDir
 
@@ -115,9 +143,9 @@ var FromFile = func(stagePath string) (Stage, error) {
 	// Clean all user-editable paths.
 	for i, art := range sff.Dependencies {
 		art.Path = filepath.Clean(art.Path)
-		// Dependencies are only committed-to/checked-out-of the Cache if they are an
-		// output of (i.e. owned by) another Stage, in which case said owner
-		// Stage is responsible for interacting with the Cache.
+		// Dependencies are only committed-to/checked-out-of the Cache if they
+		// are an output of (i.e. owned by) another Stage, in which case said
+		// owner Stage is responsible for interacting with the Cache.
 		art.SkipCache = true
 		sff.Dependencies[i] = art
 	}
@@ -178,14 +206,35 @@ func (stg *Stage) Serialize(writer io.Writer) error {
 	return yaml.NewEncoder(writer).Encode(stg.toFileFormat())
 }
 
-// FilePathForLock returns the lock file path given a Stage path.
-func FilePathForLock(stagePath string) string {
-	var str strings.Builder
-	// TODO: check for valid YAML, or at least .y(a)ml extension?
-	// TODO: check for .lock suffix already in input?
-	str.WriteString(stagePath)
-	str.WriteString(".lock")
-	return str.String()
+// CalculateChecksum returns the checksum of the Stage as it would be set in
+// the Checksum field.
+func (stg Stage) CalculateChecksum() (string, error) {
+	cleanStage := Stage{
+		Command:    stg.Command,
+		WorkingDir: stg.WorkingDir,
+	}
+	cleanStage.Dependencies = make(map[string]*artifact.Artifact, len(stg.Dependencies))
+	for _, art := range stg.Dependencies {
+		newArt := *art
+		newArt.Checksum = ""
+		cleanStage.Dependencies[art.Path] = &newArt
+	}
+	cleanStage.Outputs = make(map[string]*artifact.Artifact, len(stg.Outputs))
+	for _, art := range stg.Outputs {
+		newArt := *art
+		newArt.Checksum = ""
+		cleanStage.Outputs[art.Path] = &newArt
+	}
+	// TODO: Using encoding/gob gives sporadic checksum differences with this
+	// method. Using encoding/json seems to alleviate the issue. We need to
+	// understand this better.
+	reader, writer := io.Pipe()
+	defer reader.Close()
+	go func() {
+		json.NewEncoder(writer).Encode(cleanStage)
+		writer.Close()
+	}()
+	return checksum.Checksum(reader)
 }
 
 // CreateCommand return an exec.Cmd for the Stage.

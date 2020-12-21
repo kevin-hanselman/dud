@@ -16,11 +16,11 @@ type Cache struct {
 }
 
 // Checkout provides a mock function with given fields: workspaceDir, art, strat
-func (_m *Cache) Checkout(workspaceDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+func (_m *Cache) Checkout(workspaceDir string, art artifact.Artifact, strat strategy.CheckoutStrategy) error {
 	ret := _m.Called(workspaceDir, art, strat)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *artifact.Artifact, strategy.CheckoutStrategy) error); ok {
+	if rf, ok := ret.Get(0).(func(string, artifact.Artifact, strategy.CheckoutStrategy) error); ok {
 		r0 = rf(workspaceDir, art, strat)
 	} else {
 		r0 = ret.Error(0)

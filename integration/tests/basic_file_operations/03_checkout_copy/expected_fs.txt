@@ -7,4 +7,4 @@
 [-rw-r--r-- user              11]  ./.dud/index
 [-rw-r--r-- user             208]  ./.dud/rclone.conf
 [-rw-r--r-- user               4]  ./bar.txt
-[-rw-r--r-- user             125]  ./stage.yaml
+[-rw-r--r-- user             200]  ./stage.yaml

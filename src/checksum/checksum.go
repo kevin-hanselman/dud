@@ -38,13 +38,19 @@ func hashToHexString(h hash.Hash) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// Checksum reads from reader and returns the hash of the bytes as a hex string.
-// If the buffer passed is zero-length, an internal buffer will be used.
-func Checksum(reader io.Reader, buffer []byte) (string, error) {
-	if len(buffer) == 0 {
-		buffer = *bufferPool.Get().(*[]byte)
-		defer bufferPool.Put(&buffer)
-	}
+// Checksum reads from reader and returns the hash of the bytes as a hex
+// string. Checksum buffers from reader internally.
+func Checksum(reader io.Reader) (string, error) {
+	buffer := *bufferPool.Get().(*[]byte)
+	defer bufferPool.Put(&buffer)
+	return ChecksumBuffer(reader, buffer)
+}
+
+// ChecksumBuffer reads from reader and returns the hash of the bytes as a hex
+// string. ChecksumBuffer uses the buffer argument to buffer I/O from the
+// reader to the hasher. If the buffer passed is zero-length, this function
+// will panic.
+func ChecksumBuffer(reader io.Reader, buffer []byte) (string, error) {
 	h := hasherPool.Get().(*blake3.Hasher)
 	defer hasherPool.Put(h)
 	h.Reset()

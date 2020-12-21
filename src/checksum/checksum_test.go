@@ -14,7 +14,7 @@ func TestChecksum(t *testing.T) {
 	inputReader := bytes.NewBufferString(inputString)
 	outputBuffer := bytes.NewBuffer(nil)
 	want := "288a86a79f20a3d6dccdca7713beaed178798296bdfa7913fa2a62d9727bf8f8"
-	output, err := Checksum(io.TeeReader(inputReader, outputBuffer), []byte{})
+	output, err := Checksum(io.TeeReader(inputReader, outputBuffer))
 	if err != nil {
 		t.Error(err)
 	}
@@ -41,7 +41,7 @@ func benchmarkChecksum(inputSize datasize.ByteSize, b *testing.B) {
 	reader := bytes.NewReader(input)
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
-		_, err := Checksum(reader, []byte{})
+		_, err := Checksum(reader)
 		b.StopTimer()
 		if err != nil {
 			b.Error(err)

@@ -26,7 +26,7 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use: "dud",
-		Long: `Dud is a tool to for storing, versioning, and reproducing large files alongside
+		Long: `Dud is a tool for storing, versioning, and reproducing large files alongside
 source code.`,
 		// TODO: Ensure we always close debugOutput to prevent resource
 		// leaks. This probably requires all sub-commands not to call

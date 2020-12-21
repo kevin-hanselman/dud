@@ -31,7 +31,7 @@ func TestFetch(t *testing.T) {
 	// TODO: Consider checking the logs instead of throwing them away.
 	logger := log.New(ioutil.Discard, "", 0)
 
-	t.Run("disjoint stages with oprhan dependency", func(t *testing.T) {
+	t.Run("disjoint stages with orphan dependency", func(t *testing.T) {
 		stgA := stage.Stage{
 			WorkingDir: "a",
 			Dependencies: map[string]*artifact.Artifact{
@@ -127,7 +127,7 @@ func TestFetch(t *testing.T) {
 
 		// The linked Artifact should not be fetched as a dependency.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Fetch", rootDir, remote, &linkedArtifactOrig)
+		mockCache.AssertNotCalled(t, "Fetch", rootDir, remote, linkedArtifactOrig)
 
 		mockCache.AssertExpectations(t)
 
@@ -326,7 +326,7 @@ func TestFetch(t *testing.T) {
 
 		// The linked Artifact should not be fetched as a dependency.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Fetch", stgB.WorkingDir, &linkedArtifactOrig, remote)
+		mockCache.AssertNotCalled(t, "Fetch", stgB.WorkingDir, remote, linkedArtifactOrig)
 
 		mockCache.AssertExpectations(t)
 

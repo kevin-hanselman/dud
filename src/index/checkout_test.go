@@ -20,7 +20,7 @@ func expectOutputsCheckedOut(
 	strat strategy.CheckoutStrategy,
 ) {
 	for _, art := range stg.Outputs {
-		mockCache.On("Checkout", rootDir, art, strat).Return(nil).Once()
+		mockCache.On("Checkout", rootDir, *art, strat).Return(nil).Once()
 	}
 }
 
@@ -32,7 +32,7 @@ func TestCheckout(t *testing.T) {
 	// TODO: Consider checking the logs instead of throwing them away.
 	logger := log.New(ioutil.Discard, "", 0)
 
-	t.Run("disjoint stages with oprhan dependency", func(t *testing.T) {
+	t.Run("disjoint stages with orphan dependency", func(t *testing.T) {
 		stgA := stage.Stage{
 			WorkingDir: "a",
 			Dependencies: map[string]*artifact.Artifact{
@@ -48,9 +48,10 @@ func TestCheckout(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
-		idx["bar.yaml"] = &stgB
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -100,9 +101,10 @@ func TestCheckout(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
-		idx["bar.yaml"] = &stgB
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -126,7 +128,7 @@ func TestCheckout(t *testing.T) {
 
 		// The linked Artifact should not be checkedOut as a dependency.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Checkout", rootDir, &linkedArtifactOrig, strat)
+		mockCache.AssertNotCalled(t, "Checkout", rootDir, linkedArtifactOrig, strat)
 
 		mockCache.AssertExpectations(t)
 
@@ -164,10 +166,11 @@ func TestCheckout(t *testing.T) {
 				"bosh.bin": {Path: "bosh.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["bish.yaml"] = &stgA
-		idx["bash.yaml"] = &stgB
-		idx["bosh.yaml"] = &stgC
+		idx := Index{
+			"bish.yaml": &stgA,
+			"bash.yaml": &stgB,
+			"bosh.yaml": &stgC,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -235,11 +238,12 @@ func TestCheckout(t *testing.T) {
 				"d.bin": {Path: "d.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["a.yaml"] = &stgA
-		idx["b.yaml"] = &stgB
-		idx["c.yaml"] = &stgC
-		idx["d.yaml"] = &stgD
+		idx := Index{
+			"a.yaml": &stgA,
+			"b.yaml": &stgB,
+			"c.yaml": &stgC,
+			"d.yaml": &stgD,
+		}
 
 		mockCache := mocks.Cache{}
 		// Stage D is the only Stage that could possibly be checked out
@@ -323,7 +327,7 @@ func TestCheckout(t *testing.T) {
 
 		// The linked Artifact should not be checkedOut as a dependency.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Checkout", stgB.WorkingDir, &linkedArtifactOrig, strat)
+		mockCache.AssertNotCalled(t, "Checkout", stgB.WorkingDir, linkedArtifactOrig, strat)
 
 		mockCache.AssertExpectations(t)
 

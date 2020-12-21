@@ -17,8 +17,16 @@ func init() {
 
 func printStageStatus(stagePath string, status stage.Status) error {
 	// TODO: use text/tabwriter?
-	fmt.Println(stagePath)
-	for path, artStatus := range status {
+	var stageFileStatus string
+	if status.ChecksumMatches {
+		stageFileStatus = "up-to-date"
+	} else if status.HasChecksum {
+		stageFileStatus = "modified"
+	} else {
+		stageFileStatus = "not checksummed"
+	}
+	fmt.Printf("%s   (stage definition %s)\n", stagePath, stageFileStatus)
+	for path, artStatus := range status.ArtifactStatus {
 		if _, err := fmt.Printf("  %s  %s\n", path, artStatus); err != nil {
 			return err
 		}

@@ -23,13 +23,24 @@ var checksumCmd = &cobra.Command{
 The CLI is intended to be compatible with the *sum family of command-line tools
 (although this version is currently incomplete).`,
 	Run: func(cmd *cobra.Command, args []string) {
-		buffer := make([]byte, bufSize)
+		var (
+			buffer []byte = nil
+			cksum  string
+			err    error
+		)
+		if bufSize > 0 {
+			buffer = make([]byte, bufSize)
+		}
 		if len(args) == 0 {
-			checksum, err := checksum.Checksum(os.Stdin, buffer)
+			if buffer == nil {
+				cksum, err = checksum.Checksum(os.Stdin)
+			} else {
+				cksum, err = checksum.ChecksumBuffer(os.Stdin, buffer)
+			}
 			if err != nil {
 				logger.Fatal(err)
 			}
-			fmt.Printf("%s  -\n", checksum)
+			fmt.Printf("%s  -\n", cksum)
 			return
 		}
 
@@ -38,11 +49,15 @@ The CLI is intended to be compatible with the *sum family of command-line tools
 			if err != nil {
 				logger.Fatal(err)
 			}
-			checksum, err := checksum.Checksum(file, buffer)
+			if buffer == nil {
+				cksum, err = checksum.Checksum(file)
+			} else {
+				cksum, err = checksum.ChecksumBuffer(file, buffer)
+			}
 			if err != nil {
 				logger.Fatal(err)
 			}
-			fmt.Printf("%s  %s\n", checksum, path)
+			fmt.Printf("%s  %s\n", cksum, path)
 		}
 	},
 }

@@ -30,7 +30,7 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := cache.Checkout(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy); err != nil {
 			t.Fatal(err)
 		}
 

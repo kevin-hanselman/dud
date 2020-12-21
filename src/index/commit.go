@@ -70,6 +70,11 @@ func (idx Index) Commit(
 			return err
 		}
 	}
+	var err error
+	stg.Checksum, err = stg.CalculateChecksum()
+	if err != nil {
+		return err
+	}
 	committed[stagePath] = true
 	delete(inProgress, stagePath)
 	return nil

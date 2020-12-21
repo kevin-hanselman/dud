@@ -38,7 +38,7 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 		t.Fatal(err)
 	}
 
-	checkoutErr := cache.Checkout(dirs.WorkDir, &art, strat)
+	checkoutErr := cache.Checkout(dirs.WorkDir, art, strat)
 
 	causeErr := errors.Cause(checkoutErr)
 

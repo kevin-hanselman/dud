@@ -34,14 +34,24 @@ func (idx Index) Status(
 	if !ok {
 		return fmt.Errorf("status: unknown stage %#v", stagePath)
 	}
-	stageStatus := make(stage.Status)
+
+	stageStatus := stage.NewStatus()
+	if stg.Checksum != "" {
+		stageStatus.HasChecksum = true
+		realChecksum, err := stg.CalculateChecksum()
+		if err != nil {
+			return err
+		}
+		stageStatus.ChecksumMatches = realChecksum == stg.Checksum
+	}
+
 	for artPath, art := range stg.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
 		}
 		if ownerPath == "" {
-			stageStatus[artPath], err = ch.Status(rootDir, *art)
+			stageStatus.ArtifactStatus[artPath], err = ch.Status(rootDir, *art)
 			if err != nil {
 				return err
 			}
@@ -54,7 +64,7 @@ func (idx Index) Status(
 
 	for artPath, art := range stg.Outputs {
 		var err error
-		stageStatus[artPath], err = ch.Status(rootDir, *art)
+		stageStatus.ArtifactStatus[artPath], err = ch.Status(rootDir, *art)
 		if err != nil {
 			return errors.Wrapf(err, "status: %s", art.Path)
 		}

@@ -58,6 +58,14 @@ func TestRun(t *testing.T) {
 	}
 	defer func() { runCommand = runCommandOrig }()
 
+	updateChecksum := func(stg *stage.Stage, t *testing.T) {
+		var err error
+		stg.Checksum, err = stg.CalculateChecksum()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	// TODO: Consider checking the logs instead of throwing them away.
 	logger := log.New(ioutil.Discard, "", 0)
 
@@ -69,8 +77,8 @@ func TestRun(t *testing.T) {
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
+		updateChecksum(&stgA, t)
+		idx := Index{"foo.yaml": &stgA}
 
 		mockCache := mocks.Cache{}
 
@@ -104,8 +112,8 @@ func TestRun(t *testing.T) {
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
+		updateChecksum(&stgA, t)
+		idx := Index{"foo.yaml": &stgA}
 
 		mockCache := mocks.Cache{}
 
@@ -140,8 +148,10 @@ func TestRun(t *testing.T) {
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
+		updateChecksum(&stgA, t)
+		idx := Index{
+			"foo.yaml": &stgA,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -174,8 +184,9 @@ func TestRun(t *testing.T) {
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
+		idx := Index{
+			"foo.yaml": &stgA,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -208,6 +219,7 @@ func TestRun(t *testing.T) {
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
+		updateChecksum(&stgA, t)
 		stgB := stage.Stage{
 			Command: "echo 'run stage B'",
 			Dependencies: map[string]*artifact.Artifact{
@@ -217,9 +229,11 @@ func TestRun(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
-		idx["bar.yaml"] = &stgB
+		updateChecksum(&stgB, t)
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -254,6 +268,7 @@ func TestRun(t *testing.T) {
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
+		updateChecksum(&stgA, t)
 		stgB := stage.Stage{
 			Command: "echo 'run stage B'",
 			Dependencies: map[string]*artifact.Artifact{
@@ -263,9 +278,11 @@ func TestRun(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
-		idx["bar.yaml"] = &stgB
+		updateChecksum(&stgB, t)
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -303,6 +320,7 @@ func TestRun(t *testing.T) {
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
+		updateChecksum(&stgA, t)
 		stgB := stage.Stage{
 			Command: "echo 'run stage B'",
 			Dependencies: map[string]*artifact.Artifact{
@@ -312,9 +330,11 @@ func TestRun(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
-		idx["bar.yaml"] = &stgB
+		updateChecksum(&stgB, t)
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -351,11 +371,13 @@ func TestRun(t *testing.T) {
 				"bish.bin": {Path: "bish.bin"},
 			},
 		}
+		updateChecksum(&depA, t)
 		depB := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"bash.bin": {Path: "bash.bin"},
 			},
 		}
+		updateChecksum(&depB, t)
 		downstream := stage.Stage{
 			Command: "echo 'generating bosh.bin'",
 			Dependencies: map[string]*artifact.Artifact{
@@ -366,10 +388,12 @@ func TestRun(t *testing.T) {
 				"bosh.bin": {Path: "bosh.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["bish.yaml"] = &depA
-		idx["bash.yaml"] = &depB
-		idx["bosh.yaml"] = &downstream
+		updateChecksum(&downstream, t)
+		idx := Index{
+			"bish.yaml": &depA,
+			"bash.yaml": &depB,
+			"bosh.yaml": &downstream,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -434,11 +458,12 @@ func TestRun(t *testing.T) {
 				"d.bin": {Path: "d.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["a.yaml"] = &stgA
-		idx["b.yaml"] = &stgB
-		idx["c.yaml"] = &stgC
-		idx["d.yaml"] = &stgD
+		idx := Index{
+			"a.yaml": &stgA,
+			"b.yaml": &stgB,
+			"c.yaml": &stgC,
+			"d.yaml": &stgD,
+		}
 
 		mockCache := mocks.Cache{}
 		// Stage D is the only Stage that could possibly be ran successfully.
@@ -488,8 +513,9 @@ func TestRun(t *testing.T) {
 				"bosh.bin": {Path: "bosh.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["bosh.yaml"] = &stg
+		idx := Index{
+			"bosh.yaml": &stg,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -534,6 +560,7 @@ func TestRun(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
+		updateChecksum(&stgB, t)
 		idx := Index{
 			"foo.yaml": &stgA,
 			"bar.yaml": &stgB,
@@ -558,6 +585,55 @@ func TestRun(t *testing.T) {
 		assertCorrectCommand(stgB, commands, t)
 
 		expectedRan := map[string]bool{
+			"bar.yaml": true,
+		}
+		if diff := cmp.Diff(expectedRan, ran); diff != "" {
+			t.Fatalf("committed -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("stage with out-of-date definition does run", func(t *testing.T) {
+		defer resetRunCommandMock()
+		stgA := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"foo.bin": {Path: "foo.bin"},
+			},
+		}
+		updateChecksum(&stgA, t)
+		stgB := stage.Stage{
+			WorkingDir: "b",
+			Checksum:   "stale",
+			Command:    "echo running stage B",
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.bin": {Path: "foo.bin"},
+			},
+			Outputs: map[string]*artifact.Artifact{
+				"bar.bin": {Path: "bar.bin"},
+			},
+		}
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
+
+		mockCache := mocks.Cache{}
+
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+
+		ran := make(map[string]bool)
+		inProgress := make(map[string]bool)
+		if err := idx.Run("bar.yaml", &mockCache, rootDir, true, ran, inProgress, logger); err != nil {
+			t.Fatal(err)
+		}
+
+		mockCache.AssertExpectations(t)
+
+		if len(commands) != 1 {
+			t.Fatalf("runCommand called %d time(s), want 1", len(commands))
+		}
+
+		expectedRan := map[string]bool{
+			"foo.yaml": false,
 			"bar.yaml": true,
 		}
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {

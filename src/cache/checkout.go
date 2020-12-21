@@ -17,7 +17,7 @@ import (
 // artifact in the working directory.
 func (cache *LocalCache) Checkout(
 	workspaceDir string,
-	art *artifact.Artifact,
+	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
 	if art.SkipCache {
@@ -52,10 +52,10 @@ func (err MissingFromCacheError) Error() string {
 func checkoutFile(
 	ch *LocalCache,
 	workspaceDir string,
-	art *artifact.Artifact,
+	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, *art)
+	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	errorPrefix := fmt.Sprintf("checkout %#v", workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
@@ -84,7 +84,7 @@ func checkoutFile(
 		}
 		defer dstFile.Close()
 
-		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile), []byte{})
+		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile))
 		if err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}
@@ -102,10 +102,10 @@ func checkoutFile(
 func checkoutDir(
 	ch *LocalCache,
 	workspaceDir string,
-	art *artifact.Artifact,
+	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, *art)
+	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func checkoutDir(
 		return err
 	}
 	for _, childArt := range man.Contents {
-		if err := ch.Checkout(workPath, childArt, strat); err != nil {
+		if err := ch.Checkout(workPath, *childArt, strat); err != nil {
 			return err
 		}
 	}

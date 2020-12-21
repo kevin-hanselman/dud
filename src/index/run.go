@@ -40,7 +40,23 @@ func (idx Index) Run(
 
 	hasCommand := stg.Command != ""
 	hasDeps := len(stg.Dependencies) > 0
+	hasChecksum := stg.Checksum != ""
+	checksumUpToDate := false
+
+	if hasChecksum {
+		realChecksum, err := stg.CalculateChecksum()
+		if err != nil {
+			return err
+		}
+		checksumUpToDate = realChecksum == stg.Checksum
+	}
+
+	// Run if we have a command and no dependencies.
 	doRun := hasCommand && !hasDeps
+
+	// Run if our checksum is stale.
+	doRun = doRun || !checksumUpToDate
+
 	for artPath, art := range stg.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {

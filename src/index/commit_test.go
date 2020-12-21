@@ -54,9 +54,10 @@ func TestCommit(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
-		idx["bar.yaml"] = &stgB
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -88,6 +89,9 @@ func TestCommit(t *testing.T) {
 		if stgA.Dependencies["bish.bin"].Checksum == "" {
 			t.Fatal("expected dependency Artifact to have Checksum set")
 		}
+		if stgA.Checksum == "" {
+			t.Fatal("expected Stage to have Checksum set")
+		}
 
 		expectedCommitSet := map[string]bool{
 			"foo.yaml": true,
@@ -116,9 +120,10 @@ func TestCommit(t *testing.T) {
 				"bar.bin": {Path: "bar.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["foo.yaml"] = &stgA
-		idx["bar.yaml"] = &stgB
+		idx := Index{
+			"foo.yaml": &stgA,
+			"bar.yaml": &stgB,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -147,7 +152,7 @@ func TestCommit(t *testing.T) {
 
 		// Both instances of the linked Artifact should be committed and the same.
 		if linkedArtifactA.Checksum == "" {
-			t.Fatalf("Expected artifact %v has empty checksum", linkedArtifactA.Path)
+			t.Fatalf("expected artifact %v have Checksum set", linkedArtifactA.Path)
 		}
 
 		if diff := cmp.Diff(linkedArtifactA, linkedArtifactB); diff != "" {
@@ -160,6 +165,13 @@ func TestCommit(t *testing.T) {
 		}
 		if diff := cmp.Diff(expectedCommitSet, committed); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
+		}
+
+		if stgA.Checksum == "" {
+			t.Fatal("expected stgA to have Checksum set")
+		}
+		if stgB.Checksum == "" {
+			t.Fatal("expected stgB to have Checksum set")
 		}
 	})
 
@@ -188,10 +200,11 @@ func TestCommit(t *testing.T) {
 				"bosh.bin": {Path: "bosh.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["bish.yaml"] = &stgA
-		idx["bash.yaml"] = &stgB
-		idx["bosh.yaml"] = &stgC
+		idx := Index{
+			"bish.yaml": &stgA,
+			"bash.yaml": &stgB,
+			"bosh.yaml": &stgC,
+		}
 
 		mockCache := mocks.Cache{}
 
@@ -258,11 +271,12 @@ func TestCommit(t *testing.T) {
 				"d.bin": {Path: "d.bin"},
 			},
 		}
-		idx := make(Index)
-		idx["a.yaml"] = &stgA
-		idx["b.yaml"] = &stgB
-		idx["c.yaml"] = &stgC
-		idx["d.yaml"] = &stgD
+		idx := Index{
+			"a.yaml": &stgA,
+			"b.yaml": &stgB,
+			"c.yaml": &stgC,
+			"d.yaml": &stgD,
+		}
 
 		mockCache := mocks.Cache{}
 		// Stage D is the only Stage that could possibly be committed

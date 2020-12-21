@@ -85,7 +85,7 @@ func fileArtifactStatus(ch *LocalCache, workspaceDir string, art artifact.Artifa
 		if err != nil {
 			return status, errors.Wrap(err, errorPrefix)
 		}
-		workspaceFileChecksum, err := checksum.Checksum(fileReader, []byte{})
+		workspaceFileChecksum, err := checksum.Checksum(fileReader)
 		if err != nil {
 			return status, errors.Wrap(err, errorPrefix)
 		}
