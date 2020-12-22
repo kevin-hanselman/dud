@@ -151,13 +151,13 @@ func dirArtifactStatus(
 		// only check entries that don't appear in the manifest
 		if _, ok := manifest.Contents[entry.Name()]; !ok {
 			if entry.IsDir() {
-				// if the entry is a (untracked) directory,
+				// If the entry is a (untracked) directory,
 				// this is only a mismatch if the artifact is recursive
-				if art.IsRecursive {
+				if !art.DisableRecursion {
 					return status, manifest, nil
 				}
 			} else {
-				// if the entry is a (untracked) file,
+				// If the entry is a (untracked) file,
 				// this is always a mismatch
 				return status, manifest, nil
 			}

@@ -141,7 +141,7 @@ func TestCalculateChecksum(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		stg.Dependencies["b"].IsRecursive = true
+		stg.Dependencies["b"].DisableRecursion = true
 
 		newChecksum, err := stg.CalculateChecksum()
 		if err != nil {

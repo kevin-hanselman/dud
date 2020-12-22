@@ -146,7 +146,7 @@ func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, *LocalCac
 		}
 	}
 
-	art := artifact.Artifact{Path: "foo", IsDir: true, IsRecursive: true}
+	art := artifact.Artifact{Path: "foo", IsDir: true}
 
 	return dirs, art, cache
 }

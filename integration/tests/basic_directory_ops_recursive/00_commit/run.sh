@@ -14,14 +14,7 @@ for n in $(seq 4 7); do
     echo "$n" > "foo/bar/$n.txt"
 done
 
-(
-cat <<EOF
-outputs:
-- path: foo
-  is-dir: true
-  is-recursive: true
-EOF
-) > stage.yaml
+dud stage gen -o foo > stage.yaml
 
 dud stage add stage.yaml
 

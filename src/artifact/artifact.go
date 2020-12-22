@@ -8,6 +8,9 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 )
 
+// TODO: Consider adding JSON directives to Artifact as well for serializing
+// directoryManifests.
+
 // An Artifact is a file or directory that is tracked by Dud.
 type Artifact struct {
 	// Checksum is the hex digest Artifact's hashed contents. It is used to
@@ -18,8 +21,8 @@ type Artifact struct {
 	Path string
 	// If IsDir is true then the Artifact is a directory.
 	IsDir bool `yaml:"is-dir,omitempty"`
-	// If IsRecursive is true then the Artifact is a directory and all sub-directories.
-	IsRecursive bool `yaml:"is-recursive,omitempty"`
+	// If DisableRecursion is true then the Artifact does not recurse sub-directories
+	DisableRecursion bool `yaml:"disable-recursion,omitempty"`
 	// If SkipCache is true then the Artifact is not stored in the Cache. When
 	// the Artifact is committed, its checksum is updated, but the Artifact is
 	// not moved to the Cache. The checkout operation is a no-op.
@@ -107,31 +110,6 @@ func (stat ArtifactWithStatus) String() string {
 }
 
 var fileStatusFromPath = fsutil.FileStatusFromPath
-
-// FromPath returns a new Artifact tracking the given path.
-// TODO: When adding new files, the Index needs to be consulted to ensure
-// exactly one Artifact owns a given file, and that exactly one Stage owns
-// a given Artifact.
-func FromPath(path string, isRecursive bool) (art *Artifact, err error) {
-	status, err := fileStatusFromPath(path)
-	if err != nil {
-		return
-	}
-	switch status {
-	case fsutil.StatusAbsent:
-		return art, fmt.Errorf("path %v does not exist", path)
-	case fsutil.StatusOther, fsutil.StatusLink:
-		return art, fmt.Errorf("unsupported file type for path %v", path)
-	}
-
-	isDir := status == fsutil.StatusDirectory
-	return &Artifact{
-		Checksum:    "",
-		Path:        path,
-		IsDir:       isDir,
-		IsRecursive: isRecursive && isDir,
-	}, nil
-}
 
 // IsEquivalent returns true if the Artifacts are identical, ignoring Checksum.
 func (art Artifact) IsEquivalent(other Artifact) bool {

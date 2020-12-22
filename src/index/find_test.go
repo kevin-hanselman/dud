@@ -57,7 +57,7 @@ func TestFindOwner(t *testing.T) {
 	})
 
 	t.Run("file in dir artifact", func(t *testing.T) {
-		targetArt := artifact.Artifact{Path: "foo", IsDir: true, IsRecursive: false}
+		targetArt := artifact.Artifact{Path: "foo", IsDir: true, DisableRecursion: true}
 		idx := Index{
 			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
@@ -109,7 +109,7 @@ func TestFindOwner(t *testing.T) {
 		idx := Index{
 			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{
-					"foo": {Path: "foo", IsDir: true, IsRecursive: false},
+					"foo": {Path: "foo", IsDir: true, DisableRecursion: true},
 				},
 			},
 		}
@@ -126,7 +126,7 @@ func TestFindOwner(t *testing.T) {
 	})
 
 	t.Run("file in sub-dir of recursive dir artifact", func(t *testing.T) {
-		targetArt := artifact.Artifact{Path: "foo", IsDir: true, IsRecursive: true}
+		targetArt := artifact.Artifact{Path: "foo", IsDir: true}
 		idx := Index{
 			"foo.yaml": &stage.Stage{
 				Outputs: map[string]*artifact.Artifact{

@@ -237,11 +237,11 @@ func commitDirArtifact(
 					childArt = &artifact.Artifact{Path: path}
 				}
 				if info.IsDir() {
-					if !art.IsRecursive {
+					if art.DisableRecursion {
 						continue
 					}
 					childArt.IsDir = true
-					childArt.IsRecursive = true
+					childArt.DisableRecursion = false
 					if err := commitDirArtifact(
 						groupCtx,
 						ch,
