@@ -17,9 +17,9 @@ done
 (
 cat <<EOF
 outputs:
-- path: foo
-  is-dir: true
-  disable-recursion: true
+    foo:
+        is-dir: true
+        disable-recursion: true
 EOF
 ) > stage.yaml
 

@@ -7,7 +7,7 @@ title: dud
 
 ### Synopsis
 
-Dud is a tool to for storing, versioning, and reproducing large files alongside
+Dud is a tool for storing, versioning, and reproducing large files alongside
 source code.
 
 ### Options

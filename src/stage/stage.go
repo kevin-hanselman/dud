@@ -12,7 +12,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 // A Stage holds all information required to reproduce data. It is the primary
@@ -21,29 +21,21 @@ type Stage struct {
 	// Checksum is the checksum of the Stage definition excluding Artifact
 	// checksums. This checksum is used to determine when a Stage definition
 	// has been modified by the user.
-	Checksum string
+	Checksum string `yaml:",omitempty"`
 	// Command is the string to be evaluated and executed by a shell.
-	Command string
+	Command string `yaml:",omitempty"`
 	// WorkingDir is the directory in which the Stage's command is executed. It
 	// is a directory path relative to the Dud root directory. An
 	// empty value means the Stage's working directory _is_ the Dud root
 	// directory. WorkingDir only affects the Stage's command; all outputs and
 	// dependencies of the Stage should have paths relative to the project root.
-	WorkingDir string
+	WorkingDir string `yaml:"working-dir,omitempty"`
 	// Dependencies is a set of Artifacts which the Stage's Command needs to
 	// operate. The Artifacts are keyed by their Path for faster lookup.
-	Dependencies map[string]*artifact.Artifact
+	Dependencies map[string]*artifact.Artifact `yaml:",omitempty"`
 	// Outputs is a set of Artifacts which are owned by the Stage. The
 	// Artifacts are keyed by their Path for faster lookup.
 	Outputs map[string]*artifact.Artifact
-}
-
-type stageFileFormat struct {
-	Checksum     string               `yaml:",omitempty"`
-	Command      string               `yaml:",omitempty"`
-	WorkingDir   string               `yaml:"working-dir,omitempty"`
-	Dependencies []*artifact.Artifact `yaml:",omitempty"`
-	Outputs      []*artifact.Artifact
 }
 
 // Status holds everything necessary to qualify the state of a Stage.
@@ -63,98 +55,84 @@ func NewStatus() Status {
 	return s
 }
 
-func (stg Stage) toFileFormat() (out stageFileFormat) {
+func (stg Stage) toFileFormat() (out Stage) {
 	out.Checksum = stg.Checksum
 	out.Command = stg.Command
 	out.WorkingDir = stg.WorkingDir
 
 	if len(stg.Dependencies) > 0 {
-		out.Dependencies = make([]*artifact.Artifact, len(stg.Dependencies))
-		var i int = 0
+		out.Dependencies = make(map[string]*artifact.Artifact, len(stg.Dependencies))
 		for _, art := range stg.Dependencies {
 			// SkipCache is implicitly true for all dependencies. It's
 			// redundant and noisy to write it to the Stage file, so we hide
 			// it (making use of the 'omitempty' YAML directive) and set
 			// SkipCache to true when loading the file (see FromFile).
 			art.SkipCache = false
-			out.Dependencies[i] = art
-			i++
+			path := art.Path
+			art.Path = ""
+			out.Dependencies[path] = art
 		}
 	}
 
 	if len(stg.Outputs) > 0 {
-		out.Outputs = make([]*artifact.Artifact, len(stg.Outputs))
-		var i int = 0
+		out.Outputs = make(map[string]*artifact.Artifact, len(stg.Outputs))
 		for _, art := range stg.Outputs {
-			out.Outputs[i] = art
-			i++
+			path := art.Path
+			art.Path = ""
+			out.Outputs[path] = art
 		}
 	}
 	return
 }
 
-func (sff stageFileFormat) toStage() (stg Stage) {
-	stg.Checksum = sff.Checksum
-	stg.Command = sff.Command
-	stg.WorkingDir = sff.WorkingDir
-
-	if len(sff.Dependencies) > 0 {
-		stg.Dependencies = make(
-			map[string]*artifact.Artifact,
-			len(sff.Dependencies),
-		)
-		for _, art := range sff.Dependencies {
-			stg.Dependencies[art.Path] = art
-		}
-	}
-
-	if len(sff.Outputs) > 0 {
-		stg.Outputs = make(
-			map[string]*artifact.Artifact,
-			len(sff.Outputs),
-		)
-		for _, art := range sff.Outputs {
-			stg.Outputs[art.Path] = art
-		}
-	}
-	return
-}
-
-var fromYamlFile = func(path string, sff *stageFileFormat) error {
+var fromYamlFile = func(path string, stg *Stage) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	decoder := yaml.NewDecoder(file)
-	decoder.KnownFields(true)
-	return decoder.Decode(sff)
+	decoder.SetStrict(true)
+	return decoder.Decode(stg)
 }
 
 // FromFile loads a Stage from a file. If a lock file for the Stage exists,
 // this function uses any Artifact.Checksums it can from the lock file.
-var FromFile = func(stagePath string) (Stage, error) {
-	var (
-		stg Stage
-		sff stageFileFormat
-	)
-	if err := fromYamlFile(stagePath, &sff); err != nil {
-		return stg, err
+var FromFile = func(stagePath string) (stg Stage, err error) {
+	var tempStage Stage
+	if err = fromYamlFile(stagePath, &tempStage); err != nil {
+		return
 	}
+	stg.Checksum = tempStage.Checksum
+	stg.Command = tempStage.Command
+	stg.Dependencies = make(map[string]*artifact.Artifact, len(stg.Dependencies))
+	stg.Outputs = make(map[string]*artifact.Artifact, len(stg.Outputs))
+
 	// Clean all user-editable paths.
-	for i, art := range sff.Dependencies {
-		art.Path = filepath.Clean(art.Path)
+	stg.WorkingDir = filepath.Clean(tempStage.WorkingDir)
+
+	for path, art := range tempStage.Dependencies {
+		// yaml.v2 (and currently v3 as well) deserializes "  path.txt:" as
+		// a nil map value, while "  path.txt: {}" deserializes as an zero map
+		// value.  Because of this, it's important to check for null pointers
+		// here. This issue may be related:
+		// https://github.com/go-yaml/yaml/issues/681
+		if art == nil {
+			art = &artifact.Artifact{}
+		}
+		art.Path = filepath.Clean(path)
 		// Dependencies are only committed-to/checked-out-of the Cache if they
 		// are an output of (i.e. owned by) another Stage, in which case said
 		// owner Stage is responsible for interacting with the Cache.
 		art.SkipCache = true
-		sff.Dependencies[i] = art
+		stg.Dependencies[art.Path] = art
 	}
-	for i, art := range sff.Outputs {
-		art.Path = filepath.Clean(art.Path)
-		sff.Outputs[i] = art
+	for path, art := range tempStage.Outputs {
+		if art == nil {
+			art = &artifact.Artifact{}
+		}
+		art.Path = filepath.Clean(path)
+		stg.Outputs[art.Path] = art
 	}
-	sff.WorkingDir = filepath.Clean(sff.WorkingDir)
-	stg = sff.toStage()
 
 	return stg, stg.validate()
 }

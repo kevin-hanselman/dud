@@ -18,6 +18,6 @@ echo 'bar' > bar.txt
 # merge/update:
 #
 # dud stage gen -o bar.txt -o foo.txt | dud stage update stage.yaml
-echo '    - path: bar.txt' >> stage.yaml
+echo '  bar.txt:' >> stage.yaml
 
 dud commit

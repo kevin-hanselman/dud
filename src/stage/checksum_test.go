@@ -10,17 +10,17 @@ import (
 func TestCalculateChecksum(t *testing.T) {
 
 	newStage := func() Stage {
-		return stageFileFormat{
+		return Stage{
 			Checksum:   "foobar",
 			WorkingDir: "dir",
-			Outputs: []*artifact.Artifact{
-				{Checksum: "bish", Path: "foo.txt"},
-				{Checksum: "bash", Path: "bar.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"foo.txt": {Checksum: "bish", Path: "foo.txt"},
+				"bar.txt": {Checksum: "bash", Path: "bar.txt"},
 			},
-			Dependencies: []*artifact.Artifact{
-				{Checksum: "bosh", Path: "b", IsDir: true},
+			Dependencies: map[string]*artifact.Artifact{
+				"b": {Checksum: "bosh", Path: "b", IsDir: true},
 			},
-		}.toStage()
+		}
 	}
 
 	t.Run("calculating checksum doesn't change stage", func(t *testing.T) {

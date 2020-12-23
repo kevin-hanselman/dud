@@ -11,26 +11,26 @@ import (
 func TestFromFile(t *testing.T) {
 
 	fromYamlFileOrig := fromYamlFile
-	fromYamlFile = func(path string, output *stageFileFormat) error {
+	fromYamlFile = func(path string, output *Stage) error {
 		panic("Mock not implemented")
 	}
 	var resetFromYamlFileMock = func() { fromYamlFile = fromYamlFileOrig }
 
 	t.Run("skipCache is always true for dependencies", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stg := Stage{
+		stageFile := Stage{
 			WorkingDir: "foo",
 			Command:    "echo 'new command'",
 			Dependencies: map[string]*artifact.Artifact{
-				"foo.txt":  {Path: "foo.txt"},
-				"bish.txt": {Path: "bish.txt"},
+				"foo.txt":  {},
+				"bish.txt": {},
 			},
 			Outputs: map[string]*artifact.Artifact{
-				"bar.txt": {Path: "bar.txt", SkipCache: true},
+				"bar.txt": {SkipCache: true},
 			},
 		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
-			*output = stg.toFileFormat()
+		fromYamlFile = func(path string, output *Stage) error {
+			*output = stageFile
 			return nil
 		}
 		expectedStage := Stage{
@@ -62,17 +62,17 @@ func TestFromFile(t *testing.T) {
 
 	t.Run("fail if artifact in both deps and outputs", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stgFile := stageFileFormat{
-			Dependencies: []*artifact.Artifact{
-				{Path: "foo.txt"},
+		stageFile := Stage{
+			Dependencies: map[string]*artifact.Artifact{
+				"foo.txt": {},
 			},
-			Outputs: []*artifact.Artifact{
-				{Path: "foo.txt"},
+			Outputs: map[string]*artifact.Artifact{
+				"foo.txt": {},
 			},
 		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
+		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
-				*output = stgFile
+				*output = stageFile
 				return nil
 			}
 			return os.ErrNotExist
@@ -86,17 +86,17 @@ func TestFromFile(t *testing.T) {
 
 	t.Run("fail if output dir artifact would contain a dep", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stgFile := stageFileFormat{
-			Dependencies: []*artifact.Artifact{
-				{Path: "foo/bar.txt"},
+		stageFile := Stage{
+			Dependencies: map[string]*artifact.Artifact{
+				"foo/bar.txt": {},
 			},
-			Outputs: []*artifact.Artifact{
-				{Path: "foo", IsDir: true},
+			Outputs: map[string]*artifact.Artifact{
+				"foo": {IsDir: true},
 			},
 		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
+		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
-				*output = stgFile
+				*output = stageFile
 				return nil
 			}
 			return os.ErrNotExist
@@ -110,17 +110,17 @@ func TestFromFile(t *testing.T) {
 
 	t.Run("fail if dep dir artifact would contain a dir output", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stgFile := stageFileFormat{
-			Dependencies: []*artifact.Artifact{
-				{Path: "foo", IsDir: true},
+		stageFile := Stage{
+			Dependencies: map[string]*artifact.Artifact{
+				"foo": {IsDir: true},
 			},
-			Outputs: []*artifact.Artifact{
-				{Path: "foo/bar", IsDir: true},
+			Outputs: map[string]*artifact.Artifact{
+				"foo/bar": {IsDir: true},
 			},
 		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
+		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
-				*output = stgFile
+				*output = stageFile
 				return nil
 			}
 			return os.ErrNotExist
@@ -134,18 +134,18 @@ func TestFromFile(t *testing.T) {
 
 	t.Run("working dir should have no effect on artifact paths", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stgFile := stageFileFormat{
+		stageFile := Stage{
 			WorkingDir: "workDir",
-			Dependencies: []*artifact.Artifact{
-				{Path: "foo", IsDir: true},
+			Dependencies: map[string]*artifact.Artifact{
+				"foo": {IsDir: true},
 			},
-			Outputs: []*artifact.Artifact{
-				{Path: "foo/bar", IsDir: true},
+			Outputs: map[string]*artifact.Artifact{
+				"foo/bar": {IsDir: true},
 			},
 		}
-		fromYamlFile = func(path string, output *stageFileFormat) error {
+		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
-				*output = stgFile
+				*output = stageFile
 				return nil
 			}
 			return os.ErrNotExist
@@ -159,33 +159,33 @@ func TestFromFile(t *testing.T) {
 
 	t.Run("cleans paths", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stgFile := stageFileFormat{
+		stageFile := Stage{
 			WorkingDir: "foo/",
-			Dependencies: []*artifact.Artifact{
-				{Path: "foo/../bish.txt"},
+			Dependencies: map[string]*artifact.Artifact{
+				"foo/../bish.txt": {},
 			},
-			Outputs: []*artifact.Artifact{
-				{Path: "./bar/", IsDir: true},
+			Outputs: map[string]*artifact.Artifact{
+				"./bar/": {IsDir: true},
 			},
 		}
 
-		fromYamlFile = func(path string, output *stageFileFormat) error {
+		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
-				*output = stgFile
+				*output = stageFile
 				return nil
 			}
 			return os.ErrNotExist
 		}
 
-		expectedStage := stageFileFormat{
+		expectedStage := Stage{
 			WorkingDir: "foo",
-			Dependencies: []*artifact.Artifact{
-				{Path: "bish.txt", SkipCache: true},
+			Dependencies: map[string]*artifact.Artifact{
+				"bish.txt": {Path: "bish.txt", SkipCache: true},
 			},
-			Outputs: []*artifact.Artifact{
-				{Path: "bar", IsDir: true},
+			Outputs: map[string]*artifact.Artifact{
+				"bar": {Path: "bar", IsDir: true},
 			},
-		}.toStage()
+		}
 
 		outputStage, err := FromFile("stage.yaml")
 		if err != nil {
@@ -198,16 +198,16 @@ func TestFromFile(t *testing.T) {
 
 	t.Run("disallow working dirs outside project root", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stgFile := stageFileFormat{
+		stageFile := Stage{
 			WorkingDir: "foo/../../bar",
-			Outputs: []*artifact.Artifact{
-				{Path: "bar", IsDir: true},
+			Outputs: map[string]*artifact.Artifact{
+				"bar": {IsDir: true},
 			},
 		}
 
-		fromYamlFile = func(path string, output *stageFileFormat) error {
+		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
-				*output = stgFile
+				*output = stageFile
 				return nil
 			}
 			return os.ErrNotExist
@@ -226,15 +226,15 @@ func TestFromFile(t *testing.T) {
 
 	t.Run("disallow artifact paths outside project root", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stgFile := stageFileFormat{
-			Outputs: []*artifact.Artifact{
-				{Path: "..", IsDir: true},
+		stageFile := Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"..": {IsDir: true},
 			},
 		}
 
-		fromYamlFile = func(path string, output *stageFileFormat) error {
+		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
-				*output = stgFile
+				*output = stageFile
 				return nil
 			}
 			return os.ErrNotExist

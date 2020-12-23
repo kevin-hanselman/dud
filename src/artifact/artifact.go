@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 )
 
@@ -18,7 +17,7 @@ type Artifact struct {
 	Checksum string `yaml:",omitempty"`
 	// Path is the file path to the Artifact in the workspace. It is always
 	// relative to the project root directory.
-	Path string
+	Path string `yaml:",omitempty"`
 	// If IsDir is true then the Artifact is a directory.
 	IsDir bool `yaml:"is-dir,omitempty"`
 	// If DisableRecursion is true then the Artifact does not recurse sub-directories
@@ -107,13 +106,4 @@ func (stat ArtifactWithStatus) String() string {
 		return "invalid file type"
 	}
 	panic("exited switch unexpectedly")
-}
-
-var fileStatusFromPath = fsutil.FileStatusFromPath
-
-// IsEquivalent returns true if the Artifacts are identical, ignoring Checksum.
-func (art Artifact) IsEquivalent(other Artifact) bool {
-	art.Checksum = ""
-	other.Checksum = ""
-	return cmp.Equal(art, other)
 }

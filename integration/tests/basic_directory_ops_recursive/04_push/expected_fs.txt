@@ -50,4 +50,4 @@
 [-rw-r--r-- user               2]  ./foo/bar/5.txt
 [-rw-r--r-- user               2]  ./foo/bar/6.txt
 [-rw-r--r-- user               2]  ./foo/bar/7.txt
-[-rw-r--r-- user             215]  ./stage.yaml
+[-rw-r--r-- user             202]  ./stage.yaml

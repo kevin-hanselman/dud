@@ -32,4 +32,4 @@
 [lrwxrwxrwx user             138]  ./foo/bar/5.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
 [lrwxrwxrwx user             138]  ./foo/bar/6.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/1f/ad12e6bdb0d30895fb817b05d8fd97be199d01a4e489433629778eae97d314
 [lrwxrwxrwx user             138]  ./foo/bar/7.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/de/dc9531a3ea216ed967a15ede743b4e4d1e9181bf24204cdd6c316171daa2e8
-[-rw-r--r-- user             215]  ./stage.yaml
+[-rw-r--r-- user             202]  ./stage.yaml
