@@ -11,8 +11,8 @@ import (
 	"github.com/kevin-hanselman/dud/src/testutil"
 )
 
-func getCacheFiles(cacheDir string) (map[string]bool, error) {
-	fileSet := make(map[string]bool)
+func getCacheFiles(cacheDir string) (map[string]struct{}, error) {
+	fileSet := make(map[string]struct{})
 	files, err := filepath.Glob(filepath.Join(cacheDir, "*", "*"))
 	if err != nil {
 		return nil, err
@@ -22,7 +22,7 @@ func getCacheFiles(cacheDir string) (map[string]bool, error) {
 		if err != nil {
 			return nil, err
 		}
-		fileSet[relFile] = true
+		fileSet[relFile] = struct{}{}
 	}
 	return fileSet, nil
 }
@@ -43,12 +43,12 @@ func assertCacheDirsEqual(dirA, dirB string, t *testing.T) {
 		t.Fatalf("dir %s has no files", dirB)
 	}
 	for file := range filesA {
-		if !filesB[file] {
+		if _, ok := filesB[file]; !ok {
 			t.Fatalf("file %#v in %s but not %s", file, dirA, dirB)
 		}
 	}
 	for file := range filesB {
-		if !filesA[file] {
+		if _, ok := filesA[file]; !ok {
 			t.Fatalf("file %#v in %s but not %s", file, dirB, dirA)
 		}
 	}
@@ -62,7 +62,7 @@ func mkdirsThen(src, dst string, f func(src, dst string) error) error {
 }
 
 // Mock remoteCopy with a version that creates hard links between directories
-func mockRemoteCopy(src, dst string, fileSet map[string]bool) error {
+func mockRemoteCopy(src, dst string, fileSet map[string]struct{}) error {
 	for file := range fileSet {
 		if err := mkdirsThen(
 			filepath.Join(src, file),
@@ -81,7 +81,7 @@ func TestFetchIntegration(t *testing.T) {
 	}
 
 	remoteCopyOrig := remoteCopy
-	remoteCopyPanic := func(src, dst string, fileSet map[string]bool) error {
+	remoteCopyPanic := func(src, dst string, fileSet map[string]struct{}) error {
 		panic("unexpected call to remoteCopy")
 	}
 	remoteCopy = remoteCopyPanic

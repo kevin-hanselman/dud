@@ -55,21 +55,22 @@ func checkoutFile(
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
+	errorPrefix := fmt.Sprintf("checkout %s", art.Path)
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
-	errorPrefix := fmt.Sprintf("checkout %#v", workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
-	cachePath = filepath.Join(ch.dir, cachePath)
 	if !status.HasChecksum {
 		return errors.Wrap(InvalidChecksumError{art.Checksum}, errorPrefix)
 	}
 	if !status.ChecksumInCache {
 		return errors.Wrap(MissingFromCacheError{art.Checksum}, errorPrefix)
 	}
+	// TODO: check status.ContentsMatch here and exit early
 	if err := os.MkdirAll(filepath.Dir(workPath), 0755); err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
+	cachePath = filepath.Join(ch.dir, cachePath)
 	switch strat {
 	case strategy.CopyStrategy:
 		srcFile, err := os.Open(cachePath)
@@ -105,23 +106,28 @@ func checkoutDir(
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
+	errorPrefix := fmt.Sprintf("checkout %s", art.Path)
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
-		return err
+		return errors.Wrap(err, errorPrefix)
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 	if !status.HasChecksum {
-		return fmt.Errorf("checkoutDir: artifact has invalid checksum: %v", art.Checksum)
+		return errors.Wrap(InvalidChecksumError{art.Checksum}, errorPrefix)
 	}
 	if !status.ChecksumInCache {
-		return fmt.Errorf("checkoutDir: checksum %v not found in cache", art.Checksum)
+		return errors.Wrap(MissingFromCacheError{art.Checksum}, errorPrefix)
 	}
 	if !(status.WorkspaceFileStatus == fsutil.StatusAbsent || status.WorkspaceFileStatus == fsutil.StatusDirectory) {
-		return fmt.Errorf("checkoutDir: expected target to be empty or a directory, found %s", status.WorkspaceFileStatus)
+		return fmt.Errorf(
+			"%s: expected target to be empty or a directory, found %s",
+			errorPrefix,
+			status.WorkspaceFileStatus,
+		)
 	}
 	man, err := readDirManifest(cachePath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, errorPrefix)
 	}
 	for _, childArt := range man.Contents {
 		if err := ch.Checkout(workPath, *childArt, strat); err != nil {

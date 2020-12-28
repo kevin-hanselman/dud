@@ -14,7 +14,7 @@ import (
 // Fetch shouldn't care about the workspace at all; they purely interact with
 // the local cache.
 func (ch *LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact) error {
-	fetchFiles := make(map[string]bool)
+	fetchFiles := make(map[string]struct{})
 	if err := gatherFilesToPush(ch, workspaceDir, art, fetchFiles); err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func gatherFilesToPush(
 	ch *LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
-	filesToPush map[string]bool,
+	filesToPush map[string]struct{},
 ) error {
 	if art.SkipCache {
 		return nil
@@ -55,11 +55,11 @@ func gatherFilesToPush(
 			}
 		}
 	}
-	filesToPush[cachePath] = true
+	filesToPush[cachePath] = struct{}{}
 	return nil
 }
 
-var remoteCopy = func(src, dst string, fileSet map[string]bool) error {
+var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	cmd := exec.Command(
 		"rclone",
 		"--config",
@@ -70,6 +70,7 @@ var remoteCopy = func(src, dst string, fileSet map[string]bool) error {
 		"--progress",
 		"--immutable", // TODO: Assess this flag further.
 		"copy",
+		// "--files-from -" means to get the list of files to copy from STDIN.
 		"--files-from",
 		"-",
 		src,

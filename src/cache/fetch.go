@@ -8,7 +8,7 @@ import (
 
 // Fetch downloads an Artifact from a remote location to the local cache.
 func (ch *LocalCache) Fetch(workspaceDir, remoteSrc string, art artifact.Artifact) error {
-	fetchFiles := make(map[string]bool)
+	fetchFiles := make(map[string]struct{})
 	if err := gatherFilesToFetch(ch, workspaceDir, art, remoteSrc, fetchFiles); err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func gatherFilesToFetch(
 	workspaceDir string,
 	art artifact.Artifact,
 	remoteSrc string,
-	filesToFetch map[string]bool,
+	filesToFetch map[string]struct{},
 ) error {
 	if art.SkipCache {
 		return nil
@@ -39,7 +39,7 @@ func gatherFilesToFetch(
 		return nil
 	}
 	if art.IsDir {
-		if err := remoteCopy(remoteSrc, ch.dir, map[string]bool{cachePath: true}); err != nil {
+		if err := remoteCopy(remoteSrc, ch.dir, map[string]struct{}{cachePath: {}}); err != nil {
 			return err
 		}
 		man, err := readDirManifest(filepath.Join(ch.dir, cachePath))
@@ -59,7 +59,7 @@ func gatherFilesToFetch(
 			}
 		}
 	} else {
-		filesToFetch[cachePath] = true
+		filesToFetch[cachePath] = struct{}{}
 	}
 	return nil
 }

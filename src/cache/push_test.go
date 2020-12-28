@@ -18,7 +18,7 @@ func TestPushIntegration(t *testing.T) {
 	}
 
 	remoteCopyOrig := remoteCopy
-	remoteCopyPanic := func(src, dst string, fileSet map[string]bool) error {
+	remoteCopyPanic := func(src, dst string, fileSet map[string]struct{}) error {
 		panic("unexpected call to remoteCopy")
 	}
 	remoteCopy = remoteCopyPanic

@@ -48,15 +48,15 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 	// likely false when skipping the cache, but we don't expect any errors in this case.
 	if statusStart.SkipCache {
 		if checkoutErr != nil {
-			t.Fatalf("expected Checkout to return no error, got %v", checkoutErr)
+			t.Fatalf("expected Checkout to return no error, got %#v", checkoutErr)
 		}
 	} else if !statusStart.HasChecksum {
 		if _, ok := causeErr.(InvalidChecksumError); !ok {
-			t.Fatalf("expected Checkout to return InvalidChecksumError, got %v", causeErr)
+			t.Fatalf("expected Checkout to return InvalidChecksumError, got %#v", causeErr)
 		}
 	} else if !statusStart.ChecksumInCache {
 		if _, ok := causeErr.(MissingFromCacheError); !ok {
-			t.Fatalf("expected Checkout to return MissingFromCacheError, got %v", causeErr)
+			t.Fatalf("expected Checkout to return MissingFromCacheError, got %#v", causeErr)
 		}
 	} else if statusStart.WorkspaceFileStatus != fsutil.StatusAbsent {
 		// TODO: this clause should change if checkout should be a no-op if up-to-date
@@ -64,7 +64,7 @@ func testFileCheckoutIntegration(strat strategy.CheckoutStrategy, statusStart ar
 			t.Fatalf("expected Checkout to return Exist error, got %#v", checkoutErr)
 		}
 	} else if checkoutErr != nil {
-		t.Fatalf("expected Checkout to return no error, got %v", checkoutErr)
+		t.Fatalf("expected Checkout to return no error, got %#v", checkoutErr)
 	} else {
 		// If none of the above conditions are met, we expect Checkout to have
 		// done it's job.
