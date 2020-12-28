@@ -46,7 +46,7 @@ type MissingFromCacheError struct {
 }
 
 func (err MissingFromCacheError) Error() string {
-	return fmt.Sprintf("file missing from cache: %#v", err.checksum)
+	return fmt.Sprintf("checksum missing from cache: %#v", err.checksum)
 }
 
 func checkoutFile(
