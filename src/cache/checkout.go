@@ -66,7 +66,6 @@ func checkoutFile(
 	if !status.ChecksumInCache {
 		return errors.Wrap(MissingFromCacheError{art.Checksum}, errorPrefix)
 	}
-	// TODO: check status.ContentsMatch here and exit early
 	if err := os.MkdirAll(filepath.Dir(workPath), 0755); err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
@@ -78,6 +77,17 @@ func checkoutFile(
 			return errors.Wrap(err, errorPrefix)
 		}
 		defer srcFile.Close()
+
+		// ContentsMatch is set true in quickStatus only when the workspace
+		// file is a link to the correct file in the cache. In this case, we
+		// can safely remove the link to allow the copy checkout to proceed.
+		// Otherwise, it's best to let os.OpenFile fail below to make the user
+		// fix the issue.
+		if status.ContentsMatch {
+			if err := os.Remove(workPath); err != nil {
+				return errors.Wrap(err, errorPrefix)
+			}
+		}
 
 		dstFile, err := os.OpenFile(workPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 		if err != nil {
@@ -93,6 +103,9 @@ func checkoutFile(
 			return fmt.Errorf("%s: found checksum %#v, expected %#v", errorPrefix, checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
+		if status.ContentsMatch {
+			return nil
+		}
 		if err := os.Symlink(cachePath, workPath); err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}

@@ -44,9 +44,13 @@ func TestFileCheckoutIntegration(t *testing.T) {
 			ChecksumInCache: true,
 		},
 		{
-			HasChecksum: true,
+			HasChecksum:     true,
+			ChecksumInCache: false,
 		},
-		{},
+		{
+			HasChecksum:     false,
+			ChecksumInCache: false,
+		},
 	}
 
 	t.Run("happy path", func(t *testing.T) {
@@ -167,6 +171,38 @@ func TestFileCheckoutIntegration(t *testing.T) {
 					testFileCheckoutIntegration(in, out, t)
 				})
 			}
+		}
+	})
+
+	t.Run("up-to-date link", func(t *testing.T) {
+		for _, strat := range allStrategies {
+			status := artifact.Status{
+				WorkspaceFileStatus: fsutil.StatusLink,
+				HasChecksum:         true,
+				ChecksumInCache:     true,
+				ContentsMatch:       true,
+			}
+			artStatus := artifact.ArtifactWithStatus{Status: status}
+			in := testInput{
+				Status:           artStatus,
+				CheckoutStrategy: strat,
+			}
+			out := testExpectedOutput{
+				Status: status,
+				Error:  nil,
+			}
+			if strat == strategy.CopyStrategy {
+				out.Status.WorkspaceFileStatus = fsutil.StatusRegularFile
+			} else if strat == strategy.LinkStrategy {
+				out.Status.WorkspaceFileStatus = fsutil.StatusLink
+			} else {
+				panic("unknown strategy")
+			}
+
+			testName := fmt.Sprintf("%s %s", artStatus, strat)
+			t.Run(testName, func(t *testing.T) {
+				testFileCheckoutIntegration(in, out, t)
+			})
 		}
 	})
 }
