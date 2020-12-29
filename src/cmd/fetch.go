@@ -20,7 +20,7 @@ func init() {
 
 var fetchCmd = &cobra.Command{
 	Use:   "fetch [flags] [stage_file]...",
-	Short: "Fetch committed artifacts to the default remote cache",
+	Short: "Fetch committed artifacts from the remote cache",
 	Long: `Fetch downloads previously committed artifacts from a remote cache.
 
 For each stage passed in, fetch downloads the stage's committed outputs from the

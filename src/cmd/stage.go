@@ -14,7 +14,7 @@ import (
 )
 
 var genStageCmd = &cobra.Command{
-	Use:   "gen",
+	Use:   "gen [flags] [--] [stage_command]...",
 	Short: "Generate Stage YAML using the CLI",
 	Long: `Gen generates a Stage YAML file and prints it to STDOUT.
 

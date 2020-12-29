@@ -1,34 +1,166 @@
 package cache
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
+
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 )
 
-func TestCommitIntegration(t *testing.T) {
+func TestFileCommitIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
-	for _, testCase := range testutil.AllFileTestCases() {
-		for _, strat := range []strategy.CheckoutStrategy{strategy.CopyStrategy, strategy.LinkStrategy} {
-			t.Run(fmt.Sprintf("%s %+v", strat, testCase), func(t *testing.T) {
-				testCommitIntegration(strat, testCase, t)
+
+	allStrategies := []strategy.CheckoutStrategy{strategy.LinkStrategy, strategy.CopyStrategy}
+
+	t.Run("happy path", func(t *testing.T) {
+		for _, strat := range allStrategies {
+			in := testInput{
+				Status: artifact.ArtifactWithStatus{
+					Status: artifact.Status{
+						WorkspaceFileStatus: fsutil.StatusRegularFile,
+					},
+				},
+				CheckoutStrategy: strat,
+			}
+			out := testExpectedOutput{
+				Status: artifact.Status{
+					HasChecksum:     true,
+					ChecksumInCache: true,
+					ContentsMatch:   true,
+				},
+				Error: nil,
+			}
+			if strat == strategy.CopyStrategy {
+				out.Status.WorkspaceFileStatus = fsutil.StatusRegularFile
+			} else if strat == strategy.LinkStrategy {
+				out.Status.WorkspaceFileStatus = fsutil.StatusLink
+			} else {
+				panic("unknown strategy")
+			}
+
+			t.Run(strat.String(), func(t *testing.T) {
+				testCommitIntegration(in, out, t)
 			})
 		}
-	}
+	})
+
+	t.Run("already up-to-date", func(t *testing.T) {
+		for _, strat := range allStrategies {
+			status := artifact.Status{
+				WorkspaceFileStatus: fsutil.StatusLink,
+				HasChecksum:         true,
+				ChecksumInCache:     true,
+				ContentsMatch:       true,
+			}
+			in := testInput{
+				Status:           artifact.ArtifactWithStatus{Status: status},
+				CheckoutStrategy: strat,
+			}
+			// If we started out up-to-date, we don't change workspace state,
+			// even if the checkout strategy differs. We may reconsider this in
+			// the future.
+			out := testExpectedOutput{
+				Status: status,
+				Error:  nil,
+			}
+
+			t.Run(strat.String(), func(t *testing.T) {
+				testCommitIntegration(in, out, t)
+			})
+		}
+	})
+
+	t.Run("missing from workspace", func(t *testing.T) {
+		for _, strat := range allStrategies {
+			in := testInput{
+				Status: artifact.ArtifactWithStatus{
+					Status: artifact.Status{
+						WorkspaceFileStatus: fsutil.StatusAbsent,
+					},
+				},
+				CheckoutStrategy: strat,
+			}
+			out := testExpectedOutput{
+				Status: artifact.Status{
+					WorkspaceFileStatus: fsutil.StatusAbsent,
+				},
+				Error: os.ErrNotExist,
+			}
+
+			t.Run(strat.String(), func(t *testing.T) {
+				testCommitIntegration(in, out, t)
+			})
+		}
+	})
+
+	t.Run("invalid workspace file type", func(t *testing.T) {
+		fileStatuses := []fsutil.FileStatus{
+			fsutil.StatusLink,
+			fsutil.StatusDirectory,
+		}
+		for _, fileStatus := range fileStatuses {
+			for _, strat := range allStrategies {
+				in := testInput{
+					Status: artifact.ArtifactWithStatus{
+						Status: artifact.Status{
+							WorkspaceFileStatus: fileStatus,
+						},
+					},
+					CheckoutStrategy: strat,
+				}
+				out := testExpectedOutput{
+					Status: artifact.Status{
+						WorkspaceFileStatus: fileStatus,
+					},
+					Error: errors.New("not a regular file"),
+				}
+
+				t.Run(strat.String(), func(t *testing.T) {
+					testCommitIntegration(in, out, t)
+				})
+			}
+		}
+	})
+
+	t.Run("skip cache", func(t *testing.T) {
+		for _, strat := range allStrategies {
+			in := testInput{
+				Status: artifact.ArtifactWithStatus{
+					Artifact: artifact.Artifact{SkipCache: true},
+					Status: artifact.Status{
+						WorkspaceFileStatus: fsutil.StatusRegularFile,
+					},
+				},
+				CheckoutStrategy: strat,
+			}
+			out := testExpectedOutput{
+				Status: artifact.Status{
+					WorkspaceFileStatus: fsutil.StatusRegularFile,
+					HasChecksum:         true,
+					ChecksumInCache:     false,
+					ContentsMatch:       true,
+				},
+				Error: nil,
+			}
+
+			t.Run(strat.String(), func(t *testing.T) {
+				testCommitIntegration(in, out, t)
+			})
+		}
+	})
 }
 
-func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact.ArtifactWithStatus, t *testing.T) {
-	dirs, art, err := testutil.CreateArtifactTestCase(statusStart)
+func testCommitIntegration(in testInput, expectedOut testExpectedOutput, t *testing.T) {
+	dirs, art, err := testutil.CreateArtifactTestCase(in.Status)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
 	if err != nil {
@@ -39,53 +171,23 @@ func testCommitIntegration(strat strategy.CheckoutStrategy, statusStart artifact
 		t.Fatal(err)
 	}
 
-	commitErr := cache.Commit(dirs.WorkDir, &art, strat)
-	causeErr := errors.Cause(commitErr)
+	commitErr := cache.Commit(dirs.WorkDir, &art, in.CheckoutStrategy)
 
-	// By default, expect commit to fail and leave the workspace/cache untouched.
-	statusWant := statusStart.Status
+	// Strip any context from the error (e.g. "commit hello.txt:").
+	commitErr = errors.Cause(commitErr)
 
-	if statusStart.WorkspaceFileStatus == fsutil.StatusAbsent {
-		if !os.IsNotExist(causeErr) {
-			t.Fatalf("expected Commit to return a NotExist error, got %#v", causeErr)
-		}
-	} else if statusStart.WorkspaceFileStatus != fsutil.StatusRegularFile && !statusStart.ContentsMatch {
-		if causeErr == nil {
-			t.Fatal("expected Commit to return an error")
-		}
-	} else if commitErr != nil {
-		t.Fatalf("unexpected error: %v", commitErr)
-	} else {
-		statusWant.HasChecksum = true
-		statusWant.ContentsMatch = true
-		// If Artifact.SkipCache is true, commit will not modify the cache or
-		// the workspace file, so we retain the starting values for
-		// ChecksumInCache and WorkspaceFileStatus.
-		if !art.SkipCache {
-			statusWant.ChecksumInCache = true
-			switch strat {
-			case strategy.CopyStrategy:
-				statusWant.WorkspaceFileStatus = fsutil.StatusRegularFile
-			case strategy.LinkStrategy:
-				statusWant.WorkspaceFileStatus = fsutil.StatusLink
-			}
-			// If we started out up-to-date, we shouldn't change workspace state.
-			if statusStart.WorkspaceFileStatus == fsutil.StatusLink && statusStart.ContentsMatch {
-				statusWant.WorkspaceFileStatus = statusStart.WorkspaceFileStatus
-			}
-		}
-	}
+	assertErrorMatches(t, expectedOut.Error, commitErr)
 
 	statusGot, err := cache.Status(dirs.WorkDir, art)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if diff := cmp.Diff(statusWant, statusGot.Status); diff != "" {
+	if diff := cmp.Diff(expectedOut.Status, statusGot.Status); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
 
-	if statusWant.ChecksumInCache {
+	if expectedOut.Status.ChecksumInCache {
 		testCachePermissions(cache, art, t)
 	}
 }

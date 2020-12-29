@@ -5,13 +5,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
-	"github.com/pkg/errors"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -224,20 +224,7 @@ func testFileCheckoutIntegration(in testInput, expectedOut testExpectedOutput, t
 	// Strip any context from the error (e.g. "checkout hello.txt:").
 	checkoutErr = errors.Cause(checkoutErr)
 
-	switch expectedOut.Error {
-	case nil:
-		if checkoutErr != nil {
-			t.Fatalf("expected no error, got %v", checkoutErr)
-		}
-	case os.ErrExist:
-		if !os.IsExist(checkoutErr) {
-			t.Fatalf("expected Checkout to return Exist error, got %#v", checkoutErr)
-		}
-	default:
-		if !assert.IsType(t, expectedOut.Error, checkoutErr) {
-			t.Fatalf("expected error %v, got %v", expectedOut.Error, checkoutErr)
-		}
-	}
+	assertErrorMatches(t, expectedOut.Error, checkoutErr)
 
 	statusGot, err := cache.Status(dirs.WorkDir, art)
 	if err != nil {
@@ -246,5 +233,26 @@ func testFileCheckoutIntegration(in testInput, expectedOut testExpectedOutput, t
 
 	if diff := cmp.Diff(expectedOut.Status, statusGot.Status); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
+	}
+}
+
+func assertErrorMatches(t *testing.T, want, got error) {
+	switch want {
+	case nil:
+		if got != nil {
+			t.Fatalf("expected no error, got %v", got)
+		}
+	case os.ErrExist:
+		if !os.IsExist(got) {
+			t.Fatalf("expected Exist error, got %#v", got)
+		}
+	case os.ErrNotExist:
+		if !os.IsNotExist(got) {
+			t.Fatalf("expected NotExist error, got %#v", got)
+		}
+	default:
+		if !assert.IsType(t, want, got) {
+			t.Fatalf("expected error %v, got %v", want, got)
+		}
 	}
 }

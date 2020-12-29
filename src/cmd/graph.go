@@ -23,7 +23,7 @@ func init() {
 
 var graphCmd = &cobra.Command{
 	Use:   "graph [flags] [stage_file]...",
-	Short: "Print stage graph in graphviz DOT format",
+	Short: "Print the stage graph in graphviz DOT format",
 	Long: `Graph prints the stage graph in graphviz DOT format.
 
 For each stage file passed in, graph will print the graph of the stage and all

@@ -23,7 +23,7 @@ const (
 )
 
 func (fs FileStatus) String() string {
-	return [...]string{"Absent", "RegularFile", "Link", "Directory", "Other"}[fs]
+	return [...]string{"absent", "regular file", "link", "directory", "other"}[fs]
 }
 
 // Exists returns true if path is an existing file or directory, otherwise it

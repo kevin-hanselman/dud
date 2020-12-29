@@ -53,7 +53,8 @@ type ArtifactWithStatus struct {
 
 func (stat ArtifactWithStatus) String() string {
 	isDir := stat.WorkspaceFileStatus == fsutil.StatusDirectory
-	if isDir != stat.IsDir {
+	isAbsent := stat.WorkspaceFileStatus == fsutil.StatusAbsent
+	if (stat.IsDir != isDir) && !isAbsent {
 		return fmt.Sprintf("incorrect file type: %s", stat.WorkspaceFileStatus)
 	}
 	isRegularFile := stat.WorkspaceFileStatus == fsutil.StatusRegularFile

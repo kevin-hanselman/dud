@@ -184,6 +184,13 @@ func CreateArtifactTestCase(status artifact.ArtifactWithStatus) (dirs TempDirs, 
 		if err = os.Symlink(targetPath, fileWorkspacePath); err != nil {
 			return
 		}
+	case fsutil.StatusDirectory:
+		if status.ContentsMatch {
+			panic("ContentsMatch = true with WorkspaceFileStatus = Directory")
+		}
+		if err = os.Mkdir(fileWorkspacePath, 0755); err != nil {
+			return
+		}
 	}
 	return
 }

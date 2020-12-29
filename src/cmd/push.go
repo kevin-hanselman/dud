@@ -20,7 +20,7 @@ func init() {
 
 var pushCmd = &cobra.Command{
 	Use:   "push [flags] [stage_file]...",
-	Short: "Push committed artifacts to the default remote cache",
+	Short: "Push committed artifacts to the remote cache",
 	Long: `Push uploads previously committed artifacts to a remote cache.
 
 For each stage passed in, push uploads the stage's committed outputs to the
