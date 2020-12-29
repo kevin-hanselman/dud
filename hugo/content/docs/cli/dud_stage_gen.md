@@ -13,7 +13,7 @@ The output of this command can be redirected to a file and modified further as
 needed.
 
 ```
-dud stage gen [flags]
+dud stage gen [flags] [--] [stage_command]...
 ```
 
 ### Examples

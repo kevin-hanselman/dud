@@ -14,6 +14,7 @@ RUN pacman -Sy --noconfirm --needed \
         python-pip \
         rclone \
         sudo \
+        tokei \
         tree \
         xxhash \
     && pacman -Scc --noconfirm

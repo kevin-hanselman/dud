@@ -63,7 +63,7 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	cmd := exec.Command(
 		"rclone",
 		"--config",
-		filepath.Join(".dud/rclone.conf"),
+		".dud/rclone.conf",
 		// Ideally these sorts of flags could be added to the rclone config,
 		// but I haven't found a way to add them.
 		// See: https://github.com/rclone/rclone/issues/2697
@@ -108,7 +108,7 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	// because someone may use a local directory as their "remote".
 	var chmodErr error
 	for file := range fileSet {
-		err := os.Chmod(filepath.Join(dst, file), 0444)
+		err := os.Chmod(filepath.Join(dst, file), cacheFilePerms)
 		if err != nil && !os.IsNotExist(err) {
 			chmodErr = err
 		}

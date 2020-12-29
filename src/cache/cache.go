@@ -41,14 +41,6 @@ func (ch *LocalCache) Dir() string {
 	return ch.dir
 }
 
-// Equal returns true if the two LocalCaches are equivalent.
-// This is necessary for go-cmp to properly compare LocalCache objects (e.g. in
-// file commit args).  TODO: Needing to compare LocalCaches in tests is a bit
-// smelly. Consider removing this method?
-func (ch *LocalCache) Equal(other *LocalCache) bool {
-	return ch.dir == other.dir
-}
-
 // PathForChecksum returns the expected location of an object with the
 // given checksum in the cache. If the checksum has an invalid (e.g. empty)
 // checksum value, this function returns an error.

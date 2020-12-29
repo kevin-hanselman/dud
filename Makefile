@@ -28,7 +28,7 @@ docker: docker-image
 		--rm \
 		-it \
 		-p 8888:8888 \
-		-v $(shell pwd):/dud \
+		-v $(base_dir):/dud \
 		$(docker_image)
 
 # Run any rule in this Makefile in the development Docker image.
@@ -36,7 +36,7 @@ docker-%: docker-image
 	docker run \
 		--rm \
 		-p 8888:8888 \
-		-v $(shell pwd):/dud \
+		-v $(base_dir):/dud \
 		$(docker_image) make $(patsubst docker-%,%,$@)
 
 docker-image:
@@ -104,7 +104,7 @@ integration-bench: $(GOBIN)/dud
 deep-lint:
 	docker run \
 		--rm \
-		-v $(shell pwd):/app \
+		-v $(base_dir):/app \
 		-w /app \
 		golangci/golangci-lint:latest \
 		golangci-lint run

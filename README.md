@@ -3,95 +3,8 @@
 Dud is a tool for storing, versioning, and reproducing large files alongside
 source code.
 
-## A quick walkthrough of Dud
-
-Create a project.
-```
-$ mkdir cifar; cd cifar
-
-$ dud init
-Initialized .dud directory
-```
-
-Add some data and tell Dud to track it.
-```
-$ curl -O https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
-
-$ dud stage gen -o cifar-10-python.tar.gz | tee cifar.yaml
-working-dir: .
-outputs:
-    - path: cifar-10-python.tar.gz
-
-$ dud stage add cifar.yaml
-
-$ dud status
-cifar.yaml
-  cifar-10-python.tar.gz  uncommitted
-```
-
-Commit the data to the Dud cache.
-```
-$ dud commit
-committing stage cifar.yaml
-
-$ dud status
-cifar.yaml
-  cifar-10-python.tar.gz  up-to-date (link)
-
-$ ls -l
-total 12
-lrwxrwxrwx 1 user user  93 Oct 23 16:34 cifar-10-python.tar.gz ->
-/home/user/cifar/.dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
--rw-r--r-- 1 user user 140 Oct 23 16:32 cifar.yaml
-```
-
-Add a stage to extract the data.
-```
-$ mkdir cifar-10-batches-py
-
-$ dud stage gen -d cifar-10-python.tar.gz -o cifar-10-batches-py -- \
-  tar -xf cifar-10-python.tar.gz | tee extract_cifar.yaml
-command: tar -xf cifar-10-python.tar.gz
-working-dir: .
-dependencies:
-    - path: cifar-10-python.tar.gz
-outputs:
-    - path: cifar-10-batches-py
-      is-dir: true
-
-$ dud stage add extract_cifar.yaml
-```
-
-Run the pipeline and commit the results.
-```
-$ dud run
-nothing to do for stage cifar.yaml
-running stage extract_cifar.yaml
-
-$ dud status
-cifar.yaml
-  cifar-10-python.tar.gz  up-to-date (link)
-extract_cifar.yaml
-  cifar-10-batches-py  uncommitted
-
-$ dud commit
-committing stage cifar.yaml
-committing stage extract_cifar.yaml
-
-$ dud status
-cifar.yaml
-  cifar-10-python.tar.gz  up-to-date (link)
-extract_cifar.yaml
-  cifar-10-batches-py  up-to-date
-```
-
-Visualize the pipeline.
-```
-$ dud graph | dot -Tpng -o dud.png
-```
-
-![cifar pipeline](cifar_example.png)
-
+![Go report card](https://goreportcard.com/badge/github.com/kevin-hanselman/dud)
+![Build status](https://github.com/kevin-hanselman/dud/workflows/build/badge.svg)
 
 ## Design Principles
 
@@ -134,7 +47,7 @@ stored in the Cache, but it isn't strictly necessary.
 ### Stage
 
 A Stage is a group of Artifacts, or an operation that consumes and/or produces
-a group Artifacts. Stages are defined by the user in YAML files and should be
+a group of Artifacts. Stages are defined by the user in YAML files and should be
 tracked with source control.
 
 ### Index
@@ -144,6 +57,7 @@ a dependency graph of Stages, enabling the user to define data pipelines.
 
 ### Cache
 
-The Cache is a local directory where Dud stores and versions Artifacts. The
-Cache is content-addressed, which (among other things) facilitates storing all
-versions of all Artifacts without conflicts.
+The Cache is a local directory where Dud stores and versions the contents of
+Artifacts. The Cache is content-addressed, which (among other things)
+facilitates storing all versions of all Artifacts without conflicts or
+duplication.

@@ -3,7 +3,7 @@ title: dud graph
 ---
 ## dud graph
 
-Print stage graph in graphviz DOT format
+Print the stage graph in graphviz DOT format
 
 ### Synopsis
 

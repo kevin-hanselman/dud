@@ -3,7 +3,7 @@ title: dud fetch
 ---
 ## dud fetch
 
-Fetch committed artifacts to the default remote cache
+Fetch committed artifacts from the remote cache
 
 ### Synopsis
 

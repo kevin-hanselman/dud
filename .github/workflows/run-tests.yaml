@@ -1,7 +1,7 @@
-name: build-and-test
+name: build
 on: [push]
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout

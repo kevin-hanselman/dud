@@ -21,10 +21,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const numWorkers = 20
-
-// This is a somewhat arbitrary number. We need to profile more.
-const readDirChunkSize = 1000
+const (
+	numWorkers = 20
+	// This is a somewhat arbitrary number. We need to profile more.
+	readDirChunkSize = 1000
+	cacheFilePerms   = 0444
+)
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then
 // performs a checkout.
@@ -157,7 +159,7 @@ func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, er
 	if err = os.Rename(moveFile, cachePath); err != nil {
 		return "", err
 	}
-	if err := os.Chmod(cachePath, 0444); err != nil {
+	if err := os.Chmod(cachePath, cacheFilePerms); err != nil {
 		return "", err
 	}
 	return cksum, nil

@@ -3,7 +3,7 @@ title: dud push
 ---
 ## dud push
 
-Push committed artifacts to the default remote cache
+Push committed artifacts to the remote cache
 
 ### Synopsis
 

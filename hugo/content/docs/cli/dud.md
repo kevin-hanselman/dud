@@ -25,10 +25,10 @@ source code.
 * [dud commit]({{< relref "dud_commit.md" >}})	 - Save artifacts to the cache and record their checksums
 * [dud completion]({{< relref "dud_completion.md" >}})	 - Generate shell completion script
 * [dud config]({{< relref "dud_config.md" >}})	 - Print or modify fields in the config file
-* [dud fetch]({{< relref "dud_fetch.md" >}})	 - Fetch committed artifacts to the default remote cache
-* [dud graph]({{< relref "dud_graph.md" >}})	 - Print stage graph in graphviz DOT format
+* [dud fetch]({{< relref "dud_fetch.md" >}})	 - Fetch committed artifacts from the remote cache
+* [dud graph]({{< relref "dud_graph.md" >}})	 - Print the stage graph in graphviz DOT format
 * [dud init]({{< relref "dud_init.md" >}})	 - Initialize a Dud project
-* [dud push]({{< relref "dud_push.md" >}})	 - Push committed artifacts to the default remote cache
+* [dud push]({{< relref "dud_push.md" >}})	 - Push committed artifacts to the remote cache
 * [dud run]({{< relref "dud_run.md" >}})	 - Run stages or pipelines
 * [dud stage]({{< relref "dud_stage.md" >}})	 - Commands for interacting with stages and the index
 * [dud status]({{< relref "dud_status.md" >}})	 - Print the state of one or more stages

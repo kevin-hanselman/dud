@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Please acknowledge the following**
-- [ ] I have read about [Minimal Bug Reports](https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports) and what follows is my best attempt at creating one.
+- [ ] I have read about [Minimal Bug Reports][bugs] and what follows is my good faith attempt at creating one.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -34,7 +34,8 @@ go version
 ```
 
 **Steps to Reproduce**
-Steps to reproduce the behavior. Ideally this a copy-paste-able shell script (or set of small scripts) that reproduces the problem.
+Steps to reproduce the behavior. Ideally this a copy-paste-able shell script (or
+set of small scripts) that reproduces the problem.
 ```
 # for example:
 dud init
@@ -45,3 +46,6 @@ dud stage add stage.yaml
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
+
+
+[bugs]: https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports
