@@ -12,9 +12,10 @@ install: $(GOBIN)/dud
 
 .PHONY: cli-docs
 cli-docs: dud
-	./dud gen-docs hugo/content/docs/cli
+	./dud gen-docs hugo/content/cli
 
 .PHONY: docs
+# TODO: add hugo/content/%.md as a prerequisite
 docs: cli-docs
 	cd hugo && hugo --minify
 
@@ -68,7 +69,28 @@ bench: test
 
 .PHONY: serve-jupyter
 serve-jupyter: $(GOBIN)/dud
-	jupyter notebook -y --ip=0.0.0.0 ./notebooks/
+	jupyter notebook -y --ip=0.0.0.0 ./hugo/notebooks/
+
+hugo/notebooks/%.md:
+	jupyter nbconvert \
+		--to markdown \
+		--TagRemovePreprocessor.remove_input_tags 'hide_input' \
+		--TagRemovePreprocessor.remove_all_outputs_tags 'hide_output' \
+		'$(patsubst %.md,%.ipynb,$@)'
+
+hugo/content/%.md: hugo/notebooks/%.md
+	# $< == first prerequisite
+	mkdir -p '$(dir $@)'
+	cat '$<' \
+		| dos2unix \
+		# Find code blocks with Python syntax highlighting. If the first line
+		# in the code block starts with a bang, this is actually a shell
+		# command. Change the syntax highlighting to Bash and remove the bang.
+		# The AWK script below will handle the rest.
+		| sed -e '/```python/ {N; s;python\n!;bash\n;}' \
+		| awk -f ./hugo/notebooks/fix_md.awk \
+		> '$@'
+	cp '$(patsubst %.md,%_files,$<)'/* '$(dir $@)'
 
 # xargs trims whitespace from the hostname below
 .PHONY: serve-hugo

@@ -83,7 +83,7 @@ source code.`,
 
 // Main is the entry point to the cobra CLI.
 func Main() {
-	logger = log.New(os.Stderr, "", 0)
+	logger = log.New(os.Stdout, "", 0)
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err)
 	}

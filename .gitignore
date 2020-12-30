@@ -3,7 +3,17 @@
 .dud
 mockery
 
-# test files for benchmarking
+# auto-generated hugo files
+# (e.g. cobra CLI and converted Jupyter notebooks)
+hugo/content/**/*.*
+!hugo/content/**/_index.md
+
+hugo/notebooks/**/*.*
+!hugo/notebooks/**/*.ipynb
+!hugo/notebooks/*.*
+.ipynb_checkpoints
+
+# benchmarking
 *.bin
 integration/*/data/
 *.pprof

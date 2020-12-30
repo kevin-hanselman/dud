@@ -3,8 +3,8 @@
 Dud is a tool for storing, versioning, and reproducing large files alongside
 source code.
 
-![Go report card](https://goreportcard.com/badge/github.com/kevin-hanselman/dud)
-![Build status](https://github.com/kevin-hanselman/dud/workflows/build/badge.svg)
+[![Build status](https://github.com/kevin-hanselman/dud/workflows/build/badge.svg)](https://github.com/kevin-hanselman/dud/actions?query=workflow%3Abuild)
+[![Go report card](https://goreportcard.com/badge/github.com/kevin-hanselman/dud)](https://goreportcard.com/report/github.com/kevin-hanselman/dud)
 
 ## Design Principles
 

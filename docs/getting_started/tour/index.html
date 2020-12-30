@@ -1,0 +1,104 @@
+<!doctype html><html lang=en><head><meta name=generator content="Hugo 0.79.1"><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="A Tour of Dud #  Create a project.
+$ mkdir ~/cifar && cd ~/cifar $ dud init Dud project initialized. See .dud/config.yaml and .dud/rclone.conf to customize the project.  Add some data and tell Dud to track it.
+$ curl -sSO https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz $ dud stage gen -o cifar-10-python.tar.gz | tee cifar.yaml working-dir: . outputs: cifar-10-python.tar.gz: {} $ dud stage add cifar.yaml $ dud status cifar.yaml (stage definition not checksummed) cifar-10-python."><meta name=theme-color content="#FFFFFF"><meta property="og:title" content><meta property="og:description" content="A Tour of Dud #  Create a project.
+$ mkdir ~/cifar && cd ~/cifar $ dud init Dud project initialized. See .dud/config.yaml and .dud/rclone.conf to customize the project.  Add some data and tell Dud to track it.
+$ curl -sSO https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz $ dud stage gen -o cifar-10-python.tar.gz | tee cifar.yaml working-dir: . outputs: cifar-10-python.tar.gz: {} $ dud stage add cifar.yaml $ dud status cifar.yaml (stage definition not checksummed) cifar-10-python."><meta property="og:type" content="article"><meta property="og:url" content="https://kevin-hanselman.github.io/dud/getting_started/tour/"><title>Tour | Dud</title><link rel=manifest href=/dud/manifest.json><link rel=icon href=/dud/favicon.png type=image/x-icon><link rel=stylesheet href=/dud/book.min.09a284f5a03730d86dde350d2c062b1514e48fdfebba7763941c0674ef65748f.css integrity="sha256-CaKE9aA3MNht3jUNLAYrFRTkj9/rundjlBwGdO9ldI8="><script defer src=/dud/en.search.min.ec08ada8aad5a31697804174a97e74edaaf207945a187a31ddcce1bc661c49d0.js integrity="sha256-7AitqKrVoxaXgEF0qX507aryB5RaGHox3czhvGYcSdA="></script></head><body><input type=checkbox class="hidden toggle" id=menu-control>
+<input type=checkbox class="hidden toggle" id=toc-control><main class="container flex"><aside class=book-menu><nav><h2 class=book-brand><a href=/dud><span>Dud</span></a></h2><div class=book-search><input type=text id=book-search-input placeholder=Search aria-label=Search maxlength=64 data-hotkeys=s/><div class="book-search-spinner hidden"></div><ul id=book-search-results></ul></div><ul><li><input type=checkbox id=section-acdc30ff5cf57e4ff3a5b04fe43650db class=toggle checked>
+<label for=section-acdc30ff5cf57e4ff3a5b04fe43650db class="flex justify-between"><a>Getting Started</a>
+<span>▾</span></label><ul><li><a href=https://kevin-hanselman.github.io/dud/getting_started/tour/ class=active>Tour</a></li></ul></li><li><input type=checkbox id=section-8c728f663f5d611199f5b6f4f3a214a5 class=toggle>
+<label for=section-8c728f663f5d611199f5b6f4f3a214a5 class="flex justify-between"><a>CLI Reference</a>
+<span>▾</span></label><ul><li><a href=https://kevin-hanselman.github.io/dud/cli/dud/>dud</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_checkout/>dud checkout</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_checksum/>dud checksum</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_commit/>dud commit</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_completion/>dud completion</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_config/>dud config</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_config_get/>dud config get</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_config_set/>dud config set</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_fetch/>dud fetch</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_graph/>dud graph</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_init/>dud init</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_push/>dud push</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_run/>dud run</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_stage/>dud stage</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_stage_add/>dud stage add</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_stage_gen/>dud stage gen</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_status/>dud status</a></li><li><a href=https://kevin-hanselman.github.io/dud/cli/dud_version/>dud version</a></li></ul></li></ul></nav><script>(function(){var menu=document.querySelector("aside.book-menu nav");addEventListener("beforeunload",function(event){localStorage.setItem("menu.scrollTop",menu.scrollTop);});menu.scrollTop=localStorage.getItem("menu.scrollTop");})();</script></aside><div class=book-page><header class=book-header><div class="flex align-center justify-between"><label for=menu-control><img src=/dud/svg/menu.svg class=book-icon alt=Menu></label>
+<strong>Tour</strong>
+<label for=toc-control><img src=/dud/svg/toc.svg class=book-icon alt="Table of Contents"></label></div><aside class="hidden clearfix"><nav id=TableOfContents></nav></aside></header><article class=markdown><h1 id=a-tour-of-dud>A Tour of Dud
+<a class=anchor href=#a-tour-of-dud>#</a></h1><p>Create a project.</p><pre><code>$ mkdir ~/cifar &amp;&amp; cd ~/cifar
+
+$ dud init
+Dud project initialized.
+See .dud/config.yaml and .dud/rclone.conf to customize the project.
+</code></pre><p>Add some data and tell Dud to track it.</p><pre><code>$ curl -sSO https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
+
+$ dud stage gen -o cifar-10-python.tar.gz | tee cifar.yaml
+working-dir: .
+outputs:
+  cifar-10-python.tar.gz: {}
+
+$ dud stage add cifar.yaml
+
+$ dud status
+cifar.yaml   (stage definition not checksummed)
+  cifar-10-python.tar.gz  uncommitted
+</code></pre><p>Commit the data to the Dud cache.</p><pre><code>$ dud commit
+committing stage cifar.yaml
+⠋ committing cifar-10-python.tar.gz (163 MB, 2329.875 MB/s) 
+
+$ cat cifar.yaml
+checksum: 59f5cc183a8f5784433aaf6b36eea327f53dc03a8953b89b55063a6630c902ea
+working-dir: .
+outputs:
+  cifar-10-python.tar.gz:
+    checksum: fe3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+
+$ dud status
+cifar.yaml   (stage definition up-to-date)
+  cifar-10-python.tar.gz  up-to-date (link)
+
+$ tree -an
+.
+├── cifar-10-python.tar.gz -&gt; /home/user/cifar/.dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+├── cifar.yaml
+└── .dud
+    ├── cache
+    │   └── fe
+    │       └── 3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+    ├── config.yaml
+    ├── index
+    └── rclone.conf
+
+3 directories, 6 files
+</code></pre><p>Add a stage to extract the data.</p><pre><code>$ mkdir cifar-10-batches-py
+
+$ dud stage gen \
+    -d cifar-10-python.tar.gz \
+    -o cifar-10-batches-py/ \
+    -- tar -xvf cifar-10-python.tar.gz \
+    | tee extract_cifar.yaml
+command: tar -xvf cifar-10-python.tar.gz
+working-dir: .
+dependencies:
+  cifar-10-python.tar.gz: {}
+outputs:
+  cifar-10-batches-py:
+    is-dir: true
+
+$ dud stage add extract_cifar.yaml
+</code></pre><p>Run our pipeline and commit the results.</p><pre><code>$ dud run
+nothing to do for stage cifar.yaml
+running stage extract_cifar.yaml
+cifar-10-batches-py/
+cifar-10-batches-py/data_batch_4
+cifar-10-batches-py/readme.html
+cifar-10-batches-py/test_batch
+cifar-10-batches-py/data_batch_3
+cifar-10-batches-py/batches.meta
+cifar-10-batches-py/data_batch_2
+cifar-10-batches-py/data_batch_5
+cifar-10-batches-py/data_batch_1
+
+$ dud status
+cifar.yaml   (stage definition up-to-date)
+  cifar-10-python.tar.gz  up-to-date (link)
+extract_cifar.yaml   (stage definition not checksummed)
+  cifar-10-batches-py  uncommitted
+
+$ dud commit
+committing stage cifar.yaml
+⠋ committing cifar-10-python.tar.gz ( 0B, ) 
+committing stage extract_cifar.yaml
+⠋ committing cifar-10-batches-py (178 MB, 5496.538 MB/s) 
+</code></pre><p>Notice that Dud detected the tarball from cifar.yaml was up-to-date and did not copy any data.</p><pre><code>$ dud status
+cifar.yaml   (stage definition up-to-date)
+  cifar-10-python.tar.gz  up-to-date (link)
+extract_cifar.yaml   (stage definition up-to-date)
+  cifar-10-batches-py  up-to-date
+</code></pre><p>Visualize the pipeline using Graphviz.</p><pre><code>$ dud graph | dot -Tpng -o pipeline.png
+</code></pre><p><img src=../tour_26_0.png alt=png></p></article><footer class=book-footer><div class="flex flex-wrap justify-between"></div></footer><div class=book-comments></div><label for=menu-control class="hidden book-menu-overlay"></label></div><aside class=book-toc><nav id=TableOfContents></nav></aside></main></body></html>

@@ -31,11 +31,9 @@ upstream stages. If no stage files are passed in, graph will act on all stages
 in the index.
 
 You can pipe the output of this command to 'dot' from the graphviz package to
-generate images of the stage graph. For example:
-
-dud graph | dot -Tpng -o dud.png
-`,
-	PreRun: requireInitializedProject,
+generate images of the stage graph.`,
+	Example: "dud graph | dot -Tpng -o dud.png",
+	PreRun:  requireInitializedProject,
 	Run: func(cmd *cobra.Command, args []string) {
 		idx, err := index.FromFile(".dud/index")
 		if os.IsNotExist(err) { // TODO: print error instead?

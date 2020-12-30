@@ -1,4 +1,4 @@
-# Constributor's Guide
+# Contributor's Guide
 
 Please review and abide by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
