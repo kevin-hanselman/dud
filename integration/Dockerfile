@@ -3,7 +3,6 @@ FROM archlinux
 RUN pacman -Sy --noconfirm --needed \
         base-devel \
         diffutils \
-        dos2unix \
         git \
         go \
         graphviz \

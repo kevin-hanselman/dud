@@ -79,17 +79,9 @@ hugo/notebooks/%.md:
 		'$(patsubst %.md,%.ipynb,$@)'
 
 hugo/content/%.md: hugo/notebooks/%.md
-	# $< == first prerequisite
 	mkdir -p '$(dir $@)'
-	cat '$<' \
-		| dos2unix \
-		# Find code blocks with Python syntax highlighting. If the first line
-		# in the code block starts with a bang, this is actually a shell
-		# command. Change the syntax highlighting to Bash and remove the bang.
-		# The AWK script below will handle the rest.
-		| sed -e '/```python/ {N; s;python\n!;bash\n;}' \
-		| awk -f ./hugo/notebooks/fix_md.awk \
-		> '$@'
+	# $< == first prerequisite
+	awk -f ./hugo/notebooks/fix_md.awk '$<' > '$@'
 	cp '$(patsubst %.md,%_files,$<)'/* '$(dir $@)'
 
 # xargs trims whitespace from the hostname below
