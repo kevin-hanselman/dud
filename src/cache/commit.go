@@ -110,16 +110,6 @@ func commitFileArtifact(
 	art.Checksum = cksum
 	// There's no need to call Checkout if using CopyStrategy; the original file still exists.
 	if strat == strategy.LinkStrategy {
-		// TODO: add "force" option to cache.Checkout to replace this
-		exists, err := fsutil.Exists(workPath, false)
-		if err != nil {
-			return errors.Wrap(err, errorPrefix)
-		}
-		if exists {
-			if err := os.Remove(workPath); err != nil {
-				return errors.Wrap(err, errorPrefix)
-			}
-		}
 		return ch.Checkout(workspaceDir, *art, strat)
 	}
 	return nil
