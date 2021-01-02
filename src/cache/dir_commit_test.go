@@ -19,6 +19,9 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		t.Skip()
 	}
 
+	maxSharedWorkers = 1
+	maxDedicatedWorkers = 1
+
 	t.Run("happy path", func(t *testing.T) {
 		dirs, art, cache := setupDirTest(t)
 		defer os.RemoveAll(dirs.CacheDir)

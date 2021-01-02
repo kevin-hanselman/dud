@@ -22,10 +22,19 @@ import (
 )
 
 const (
-	numWorkers = 20
-	// This is a somewhat arbitrary number. We need to profile more.
-	readDirChunkSize = 1000
-	cacheFilePerms   = 0444
+	cacheFilePerms = 0444
+)
+
+// These are somewhat arbitrary numbers. We need to profile more.
+var (
+	// The number of concurrent workers available to a top-level directory
+	// artifact and all its child artifacts.
+	maxSharedWorkers = 64
+	// The number of concurrent workers available to each individual directory
+	// artifact (and not its children). Dedicated workers are necessary because
+	// without them, deadlocks can occur when maxSharedWorkers is less than the
+	// directory depth.
+	maxDedicatedWorkers = 1
 )
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then
@@ -38,7 +47,16 @@ func (ch *LocalCache) Commit(
 	pb := progressbar.DefaultBytes(-1, fmt.Sprintf("committing %s", art.Path))
 	defer pb.Finish()
 	if art.IsDir {
-		return commitDirArtifact(context.Background(), ch, workspaceDir, art, strat, pb)
+		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
+		return commitDirArtifact(
+			context.Background(),
+			ch,
+			workspaceDir,
+			art,
+			strat,
+			activeSharedWorkers,
+			pb,
+		)
 	}
 	return commitFileArtifact(ch, workspaceDir, art, strat, pb)
 }
@@ -108,7 +126,8 @@ func commitFileArtifact(
 	}
 
 	art.Checksum = cksum
-	// There's no need to call Checkout if using CopyStrategy; the original file still exists.
+	// There's no need to call Checkout if using CopyStrategy; the original
+	// file still exists.
 	if strat == strategy.LinkStrategy {
 		return ch.Checkout(workspaceDir, *art, strat)
 	}
@@ -171,6 +190,7 @@ func commitDirArtifact(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	activeSharedWorkers chan struct{},
 	pb *progressbar.ProgressBar,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
@@ -184,98 +204,97 @@ func commitDirArtifact(
 
 	baseDir := filepath.Join(workspaceDir, art.Path)
 
-	// Using this example as a reference:
-	// https://godoc.org/golang.org/x/sync/errgroup#example-Group--Pipeline
+	infos, err := readDir(baseDir, art.DisableRecursion)
 
-	// Start a goroutine to read the directory and feed files/sub-directories
-	// to the workers.
+	// Start a goroutine to feed files/sub-directories to workers.
 	errGroup, groupCtx := errgroup.WithContext(ctx)
 	inputFiles := make(chan os.FileInfo)
 	errGroup.Go(func() error {
 		defer close(inputFiles)
-		dir, err := os.Open(baseDir)
-		if err != nil {
-			return err
-		}
-		moreFiles := true
-		for moreFiles {
-			infos, err := dir.Readdir(readDirChunkSize)
-			moreFiles = err != io.EOF
-			if err != nil && moreFiles {
-				return err
-			}
-			for _, info := range infos {
-				select {
-				case inputFiles <- info:
-				case <-groupCtx.Done():
-					return groupCtx.Err()
-				}
+		for _, info := range infos {
+			select {
+			case inputFiles <- info:
+			case <-groupCtx.Done():
+				return groupCtx.Err()
 			}
 		}
 		return nil
 	})
 
-	// Start workers to commit child Artifacts.
+	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
 	childArtifacts := make(chan *artifact.Artifact)
-	for i := 0; i < numWorkers; i++ {
-		errGroup.Go(func() error {
-			for info := range inputFiles {
-				path := info.Name()
-				// See if we can recover a sub-artifact from an existing
-				// dirManifest. This enables skipping up-to-date artifacts.
-				var childArt *artifact.Artifact
-				childArt, ok := oldManifest.Contents[path]
-				if !ok {
-					childArt = &artifact.Artifact{Path: path}
-				}
-				if info.IsDir() {
-					if art.DisableRecursion {
-						continue
-					}
-					childArt.IsDir = true
-					childArt.DisableRecursion = false
-					if err := commitDirArtifact(
-						groupCtx,
-						ch,
-						baseDir,
-						childArt,
-						strat,
-						pb,
-					); err != nil {
-						return err
-					}
-				} else {
-					if err := commitFileArtifact(ch, baseDir, childArt, strat, pb); err != nil {
-						return err
-					}
-				}
-				select {
-				case childArtifacts <- childArt:
-				case <-groupCtx.Done():
-					return groupCtx.Err()
-				}
-			}
-			return nil
-		})
-	}
-
-	// Start a goroutine to close the output channel when the workers have
-	// completed.
-	go func() {
-		errGroup.Wait()
-		close(childArtifacts)
-	}()
+	manifestReady := make(chan struct{})
 
 	newManifest := &directoryManifest{Path: art.Path}
 	newManifest.Contents = make(map[string]*artifact.Artifact)
-	for childArt := range childArtifacts {
-		newManifest.Contents[childArt.Path] = childArt
+	errGroup.Go(func() error {
+		// There should be exactly len(infos) Artifacts returned in the
+		// childArtifacts channel. This fact is critical for enabling the
+		// dynamic worker scheduling below, because that logic needs to know
+		// when to stop waiting for available worker tokens (via the
+		// manifestReady channel).
+		for i := 0; i < len(infos); i++ {
+			select {
+			case childArt := <-childArtifacts:
+				newManifest.Contents[childArt.Path] = childArt
+			case <-groupCtx.Done():
+				return groupCtx.Err()
+			}
+		}
+		close(manifestReady)
+		return nil
+	})
+
+	// Start workers to commit child Artifacts. We spawn workers when there's
+	// free space in either of the "active worker" channels. We quit when
+	// either we've either scheduled as many workers as files/sub-dirs, the
+	// manifest builder says the manifest is ready, or the group was cancelled.
+	for i := 0; i < len(infos); i++ {
+		select {
+		case <-groupCtx.Done():
+		case <-manifestReady:
+			break
+		case activeSharedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeSharedWorkers }()
+				return dirWorker(
+					groupCtx,
+					ch,
+					*art,
+					baseDir,
+					oldManifest,
+					strat,
+					inputFiles,
+					childArtifacts,
+					activeSharedWorkers,
+					pb,
+				)
+			})
+		case activeDedicatedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeDedicatedWorkers }()
+				return dirWorker(
+					groupCtx,
+					ch,
+					*art,
+					baseDir,
+					oldManifest,
+					strat,
+					inputFiles,
+					childArtifacts,
+					activeSharedWorkers,
+					pb,
+				)
+			})
+		}
 	}
 
-	// Check the group again to collect the group error.
+	// Wait for all goroutines to exit and collect the group error.
 	if err := errGroup.Wait(); err != nil {
 		return err
 	}
+
+	close(childArtifacts)
 
 	cksum, err := commitDirManifest(ch, newManifest)
 	if err != nil {
@@ -283,4 +302,76 @@ func commitDirArtifact(
 	}
 	art.Checksum = cksum
 	return nil
+}
+
+func dirWorker(
+	ctx context.Context,
+	ch *LocalCache,
+	art artifact.Artifact,
+	baseDir string,
+	dirMan directoryManifest,
+	strat strategy.CheckoutStrategy,
+	inputFiles <-chan os.FileInfo,
+	outputArtifacts chan<- *artifact.Artifact,
+	activeSharedWorkers chan struct{},
+	pb *progressbar.ProgressBar,
+) error {
+	for info := range inputFiles {
+		path := info.Name()
+		// See if we can recover a sub-artifact from an existing
+		// dirManifest. This enables skipping up-to-date artifacts.
+		var childArt *artifact.Artifact
+		childArt, ok := dirMan.Contents[path]
+		if !ok {
+			childArt = &artifact.Artifact{Path: path}
+		}
+		if info.IsDir() {
+			childArt.IsDir = true
+			if err := commitDirArtifact(
+				ctx,
+				ch,
+				baseDir,
+				childArt,
+				strat,
+				activeSharedWorkers,
+				pb,
+			); err != nil {
+				return err
+			}
+		} else {
+			if err := commitFileArtifact(ch, baseDir, childArt, strat, pb); err != nil {
+				return err
+			}
+		}
+		select {
+		case outputArtifacts <- childArt:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	return nil
+}
+
+func readDir(path string, excludeDirs bool) (out []os.FileInfo, err error) {
+	dir, err := os.Open(path)
+	defer dir.Close()
+	if err != nil {
+		return
+	}
+	out, err = dir.Readdir(0)
+	if err != nil {
+		return
+	}
+
+	if excludeDirs {
+		allOut := out
+		out = make([]os.FileInfo, 0, len(allOut))
+		for _, info := range allOut {
+			if info.IsDir() {
+				continue
+			}
+			out = append(out, info)
+		}
+	}
+	return
 }
