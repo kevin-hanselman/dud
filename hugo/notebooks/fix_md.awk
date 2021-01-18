@@ -10,10 +10,6 @@ BEGIN {
     sub(/[ \t\r]+$/, "")
 }
 
-/%%bash/ || /%%writefile/ {
-    next
-}
-
 /\w+_files\// {
     sub(/\w+_files\//, "../")
 }
@@ -55,12 +51,24 @@ BEGIN {
         # add the starting fence back.
         if (/^!/) {
             inBash = 1
-            inPython = 0
             sub(/^!/, "$ ", $0)
         } else {
             print inPython
         }
+        # Stop processing after the first line.
+        inPython = 0
     }
+}
+
+/%%bash/ { next }
+
+/%%writefile/ {
+    # Print the file name as a Python/shell comment at the top of the block.
+    print "# " $2
+    next
+}
+
+{
     if (inBash) {
         print "    "$0
     } else {
