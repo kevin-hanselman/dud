@@ -35,6 +35,7 @@ docker: docker-image
 # Run any rule in this Makefile in the development Docker image.
 docker-%: docker-image
 	docker run \
+		--pull \
 		--rm \
 		-p 8888:8888 \
 		-v $(base_dir):/dud \
