@@ -64,7 +64,7 @@ test: fmt lint
 	go test -cover -race ./...
 
 .PHONY: bench
-bench: test
+bench: test-short
 	go test ./... -benchmem -bench .
 
 .PHONY: serve-jupyter
@@ -80,7 +80,6 @@ hugo/notebooks/%.md:
 
 hugo/content/%.md: hugo/notebooks/%.md
 	mkdir -p '$(dir $@)'
-	# $< == first prerequisite
 	awk -f ./hugo/notebooks/fix_md.awk '$<' > '$@'
 	cp '$(patsubst %.md,%_files,$<)'/* '$(dir $@)'
 
@@ -140,7 +139,7 @@ tidy:
 .PHONY: loc
 loc:
 	tokei --sort lines --exclude 'src/mocks/' ./src/ ./integration/
-	tokei --sort lines --exclude 'src/mocks/' --exclude '*_test.go' ./src/ ./integration/
+	tokei --sort lines --exclude 'src/mocks/' --exclude '*_test.go' ./src/
 
 mockery:
 	curl -L https://github.com/vektra/mockery/releases/download/v2.2.1/mockery_2.2.1_Linux_x86_64.tar.gz \
