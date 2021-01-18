@@ -81,9 +81,9 @@ hugo/notebooks/%.md:
 
 hugo/content/%.md: hugo/notebooks/%.md
 	mkdir -p '$(dir $@)'
-	# $< == first prerequisite
-	awk -f ./hugo/notebooks/fix_md.awk '$<' > '$@'
-	cp '$(patsubst %.md,%_files,$<)'/* '$(dir $@)'
+	awk --lint=fatal -f ./hugo/notebooks/fix_md.awk '$<' > '$@'
+	$(eval supporting_files = $(wildcard $(patsubst %.md,%_files,$<)/*.*))
+	if test -n "$(supporting_files)"; then cp -v $(supporting_files) $(dir $@); fi
 
 # xargs trims whitespace from the hostname below
 .PHONY: serve-hugo
@@ -154,7 +154,7 @@ mocks: mockery
 # The awk command removes all graph edge definitions that don't include dud
 depgraph.png:
 	godepgraph -nostdlib . \
-		| awk '/^[^"]/ || /dud/ {print;}' \
+		| awk '/^[^"]/ || /dud/ {print}' \
 		| dot -Tpng -o $@
 
 %mb_random.bin:
