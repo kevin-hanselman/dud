@@ -1,10 +1,27 @@
-# Dud
+# Dud [![Build status](https://github.com/kevin-hanselman/dud/workflows/build/badge.svg)](https://github.com/kevin-hanselman/dud/actions?query=workflow%3Abuild) [![Go report card](https://goreportcard.com/badge/github.com/kevin-hanselman/dud)](https://goreportcard.com/report/github.com/kevin-hanselman/dud)
 
 Dud is a tool for storing, versioning, and reproducing large files alongside
 source code.
 
-[![Build status](https://github.com/kevin-hanselman/dud/workflows/build/badge.svg)](https://github.com/kevin-hanselman/dud/actions?query=workflow%3Abuild)
-[![Go report card](https://goreportcard.com/badge/github.com/kevin-hanselman/dud)](https://goreportcard.com/report/github.com/kevin-hanselman/dud)
+With Dud, you can **commit, checkout, fetch, and push large files and
+directories** with a simple command line interface. Dud stores recipes (a.k.a.
+stages) for retrieving your data in small YAML files. These recipes can be
+stored in source control to **link your data to your code**. On top of that, the
+recipes can **run the commands to generate the data**, sort of like Make.
+Recipes can be chained together to **create data pipelines**.
+
+Dud is heavily inspired by [DVC](https://dvc.org/). If DVC is [Django][1], Dud
+aims to be [Flask][1].
+
+[1]: https://hackr.io/blog/flask-vs-django
+
+Check out [the whirlwind
+tour](https://kevin-hanselman.github.io/dud/getting_started/tour/) to get a feel
+for using Dud.
+
+Oh, and Dud is pronounced "duhd". Don't ask it where your car is; it doesn't
+know.
+
 
 ## Design Principles
 
