@@ -7,6 +7,7 @@ mockery
 # (e.g. cobra CLI and converted Jupyter notebooks)
 hugo/content/**/*.*
 !hugo/content/**/_index.md
+hugo/content/benchmarks/_index.md
 
 hugo/notebooks/**/*.*
 !hugo/notebooks/**/*.ipynb
@@ -15,7 +16,6 @@ hugo/notebooks/**/*.*
 
 # benchmarking
 *.bin
-integration/*/data/
 *.pprof
 *.trace
 

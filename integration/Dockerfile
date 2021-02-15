@@ -4,16 +4,21 @@ RUN pacman -Sy --noconfirm --needed \
         base-devel \
         diffutils \
         git \
+        # Make sure glibc is up-to-date. Sometimes it isn't,
+        # and Go tools (e.g. go vet) can have problems.
+        glibc \
         go \
         graphviz \
         hugo \
         hyperfine \
         jq \
         jupyter \
+        parallel \
         python \
         python-pip \
         rclone \
         sudo \
+        time \
         tokei \
         tree \
         xxhash \
@@ -26,6 +31,11 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 USER user
 
 WORKDIR /home/user
+
+# Create a directory to mount a Docker volume to. If we don't create the mount
+# point now as the user, Docker will create it with root permissions when it
+# creates the container.
+RUN mkdir ~/dud-data
 
 ENV PATH=$PATH:/home/user/go/bin:/home/user/.local/bin
 

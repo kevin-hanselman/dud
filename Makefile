@@ -12,11 +12,12 @@ install: $(GOBIN)/dud
 
 .PHONY: cli-docs
 cli-docs: dud
+	rm -f hugo/content/docs/cli/dud*.md
 	./dud gen-docs hugo/content/cli
 
-.PHONY: docs
 # TODO: add hugo/content/%.md as a prerequisite
-docs: cli-docs
+.PHONY: docs
+docs: cli-docs hugo/content/benchmarks/_index.md
 	cd hugo && hugo --minify
 
 $(GOBIN)/dud: dud
@@ -28,8 +29,10 @@ docker: docker-image
 	docker run \
 		--rm \
 		-it \
+		-u $(shell id -u):$(shell id -g) \
 		-p 8888:8888 \
 		-v $(base_dir):/dud \
+		-v dud-data:/home/user/dud-data \
 		$(docker_image)
 
 # Run any rule in this Makefile in the development Docker image.
@@ -38,9 +41,11 @@ docker-%: docker-image
 		--rm \
 		-p 8888:8888 \
 		-v $(base_dir):/dud \
+		-v dud-data:/dud-data \
 		$(docker_image) make $(patsubst docker-%,%,$@)
 
 docker-image:
+	docker volume create dud-data
 	docker build \
 		-t $(docker_image) \
 		-f ./integration/Dockerfile \
@@ -48,19 +53,19 @@ docker-image:
 
 .PHONY: fmt
 fmt: $(GOBIN)/goimports
-	goimports -w .
-	gofmt -s -w .
+	goimports -w -l .
+	gofmt -s -w -l .
 
 .PHONY: lint
 lint: $(GOBIN)/golint
 	go vet ./...
 	golint ./...
 
-.PHONY: test-%
-test-short: fmt lint
+.PHONY: test%
+test-short: src/mocks fmt lint
 	go test -short ./...
 
-test: fmt lint
+test: src/mocks fmt lint
 	go test -cover -race ./...
 
 .PHONY: bench
@@ -78,13 +83,44 @@ hugo/notebooks/%.md:
 		--TagRemovePreprocessor.remove_all_outputs_tags 'hide_output' \
 		'$(patsubst %.md,%.ipynb,$@)'
 
+# TODO: Make won't recognize this rule (and maybe others like it) when run with
+# the docker- prefix.
+hugo/content/benchmarks/_index.md: \
+	integration/benchmarks/markdown/00_front_matter.md \
+	integration/benchmarks/markdown/few_large_files/commit/table.md \
+	integration/benchmarks/markdown/many_small_files/commit/table.md
+	mkdir -p $(dir $@)
+	find integration/benchmarks/markdown -type f -name '*.md' | sort | xargs cat > $@
+
 hugo/content/%.md: hugo/notebooks/%.md
 	mkdir -p '$(dir $@)'
 	awk --lint=fatal -f ./hugo/notebooks/fix_md.awk '$<' > '$@'
 	$(eval supporting_files = $(wildcard $(patsubst %.md,%_files,$<)/*.*))
 	if test -n "$(supporting_files)"; then cp -v $(supporting_files) $(dir $@); fi
 
-# xargs trims whitespace from the hostname below
+~/dud-data/%:
+	mkdir $@
+	./integration/benchmarks/datasets/$*.sh $@
+
+integration/benchmarks/markdown/00_front_matter.md:
+	./integration/benchmarks/generate_front_matter.sh > $@
+
+# The pipe ("|") makes the Dud executable an "order-only" prerequisite. The
+# installed Dud executable is not found in the Docker image on boot, so it will
+# always be built and installed. This installation will always result in the
+# Dud executable being newer than the target (i.e. table.md), and thus Make
+# will always run this rule. Order-only prerequisites ignore timestamps.
+# See also: https://stackoverflow.com/a/58040049/857893
+integration/benchmarks/markdown/%/table.md: | $(GOBIN)/dud
+	$(eval parent_dirs = $(subst /, ,$*))
+	mkdir ~/dud-bench
+	./integration/benchmarks/hyperfine.sh \
+		~/dud-bench \
+		~/dud-data/$(word 1, $(parent_dirs)) \
+		integration/benchmarks/workflows/$(word 2, $(parent_dirs)) \
+		integration/benchmarks/markdown
+	rm -rf ~/dud-bench
+
 .PHONY: serve-hugo
 serve-hugo:
 	cd hugo && \
@@ -92,6 +128,7 @@ serve-hugo:
 		--disableFastRender \
 		--bind 0.0.0.0 \
 		--baseUrl $(shell hostname -i | xargs)/dud/
+# xargs trims whitespace from the hostname
 
 .PHONY: %-test-cov
 %-test-cov: %-test.coverage
@@ -106,13 +143,9 @@ int-test.coverage:
 all-test.coverage:
 	go test ./... -coverprofile=$@
 
-.PHONY: integration-%
+.PHONY: integration-test
 integration-test: $(GOBIN)/dud
 	python $(base_dir)/integration/run_tests.py
-
-integration-bench: $(GOBIN)/dud
-	mkdir -p ~/dud_integration_benchmarks
-	cd ~/dud_integration_benchmarks && python $(base_dir)/integration/run_benchmarks.py
 
 .PHONY: deep-lint
 deep-lint:
@@ -139,15 +172,14 @@ tidy:
 
 .PHONY: loc
 loc:
-	tokei --sort lines --exclude 'src/mocks/' ./src/ ./integration/
-	tokei --sort lines --exclude 'src/mocks/' --exclude '*_test.go' ./src/
+	tokei --sort lines --exclude src/mocks/ ./src/ ./integration/
+	tokei --sort lines --exclude src/mocks/ --exclude '*_test.go' ./src/
 
 mockery:
 	curl -L https://github.com/vektra/mockery/releases/download/v2.2.1/mockery_2.2.1_Linux_x86_64.tar.gz \
 		| tar -zxvf - mockery
 
-.PHONY: mocks
-mocks: mockery
+src/mocks: mockery
 	./mockery --all --output src/mocks
 
 # The awk command removes all graph edge definitions that don't include dud
