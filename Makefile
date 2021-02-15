@@ -98,6 +98,9 @@ hugo/content/%.md: hugo/notebooks/%.md
 	$(eval supporting_files = $(wildcard $(patsubst %.md,%_files,$<)/*.*))
 	if test -n "$(supporting_files)"; then cp -v $(supporting_files) $(dir $@); fi
 
+# TODO: This currently needs to be run manually, as the rule that uses it
+# (.../%/table.md below) is specific to a dataset and workflow pair (not just
+# a dataset).
 ~/dud-data/%:
 	mkdir $@
 	./integration/benchmarks/datasets/$*.sh $@

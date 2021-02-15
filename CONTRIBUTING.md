@@ -12,7 +12,7 @@ If you're making user-facing changes, you should probably update the
 website/documentation. The `docs` Make rule will generate the project website
 which is stored in the `docs` directory in the main branch. You should run this
 rule (preferably as `make docker-docs`, see below) and commit everything in the
-`hugo` and `docs` directories as part of your work.
+`docs` directory as part of your work.
 
 
 ## Development Environment
