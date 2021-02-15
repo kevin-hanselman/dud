@@ -15,7 +15,7 @@ import (
 
 // Checkout finds the artifact in the cache and adds a copy of/link to said
 // artifact in the working directory.
-func (cache *LocalCache) Checkout(
+func (cache LocalCache) Checkout(
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
@@ -50,7 +50,7 @@ func (err MissingFromCacheError) Error() string {
 }
 
 func checkoutFile(
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
@@ -114,7 +114,7 @@ func checkoutFile(
 }
 
 func checkoutDir(
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,

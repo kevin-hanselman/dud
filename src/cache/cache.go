@@ -25,26 +25,26 @@ type LocalCache struct {
 }
 
 // NewLocalCache initializes a LocalCache with a valid cache directory.
-func NewLocalCache(dir string) (*LocalCache, error) {
+func NewLocalCache(dir string) (ch LocalCache, err error) {
 	if dir == "" {
-		return nil, errors.New("cache directory path must be set")
+		return ch, errors.New("cache directory path must be set")
 	}
-	absDir, err := filepath.Abs(dir)
+	ch.dir, err = filepath.Abs(dir)
 	if err != nil {
-		return nil, err
+		return ch, err
 	}
-	return &LocalCache{dir: absDir}, nil
+	return ch, nil
 }
 
 // Dir returns the root directory for the LocalCache.
-func (ch *LocalCache) Dir() string {
+func (ch LocalCache) Dir() string {
 	return ch.dir
 }
 
 // PathForChecksum returns the expected location of an object with the
 // given checksum in the cache. If the checksum has an invalid (e.g. empty)
 // checksum value, this function returns an error.
-func (ch *LocalCache) PathForChecksum(checksum string) (string, error) {
+func (ch LocalCache) PathForChecksum(checksum string) (string, error) {
 	if len(checksum) < 3 {
 		return "", fmt.Errorf("invalid checksum: %#v", checksum)
 	}

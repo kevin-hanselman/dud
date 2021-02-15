@@ -7,7 +7,7 @@ import (
 )
 
 // Fetch downloads an Artifact from a remote location to the local cache.
-func (ch *LocalCache) Fetch(workspaceDir, remoteSrc string, art artifact.Artifact) error {
+func (ch LocalCache) Fetch(workspaceDir, remoteSrc string, art artifact.Artifact) error {
 	fetchFiles := make(map[string]struct{})
 	if err := gatherFilesToFetch(ch, workspaceDir, art, remoteSrc, fetchFiles); err != nil {
 		return err
@@ -19,7 +19,7 @@ func (ch *LocalCache) Fetch(workspaceDir, remoteSrc string, art artifact.Artifac
 }
 
 func gatherFilesToFetch(
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 	remoteSrc string,

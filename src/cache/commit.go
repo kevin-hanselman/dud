@@ -39,16 +39,15 @@ var (
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then
 // performs a checkout.
-func (ch *LocalCache) Commit(
+func (ch LocalCache) Commit(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-) error {
+) (err error) {
 	pb := progressbar.DefaultBytes(-1, fmt.Sprintf("committing %s", art.Path))
-	defer pb.Finish()
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
-		return commitDirArtifact(
+		err = commitDirArtifact(
 			context.Background(),
 			ch,
 			workspaceDir,
@@ -57,8 +56,16 @@ func (ch *LocalCache) Commit(
 			activeSharedWorkers,
 			pb,
 		)
+	} else {
+		err = commitFileArtifact(ch, workspaceDir, art, strat, pb)
 	}
-	return commitFileArtifact(ch, workspaceDir, art, strat, pb)
+	if err == nil && pb.State().CurrentBytes <= 0 {
+		pb.Clear()
+		fmt.Printf("%s up-to-date; skipping commit\n", art.Path)
+	} else {
+		pb.Finish()
+	}
+	return err
 }
 
 func memoryMapOpen(path string) (reader io.Reader, closer io.Closer, err error) {
@@ -72,7 +79,7 @@ func memoryMapOpen(path string) (reader io.Reader, closer io.Closer, err error) 
 }
 
 func commitFileArtifact(
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
@@ -139,7 +146,7 @@ func commitFileArtifact(
 // reader to the cache while checksumming. If moveFile is not empty, the file
 // path it references is moved (i.e. renamed) to the cache after checksumming,
 // thus eliminating unnecessary file IO.
-func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, error) {
+func (ch LocalCache) commitBytes(reader io.Reader, moveFile string) (string, error) {
 	// If there's no file we can move, we need to copy the bytes from reader to
 	// the cache.
 	if moveFile == "" {
@@ -174,7 +181,7 @@ func (ch *LocalCache) commitBytes(reader io.Reader, moveFile string) (string, er
 	return cksum, nil
 }
 
-func commitDirManifest(ch *LocalCache, manifest *directoryManifest) (string, error) {
+func commitDirManifest(ch LocalCache, manifest *directoryManifest) (string, error) {
 	// TODO: Consider using an io.Pipe() instead of a buffer.
 	// For large directories this is probably more important.
 	buf := new(bytes.Buffer)
@@ -186,7 +193,7 @@ func commitDirManifest(ch *LocalCache, manifest *directoryManifest) (string, err
 
 func commitDirArtifact(
 	ctx context.Context,
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
@@ -306,7 +313,7 @@ func commitDirArtifact(
 
 func dirWorker(
 	ctx context.Context,
-	ch *LocalCache,
+	ch LocalCache,
 	art artifact.Artifact,
 	baseDir string,
 	dirMan directoryManifest,

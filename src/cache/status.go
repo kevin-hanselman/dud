@@ -13,7 +13,7 @@ import (
 )
 
 // Status reports the status of an Artifact in the Cache.
-func (ch *LocalCache) Status(workspaceDir string, art artifact.Artifact) (
+func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 	outputStatus artifact.ArtifactWithStatus,
 	err error,
 ) {
@@ -33,7 +33,7 @@ func (ch *LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 var quickStatus = func(
 	// TODO: It may be worth exposing this version of status (bypassing the full
 	// status check) using a CLI flag
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 ) (status artifact.Status, cachePath, workPath string, err error) {
@@ -65,7 +65,7 @@ var quickStatus = func(
 	return
 }
 
-func fileArtifactStatus(ch *LocalCache, workspaceDir string, art artifact.Artifact) (artifact.Status, error) {
+func fileArtifactStatus(ch LocalCache, workspaceDir string, art artifact.Artifact) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	errorPrefix := "file status"
 	if err != nil {
@@ -103,7 +103,7 @@ func fileArtifactStatus(ch *LocalCache, workspaceDir string, art artifact.Artifa
 }
 
 func dirArtifactStatus(
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 ) (artifact.Status, directoryManifest, error) {

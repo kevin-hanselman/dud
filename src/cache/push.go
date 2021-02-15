@@ -13,7 +13,7 @@ import (
 // TODO: Consider removing the workspaceDir argument. Technically Push and
 // Fetch shouldn't care about the workspace at all; they purely interact with
 // the local cache.
-func (ch *LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact) error {
+func (ch LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact) error {
 	fetchFiles := make(map[string]struct{})
 	if err := gatherFilesToPush(ch, workspaceDir, art, fetchFiles); err != nil {
 		return err
@@ -25,7 +25,7 @@ func (ch *LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact
 }
 
 func gatherFilesToPush(
-	ch *LocalCache,
+	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 	filesToPush map[string]struct{},

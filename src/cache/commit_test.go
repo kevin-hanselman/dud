@@ -192,7 +192,7 @@ func testCommitIntegration(in testInput, expectedOut testExpectedOutput, t *test
 	}
 }
 
-func testCachePermissions(cache *LocalCache, art artifact.Artifact, t *testing.T) {
+func testCachePermissions(cache LocalCache, art artifact.Artifact, t *testing.T) {
 	fileCachePath, err := cache.PathForChecksum(art.Checksum)
 	if err != nil {
 		t.Fatal(err)

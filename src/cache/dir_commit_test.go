@@ -117,7 +117,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 	})
 }
 
-func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, *LocalCache) {
+func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, LocalCache) {
 	dirs, err := testutil.CreateTempDirs()
 	if err != nil {
 		t.Fatal(err)
