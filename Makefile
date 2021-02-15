@@ -17,7 +17,11 @@ cli-docs: dud
 
 # TODO: add hugo/content/%.md as a prerequisite
 .PHONY: docs
-docs: cli-docs hugo/content/benchmarks/_index.md
+docs: \
+	cli-docs \
+	hugo/content/benchmarks/_index.md \
+	hugo/content/getting_started/tour.md
+	rm -f docs/en.search*.js
 	cd hugo && hugo --minify
 
 $(GOBIN)/dud: dud
@@ -81,6 +85,10 @@ hugo/notebooks/%.md:
 		--to markdown \
 		--TagRemovePreprocessor.remove_input_tags 'hide_input' \
 		--TagRemovePreprocessor.remove_all_outputs_tags 'hide_output' \
+		'$(patsubst %.md,%.ipynb,$@)'
+	jupyter nbconvert \
+		--ClearOutputPreprocessor.enabled=True \
+		--inplace \
 		'$(patsubst %.md,%.ipynb,$@)'
 
 # TODO: Make won't recognize this rule (and maybe others like it) when run with
