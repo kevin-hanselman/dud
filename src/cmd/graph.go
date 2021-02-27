@@ -33,7 +33,7 @@ in the index.
 You can pipe the output of this command to 'dot' from the graphviz package to
 generate images of the stage graph.`,
 	Example: "dud graph | dot -Tpng -o dud.png",
-	PreRun:  requireInitializedProject,
+	PreRun:  cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 		idx, err := index.FromFile(".dud/index")
 		if os.IsNotExist(err) { // TODO: print error instead?

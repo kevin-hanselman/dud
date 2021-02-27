@@ -130,7 +130,7 @@ func init() {
 	})
 }
 
-func requireInitializedProject(cmd *cobra.Command, args []string) {
+func cdToProjectRootAndReadConfig(_ *cobra.Command, _ []string) {
 	var err error
 	rootDir, err = getProjectRootDir()
 	if err != nil {

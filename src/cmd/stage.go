@@ -22,6 +22,10 @@ The output of this command can be redirected to a file and modified further as
 needed.`,
 	Example: `dud stage gen -o data/ python download_data.py > download.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
+		rootDir, err := getProjectRootDir()
+		if err != nil {
+			logger.Fatal(err)
+		}
 		stageWorkingDir, err := rel(rootDir, stageWorkingDir)
 		if err != nil {
 			logger.Fatal(err)
@@ -32,7 +36,7 @@ needed.`,
 		}
 		stage.Outputs = make(map[string]*artifact.Artifact, len(stageOutputs))
 		for _, path := range stageOutputs {
-			art, err := createArtifactFromPath(path)
+			art, err := createArtifactFromPath(rootDir, path)
 			if err != nil {
 				logger.Fatal(err)
 			}
@@ -40,7 +44,7 @@ needed.`,
 		}
 		stage.Dependencies = make(map[string]*artifact.Artifact, len(stageDependencies))
 		for _, path := range stageDependencies {
-			art, err := createArtifactFromPath(path)
+			art, err := createArtifactFromPath(rootDir, path)
 			if err != nil {
 				logger.Fatal(err)
 			}
@@ -60,7 +64,8 @@ var addStageCmd = &cobra.Command{
 Add loads each stage file passed on the command line, validates its contents,
 checks if it conflicts with any stages already in the index, then adds the
 stage to the index file.`,
-	Args: cobra.MinimumNArgs(1),
+	Args:   cobra.MinimumNArgs(1),
+	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 		indexPath := ".dud/index"
 
@@ -114,10 +119,9 @@ func init() {
 	)
 
 	stageCmd := &cobra.Command{
-		Use:              "stage",
-		Short:            "Commands for interacting with stages and the index",
-		Long:             "Stage is a group of sub-commands for interacting with stages and the index.",
-		PersistentPreRun: requireInitializedProject,
+		Use:   "stage",
+		Short: "Commands for interacting with stages and the index",
+		Long:  "Stage is a group of sub-commands for interacting with stages and the index.",
 	}
 	stageCmd.AddCommand(genStageCmd)
 	stageCmd.AddCommand(addStageCmd)
@@ -134,7 +138,7 @@ func rel(rootDir, path string) (relPath string, err error) {
 	return
 }
 
-func createArtifactFromPath(path string) (art *artifact.Artifact, err error) {
+func createArtifactFromPath(rootDir, path string) (art *artifact.Artifact, err error) {
 	cleanPath, err := rel(rootDir, path)
 	if err != nil {
 		return

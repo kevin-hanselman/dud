@@ -32,7 +32,7 @@ If no stage files are passed in, run will act on all stages in the index. By
 default, run will act recursively on all upstream stages (i.e. dependencies),
 and thus run will execute a stage's command if any upstream stages are
 out-of-date.`,
-	PreRun: requireInitializedProject,
+	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))

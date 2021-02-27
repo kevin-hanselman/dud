@@ -18,7 +18,7 @@ func init() {
 		Use:              "config {get|set}",
 		Short:            "Print or modify fields in the config file",
 		Long:             "Config prints or modifies fields in the config file",
-		PersistentPreRun: requireInitializedProject,
+		PersistentPreRun: cdToProjectRootAndReadConfig,
 	}
 
 	configCmd.AddCommand(

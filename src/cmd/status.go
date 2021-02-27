@@ -44,7 +44,7 @@ For each stage file passed in, status will print the current state of the
 stage.  If no stage files are passed in, status will act on all stages in the
 index. By default, status will act recursively on all upstream stages (i.e.
 dependencies).`,
-	PreRun: requireInitializedProject,
+	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))

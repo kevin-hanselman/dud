@@ -5,7 +5,7 @@
 **CPU**: Intel(R) Core(TM) i3-7100 CPU @ 3.90GHz
 
 **RAM**: 16 GB
-## Few Large Files
+## Few large files
 
 This dataset consists of four 1 GB files in a single directory.
 

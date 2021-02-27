@@ -27,7 +27,7 @@ For each stage passed in, fetch downloads the stage's committed outputs from the
 remote cache specified in the Dud config file. If no stage files are passed
 in, fetch will act on all stages in the index. By default, fetch will act
 recursively on all upstream stages (i.e. dependencies).`,
-	PreRun: requireInitializedProject,
+	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
