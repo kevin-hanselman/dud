@@ -51,8 +51,16 @@ built.
 
 ### Jupyter Notebooks
 
-TODO: Expand this documentation.
+This project uses Jupyter Notebooks to build executable and reproducible
+documentation. To start the Jupyter Notebook server, run `make
+docker-serve-jupyter`.
 
-See `make hugo/notebooks/%.md` for how Jupyter Notebooks on converted to
-Markdown, and then see `make hugo/content/%.md` for how that Markdown is made
-Hugo-ready.
+See `make hugo/notebooks/%.md` for how Jupyter Notebooks get converted to
+Markdown, and then see `make hugo/content/%.md` for how that Markdown is cleaned
+and added to the `hugo/content/` directory.
+
+`make hugo/notebooks/%.md` doesn't execute the notebooks automatically; you will
+have to execute them manually. The reason for this is mostly because notebook
+execution can be an expensive operation (in time and network bandwidth), but
+also because there are some inconsistencies in the output of `nbconvert
+--execute` versus manual execution.

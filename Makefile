@@ -79,7 +79,6 @@ serve-jupyter: $(GOBIN)/dud
 hugo/notebooks/%.md:
 	jupyter nbconvert \
 		--to markdown \
-		--execute \
 		--TagRemovePreprocessor.remove_input_tags 'hide_input' \
 		--TagRemovePreprocessor.remove_all_outputs_tags 'hide_output' \
 		'$(patsubst %.md,%.ipynb,$@)'
