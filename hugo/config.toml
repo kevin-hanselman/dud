@@ -2,7 +2,7 @@ baseURL = "https://kevin-hanselman.github.io/dud/"
 languageCode = "en-us"
 title = "Dud"
 theme = "book"
-publishDir = "../docs"
+publishDir = "../website"
 
 # (Optional) Set Google Analytics if you use it to track your website.
 # Always put it on the top of the configuration file, otherwise it won't work
@@ -13,7 +13,7 @@ publishDir = "../docs"
 #disqusShortname = "my-site"
 
 # (Optional) Set this to true if you use capital letters in file names
-disablePathToLower = true
+disablePathToLower = false
 
 # (Optional) Set this to true to enable 'Last Modified by' date and git author
 #  information on 'doc' type pages.

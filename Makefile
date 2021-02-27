@@ -10,22 +10,18 @@ dud: test
 .PHONY: install
 install: $(GOBIN)/dud
 
+$(GOBIN)/dud: dud
+	cp -v dud $(GOBIN)
+
 .PHONY: cli-docs
 cli-docs: dud
 	rm -f hugo/content/docs/cli/dud*.md
 	./dud gen-docs hugo/content/cli
 
-# TODO: add hugo/content/%.md as a prerequisite
-.PHONY: docs
-docs: \
-	cli-docs \
-	hugo/content/benchmarks/_index.md \
-	hugo/content/getting_started/tour.md
-	rm -f docs/en.search*.js
+.PHONY: website
+website: cli-docs
+	rm -rf ./website
 	cd hugo && hugo --minify
-
-$(GOBIN)/dud: dud
-	cp dud $(GOBIN)
 
 .PHONY: docker%
 # Create an interactive session in the development Docker image.
@@ -83,6 +79,7 @@ serve-jupyter: $(GOBIN)/dud
 hugo/notebooks/%.md:
 	jupyter nbconvert \
 		--to markdown \
+		--execute \
 		--TagRemovePreprocessor.remove_input_tags 'hide_input' \
 		--TagRemovePreprocessor.remove_all_outputs_tags 'hide_output' \
 		'$(patsubst %.md,%.ipynb,$@)'
@@ -169,7 +166,7 @@ deep-lint:
 
 .PHONY: clean
 clean:
-	rm -rf hugo/content/docs/cli/dud*.md ./docs/*
+	rm -rf hugo/content/docs/cli/dud*.md ./website
 	rm -f *.coverage *.bin depgraph.png mockery $(GOBIN)/dud
 	go clean ./...
 

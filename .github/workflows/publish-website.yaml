@@ -1,0 +1,43 @@
+name: Publish website
+
+on:
+  workflow_run:
+    workflows: build
+    branches: master
+    types: completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true  # Fetch Hugo themes
+          fetch-depth: 0    # Fetch all Git history, for .GitInfo and .Lastmod
+
+      - name: Install Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: '0.80.0'
+          extended: true  # Not quite sure what this does, but my local Hugo version is "extended".
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.15'
+
+      - name: Set environment variables
+        shell: bash
+        run: |
+          export GO111MODULE=on
+
+      - name: Build
+        run: make website
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./website
+          publish_branch: gh-pages
+          force_orphan: true  # Limit to one commit in the published branch
