@@ -8,14 +8,8 @@ Please review and abide by the [Code of Conduct](CODE_OF_CONDUCT.md).
 `make docker-integration-test` should complete without error. Read
 the Makefile (or just try running it!) to see what goes into that command.
 
-If you're making user-facing changes, you should probably update the
-website/documentation. The `docs` Make rule will generate the project website
-which is stored in the `docs` directory in the main branch. You should run this
-rule (preferably as `make docker-docs`, see below) and commit everything in the
-`docs` directory as part of your work.
 
-
-## Development Environment
+## Development environment
 
 To build the code and run tests, you will need Git, GNU Make, and Docker.
 
@@ -39,3 +33,26 @@ ensure things look right (see `expected_fs.txt` files in the tests, and
 sequences using subdirectories (e.g. see
 `integration/tests/basic_file_operations`), in which case the sub-tests share
 a Dud project and are executed in lexicographic order.
+
+
+## Documentation and Website
+
+This project uses [Hugo](https://gohugo.io/) to turn Markdown files under
+`hugo/content/` into a static website served on Github Pages. The CLI docs are
+generated automatically by the Cobra Go library (see `make cli-docs`), but all
+other Markdown files require some level of manual intervention.
+
+### Benchmarks
+
+TODO: Expand this documentation.
+
+See `make hugo/content/benchmarks/_index.md` for how the benchmarks page is
+built.
+
+### Jupyter Notebooks
+
+TODO: Expand this documentation.
+
+See `make hugo/notebooks/%.md` for how Jupyter Notebooks on converted to
+Markdown, and then see `make hugo/content/%.md` for how that Markdown is made
+Hugo-ready.
