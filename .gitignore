@@ -1,6 +1,5 @@
 .tags
 /dud
-.dud
 mockery
 
 # auto-generated hugo files
@@ -11,6 +10,10 @@ hugo/content/cli
 hugo/notebooks/*/**/*.*
 !hugo/notebooks/**/*.ipynb
 .ipynb_checkpoints
+
+# ad hoc testing
+.dud
+*.yaml
 
 # benchmarking
 *.bin

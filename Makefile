@@ -96,6 +96,9 @@ hugo/content/benchmarks/_index.md: \
 	mkdir -p $(dir $@)
 	find integration/benchmarks/markdown -type f -name '*.md' | sort | xargs cat > $@
 
+.PHONY: bench-docs
+bench-docs: hugo/content/benchmarks/_index.md
+
 hugo/content/%.md: hugo/notebooks/%.md
 	mkdir -p '$(dir $@)'
 	awk --lint=fatal -f ./hugo/notebooks/fix_md.awk '$<' > '$@'

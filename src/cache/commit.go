@@ -7,22 +7,30 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
-	"github.com/schollz/progressbar/v3"
-	"golang.org/x/exp/mmap"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
 	cacheFilePerms = 0444
+
+	// Template for progress report.
+	//
+	// rtime docs copied from cheggaaa/pb:
+	// First string will be used as value for format time duration string, default is "%s".
+	// Second string will be used when bar finished and value indicates elapsed time, default is "%s"
+	// Third string will be used when value not available, default is "?"
+	barTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
+		`  {{percent . "%3.0f%%"}}  {{speed . "%s/s" "?/s"}}  {{rtime . "ETA %s" "%s total"}}`
 )
 
 // These are somewhat arbitrary numbers. We need to profile more.
@@ -44,7 +52,8 @@ func (ch LocalCache) Commit(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) (err error) {
-	pb := progressbar.DefaultBytes(-1, fmt.Sprintf("committing %s", art.Path))
+	progress := barTemplate.New(0).SetMaxWidth(120).SetRefreshRate(100 * time.Millisecond)
+	progress.Set("prefix", art.Path)
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = commitDirArtifact(
@@ -54,28 +63,17 @@ func (ch LocalCache) Commit(
 			art,
 			strat,
 			activeSharedWorkers,
-			pb,
+			progress,
 		)
 	} else {
-		err = commitFileArtifact(ch, workspaceDir, art, strat, pb)
+		err = commitFileArtifact(ch, workspaceDir, art, strat, progress)
 	}
-	if err == nil && pb.State().CurrentBytes <= 0 {
-		pb.Clear()
+	if err == nil && progress.Current() <= 0 {
 		fmt.Printf("%s up-to-date; skipping commit\n", art.Path)
 	} else {
-		pb.Finish()
+		progress.Finish()
 	}
 	return err
-}
-
-func memoryMapOpen(path string) (reader io.Reader, closer io.Closer, err error) {
-	readerAt, err := mmap.Open(path)
-	if err != nil {
-		return
-	}
-	reader = io.NewSectionReader(readerAt, 0, math.MaxInt64)
-	closer = readerAt
-	return
 }
 
 func commitFileArtifact(
@@ -83,7 +81,7 @@ func commitFileArtifact(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-	pb *progressbar.ProgressBar,
+	progress *pb.ProgressBar,
 ) error {
 	// ignore cachePath because the artifact likely has a stale or empty checksum
 	status, _, workPath, err := quickStatus(ch, workspaceDir, *art)
@@ -100,14 +98,18 @@ func commitFileArtifact(
 	if status.WorkspaceFileStatus != fsutil.StatusRegularFile {
 		return errors.Wrap(errors.New("not a regular file"), errorPrefix)
 	}
-	//srcReader, srcCloser, err := memoryMapOpen(workPath)
-	srcFile, err := os.Open(workPath)
-	var srcReader io.Reader = io.TeeReader(srcFile, pb)
-	var srcCloser io.Closer = srcFile
+	fileInfo, err := os.Stat(workPath)
 	if err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
-	defer srcCloser.Close()
+	progress.AddTotal(fileInfo.Size())
+	progress.Start()
+	srcFile, err := os.Open(workPath)
+	if err != nil {
+		return errors.Wrap(err, errorPrefix)
+	}
+	defer srcFile.Close()
+	srcReader := progress.NewProxyReader(srcFile)
 
 	if art.SkipCache {
 		cksum, err := checksum.Checksum(srcReader)
@@ -198,7 +200,7 @@ func commitDirArtifact(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 	activeSharedWorkers chan struct{},
-	pb *progressbar.ProgressBar,
+	progress *pb.ProgressBar,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
 	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art)
@@ -274,7 +276,7 @@ func commitDirArtifact(
 					inputFiles,
 					childArtifacts,
 					activeSharedWorkers,
-					pb,
+					progress,
 				)
 			})
 		case activeDedicatedWorkers <- struct{}{}:
@@ -290,7 +292,7 @@ func commitDirArtifact(
 					inputFiles,
 					childArtifacts,
 					activeSharedWorkers,
-					pb,
+					progress,
 				)
 			})
 		}
@@ -321,7 +323,7 @@ func dirWorker(
 	inputFiles <-chan os.FileInfo,
 	outputArtifacts chan<- *artifact.Artifact,
 	activeSharedWorkers chan struct{},
-	pb *progressbar.ProgressBar,
+	progress *pb.ProgressBar,
 ) error {
 	for info := range inputFiles {
 		path := info.Name()
@@ -341,12 +343,18 @@ func dirWorker(
 				childArt,
 				strat,
 				activeSharedWorkers,
-				pb,
+				progress,
 			); err != nil {
 				return err
 			}
 		} else {
-			if err := commitFileArtifact(ch, baseDir, childArt, strat, pb); err != nil {
+			if err := commitFileArtifact(
+				ch,
+				baseDir,
+				childArt,
+				strat,
+				progress,
+			); err != nil {
 				return err
 			}
 		}
