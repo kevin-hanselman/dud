@@ -29,7 +29,6 @@ func assertCorrectCommand(stg stage.Stage, commands map[string]*exec.Cmd, t *tes
 }
 
 func TestRun(t *testing.T) {
-
 	upToDate := artifact.Status{
 		WorkspaceFileStatus: fsutil.StatusLink,
 		HasChecksum:         true,
@@ -47,7 +46,7 @@ func TestRun(t *testing.T) {
 	rootDir := "project/root"
 
 	var commands map[string]*exec.Cmd
-	var resetRunCommandMock = func() {
+	resetRunCommandMock := func() {
 		commands = make(map[string]*exec.Cmd)
 	}
 	runCommandOrig := runCommand

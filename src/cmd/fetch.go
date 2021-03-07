@@ -29,7 +29,6 @@ in, fetch will act on all stages in the index. By default, fetch will act
 recursively on all upstream stages (i.e. dependencies).`,
 	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
 			logger.Fatal(err)

@@ -66,7 +66,7 @@ func checkoutFile(
 	if !status.ChecksumInCache {
 		return errors.Wrap(MissingFromCacheError{art.Checksum}, errorPrefix)
 	}
-	if err := os.MkdirAll(filepath.Dir(workPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(workPath), 0o755); err != nil {
 		return errors.Wrap(err, errorPrefix)
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
@@ -89,7 +89,7 @@ func checkoutFile(
 			}
 		}
 
-		dstFile, err := os.OpenFile(workPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+		dstFile, err := os.OpenFile(workPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 		if err != nil {
 			return errors.Wrap(err, errorPrefix)
 		}

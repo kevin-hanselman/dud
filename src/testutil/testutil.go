@@ -154,16 +154,16 @@ func CreateArtifactTestCase(status artifact.ArtifactWithStatus) (dirs TempDirs, 
 	}
 
 	if status.ChecksumInCache {
-		if err = os.Mkdir(fileCacheDir, 0755); err != nil {
+		if err = os.Mkdir(fileCacheDir, 0o755); err != nil {
 			return
 		}
-		if err = ioutil.WriteFile(fileCachePath, fileContents, 0444); err != nil {
+		if err = ioutil.WriteFile(fileCachePath, fileContents, 0o444); err != nil {
 			return
 		}
 	}
 
 	if status.WorkspaceFileStatus != fsutil.StatusAbsent {
-		if err = os.Mkdir(filepath.Join(dirs.WorkDir, parentDir), 0755); err != nil {
+		if err = os.Mkdir(filepath.Join(dirs.WorkDir, parentDir), 0o755); err != nil {
 			return
 		}
 	}
@@ -173,7 +173,7 @@ func CreateArtifactTestCase(status artifact.ArtifactWithStatus) (dirs TempDirs, 
 		if !status.ContentsMatch {
 			fileContents = []byte("Not the same as in the cache")
 		}
-		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0644); err != nil {
+		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0o644); err != nil {
 			return
 		}
 	case fsutil.StatusLink:
@@ -188,7 +188,7 @@ func CreateArtifactTestCase(status artifact.ArtifactWithStatus) (dirs TempDirs, 
 		if status.ContentsMatch {
 			panic("ContentsMatch = true with WorkspaceFileStatus = Directory")
 		}
-		if err = os.Mkdir(fileWorkspacePath, 0755); err != nil {
+		if err = os.Mkdir(fileWorkspacePath, 0o755); err != nil {
 			return
 		}
 	}

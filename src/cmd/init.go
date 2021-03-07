@@ -16,7 +16,7 @@ func init() {
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			cacheDir := ".dud/cache"
-			if err := os.MkdirAll(cacheDir, 0755); err != nil {
+			if err := os.MkdirAll(cacheDir, 0o755); err != nil {
 				logger.Fatal(err)
 			}
 
@@ -34,7 +34,7 @@ cache: %s
 `,
 				cacheDir,
 			)
-			if err := ioutil.WriteFile(".dud/config.yaml", []byte(dudConf), 0644); err != nil {
+			if err := ioutil.WriteFile(".dud/config.yaml", []byte(dudConf), 0o644); err != nil {
 				logger.Fatal(err)
 			}
 
@@ -43,7 +43,7 @@ cache: %s
 # and then set 'remote' to a valid rclone remote path.
 # See: https://rclone.org/docs/#syntax-of-remote-paths
 `
-			if err := ioutil.WriteFile(".dud/rclone.conf", []byte(rcloneConf), 0644); err != nil {
+			if err := ioutil.WriteFile(".dud/rclone.conf", []byte(rcloneConf), 0o644); err != nil {
 				logger.Fatal(err)
 			}
 

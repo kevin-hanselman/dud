@@ -128,14 +128,14 @@ func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, LocalCach
 		t.Fatal(err)
 	}
 
-	if err := os.MkdirAll(filepath.Join(dirs.WorkDir, "foo", "bar"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(dirs.WorkDir, "foo", "bar"), 0o755); err != nil {
 		t.Fatal(err)
 	}
 
 	for i := 1; i <= 5; i++ {
 		s := fmt.Sprint(i)
 		path := filepath.Join(dirs.WorkDir, "foo", fmt.Sprintf("%s.txt", s))
-		if err := ioutil.WriteFile(path, []byte(s), 0644); err != nil {
+		if err := ioutil.WriteFile(path, []byte(s), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -144,7 +144,7 @@ func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, LocalCach
 	for i := 4; i <= 8; i++ {
 		s := fmt.Sprint(i)
 		path := filepath.Join(dirs.WorkDir, "foo", "bar", fmt.Sprintf("%s.txt", s))
-		if err := ioutil.WriteFile(path, []byte(s), 0644); err != nil {
+		if err := ioutil.WriteFile(path, []byte(s), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}

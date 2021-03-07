@@ -44,12 +44,12 @@ RUN pip install --no-cache --user dvc \
     && dvc config --global cache.type symlink
 
 # Pre-download the Go dependencies for Dud.
-COPY go.mod go.sum ./
+COPY --chown=user go.mod go.sum ./
 
 RUN go mod download \
     && rm go.{mod,sum} \
-    && go get golang.org/x/tools/cmd/goimports \
-    && go get golang.org/x/lint/golint \
+    && go install mvdan.cc/gofumpt@latest \
+    && go install golang.org/x/lint/golint@latest \
     && rm -rf /home/user/go/src
 
 WORKDIR /dud

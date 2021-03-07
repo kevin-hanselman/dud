@@ -8,7 +8,6 @@ import (
 )
 
 func TestCalculateChecksum(t *testing.T) {
-
 	newStage := func() Stage {
 		return Stage{
 			Checksum:   "foobar",

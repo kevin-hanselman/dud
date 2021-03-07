@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	cacheFilePerms = 0444
+	cacheFilePerms = 0o444
 
 	// Template for progress report.
 	//
@@ -171,7 +171,7 @@ func (ch LocalCache) commitBytes(reader io.Reader, moveFile string) (string, err
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 	dstDir := filepath.Dir(cachePath)
-	if err = os.MkdirAll(dstDir, 0755); err != nil {
+	if err = os.MkdirAll(dstDir, 0o755); err != nil {
 		return "", err
 	}
 	if err = os.Rename(moveFile, cachePath); err != nil {

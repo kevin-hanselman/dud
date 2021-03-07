@@ -6,7 +6,6 @@ import (
 )
 
 func TestPathForChecksum(t *testing.T) {
-
 	t.Run("happy path", func(t *testing.T) {
 		ch, err := NewLocalCache("/foo")
 		if err != nil {

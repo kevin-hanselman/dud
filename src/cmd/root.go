@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime/trace"
 	"strings"
 
 	"github.com/kevin-hanselman/dud/src/fsutil"
@@ -13,8 +14,6 @@ import (
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"runtime/trace"
 
 	"github.com/felixge/fgprof"
 )
@@ -97,7 +96,6 @@ func init() {
 		Hidden: true,
 		Args:   cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			linkHandler := func(name string) string {
 				// See: https://gohugo.io/content-management/cross-references/
 				return fmt.Sprintf(`{{< relref "%s" >}}`, name)

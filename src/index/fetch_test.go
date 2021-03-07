@@ -3,13 +3,12 @@ package index
 import (
 	"io/ioutil"
 	"log"
+	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/mocks"
 	"github.com/kevin-hanselman/dud/src/stage"
-
-	"testing"
 )
 
 func expectOutputsFetched(
@@ -24,7 +23,6 @@ func expectOutputsFetched(
 }
 
 func TestFetch(t *testing.T) {
-
 	rootDir := "project/root"
 	remote := "my_remote:my_bucket"
 

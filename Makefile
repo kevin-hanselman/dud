@@ -52,9 +52,8 @@ docker-image:
 		.
 
 .PHONY: fmt
-fmt: $(GOBIN)/goimports
-	goimports -w -l .
-	gofmt -s -w -l .
+fmt: $(GOBIN)/gofumpt
+	gofumpt -w -l .
 
 .PHONY: lint
 lint: $(GOBIN)/golint
@@ -112,7 +111,7 @@ hugo/content/%.md: hugo/notebooks/%.md
 	mkdir $@
 	./integration/benchmarks/datasets/$*.sh $@
 
-integration/benchmarks/markdown/00_front_matter.md:
+integration/benchmarks/markdown/00_front_matter.md: $(GOBIN)/dud
 	./integration/benchmarks/generate_front_matter.sh > $@
 
 # The pipe ("|") makes the Dud executable an "order-only" prerequisite. The
@@ -212,8 +211,8 @@ hyperfine: 50mb_random.bin dud
 	hyperfine -L bufsize 4096,8192,16384,32768,65536,131072,262144,524288,1048576 \
 		'./dud checksum -b{bufsize} $<'
 
-$(GOBIN)/goimports:
-	go install golang.org/x/tools/cmd/goimports
+$(GOBIN)/gofumpt:
+	go install mvdan.cc/gofumpt@latest
 
 $(GOBIN)/golint:
-	go install golang.org/x/lint/golint
+	go install golang.org/x/lint/golint@latest

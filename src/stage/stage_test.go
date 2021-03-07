@@ -9,12 +9,11 @@ import (
 )
 
 func TestFromFile(t *testing.T) {
-
 	fromYamlFileOrig := fromYamlFile
 	fromYamlFile = func(path string, output *Stage) error {
 		panic("Mock not implemented")
 	}
-	var resetFromYamlFileMock = func() { fromYamlFile = fromYamlFileOrig }
+	resetFromYamlFileMock := func() { fromYamlFile = fromYamlFileOrig }
 
 	t.Run("skipCache is always true for dependencies", func(t *testing.T) {
 		defer resetFromYamlFileMock()

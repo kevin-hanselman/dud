@@ -1,15 +1,14 @@
 package index
 
 import (
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/stage"
-
-	"testing"
 )
 
 func TestFindOwner(t *testing.T) {
-
 	t.Run("single stage", func(t *testing.T) {
 		targetArt := artifact.Artifact{Path: "bar.bin"}
 		idx := Index{
@@ -46,7 +45,6 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		owner, _, err := idx.findOwner("other.bin")
-
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -115,7 +113,6 @@ func TestFindOwner(t *testing.T) {
 		}
 
 		owner, _, err := idx.findOwner("foo/bar/test.bin")
-
 		if err != nil {
 			t.Fatal(err)
 		}

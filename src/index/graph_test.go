@@ -1,12 +1,12 @@
 package index
 
 import (
+	"testing"
+
 	"github.com/awalterschulze/gographviz"
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/stage"
-
-	"testing"
 )
 
 func assertGraphsEqual(
@@ -40,7 +40,6 @@ func assertGraphsEqual(
 }
 
 func TestGraph(t *testing.T) {
-
 	t.Run("disjoint stages", func(t *testing.T) {
 		stgA := stage.Stage{
 			Dependencies: map[string]*artifact.Artifact{

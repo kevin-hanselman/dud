@@ -55,7 +55,7 @@ func assertCacheDirsEqual(dirA, dirB string, t *testing.T) {
 }
 
 func mkdirsThen(src, dst string, f func(src, dst string) error) error {
-	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
 		return err
 	}
 	return f(src, dst)

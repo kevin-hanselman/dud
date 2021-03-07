@@ -32,7 +32,6 @@ in, commit will act on all stages in the index. By default, commit will act
 recursively on all upstream stages (i.e. dependencies).`,
 	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		strat := strategy.LinkStrategy
 		if useCopyStrategy {
 			strat = strategy.CopyStrategy

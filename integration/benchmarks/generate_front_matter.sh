@@ -13,4 +13,8 @@ cat << EOF
 **CPU**: $BENCH_CPU
 
 **RAM**: $BENCH_SYS_MEM_GB GB
+
+**Dud version**: $(dud --version | xargs)
+
+**DVC version**: $(dvc version | head -n1 | xargs)
 EOF

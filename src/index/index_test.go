@@ -9,7 +9,6 @@ import (
 )
 
 func TestAdd(t *testing.T) {
-
 	stageFromFileOrig := stage.FromFile
 	stage.FromFile = func(path string) (stage.Stage, error) {
 		return stage.Stage{}, nil

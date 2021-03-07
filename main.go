@@ -7,10 +7,8 @@ import (
 	"github.com/kevin-hanselman/dud/src/cmd"
 )
 
-var (
-	// Version string set by goreleaser.
-	version string = "unset"
-)
+// Version string set by goreleaser.
+var version string = "NONE"
 
 func main() {
 	if os.Geteuid() == 0 {

@@ -34,7 +34,6 @@ and thus run will execute a stage's command if any upstream stages are
 out-of-date.`,
 	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
 			logger.Fatal(err)

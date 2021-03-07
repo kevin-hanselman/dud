@@ -39,7 +39,6 @@ stages in the index. By default, checkout will act recursively on all upstream s
 (i.e. dependencies).`,
 	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		strat := strategy.LinkStrategy
 		if useCopyStrategy {
 			strat = strategy.CopyStrategy

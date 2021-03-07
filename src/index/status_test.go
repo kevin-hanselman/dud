@@ -1,14 +1,14 @@
 package index
 
 import (
+	"testing"
+
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/mocks"
 	"github.com/kevin-hanselman/dud/src/stage"
-
-	"testing"
 )
 
 func expectStageStatusCalled(
@@ -29,7 +29,6 @@ func expectStageStatusCalled(
 }
 
 func TestStatus(t *testing.T) {
-
 	upToDate := artifact.Status{
 		WorkspaceFileStatus: fsutil.StatusLink,
 		HasChecksum:         true,

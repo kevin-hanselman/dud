@@ -203,7 +203,7 @@ func testCachePermissions(cache LocalCache, art artifact.Artifact, t *testing.T)
 		t.Fatal(err)
 	}
 	// TODO: check this in cache.Status?
-	if cachedFileInfo.Mode() != 0444 {
-		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0444)
+	if cachedFileInfo.Mode() != 0o444 {
+		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0o444)
 	}
 }
