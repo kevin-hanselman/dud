@@ -13,8 +13,8 @@ hugo/notebooks/*/**/*.*
 .ipynb_checkpoints
 
 # ad hoc testing
-.dud
-*.yaml
+/.dud
+/*.yaml
 
 # benchmarking
 *.bin
