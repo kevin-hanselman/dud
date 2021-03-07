@@ -114,6 +114,7 @@ func getFileDevice(path string) (uint64, error) {
 	if sys == nil {
 		return 0, fmt.Errorf("os.FileInfo.Sys() on %#v returned nil", path)
 	}
-	// TODO: instead of panicing, check the type assertion and return an error
-	return sys.(*syscall.Stat_t).Dev, nil
+	// Dev is type int32 on darwin_arm64 -- requires cast.
+	// TODO: Instead of panicking, check the type assertion and return an error.
+	return uint64(sys.(*syscall.Stat_t).Dev), nil
 }

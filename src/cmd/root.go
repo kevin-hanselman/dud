@@ -20,10 +20,6 @@ import (
 )
 
 var (
-	// Version is the application version. It is set during compilation using
-	// ldflags.
-	Version string
-
 	rootCmd = &cobra.Command{
 		Use: "dud",
 		Long: `Dud is a tool for storing, versioning, and reproducing large files alongside
@@ -82,8 +78,9 @@ source code.`,
 )
 
 // Main is the entry point to the cobra CLI.
-func Main() {
+func Main(version string) {
 	logger = log.New(os.Stdout, "", 0)
+	rootCmd.Version = version
 	if err := rootCmd.Execute(); err != nil {
 		logger.Fatal(err)
 	}
@@ -93,15 +90,6 @@ func init() {
 	// This must be a global flag, not one associated with the root Command.
 	pflag.BoolVar(&doProfile, "profile", false, "enable profiling")
 	pflag.BoolVar(&doTrace, "trace", false, "enable tracing")
-
-	rootCmd.AddCommand(&cobra.Command{
-		Use:   "version",
-		Short: "Print version and exit",
-		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			logger.Println(Version)
-		},
-	})
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:    "gen-docs",

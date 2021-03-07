@@ -12,12 +12,18 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v2
         with:
-          go-version: '1.15'
+          go-version: 1.15
 
       - name: Set environment variables
         shell: bash
         run: |
           export GO111MODULE=on
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: build --snapshot --rm-dist
 
       - name: Install test dependencies
         shell: bash

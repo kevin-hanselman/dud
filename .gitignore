@@ -1,6 +1,7 @@
 .tags
 /dud
-mockery
+/mockery
+/goreleaser
 
 # auto-generated hugo files
 # (e.g. cobra CLI and converted Jupyter notebooks)
@@ -36,3 +37,4 @@ hugo/notebooks/*/**/*.*
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+dist/

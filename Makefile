@@ -5,7 +5,7 @@ GOBIN ?= $(GOPATH)/bin
 
 dud: test
 	go build -o dud \
-		-ldflags "-s -w -X 'github.com/kevin-hanselman/dud/src/cmd.Version=$(shell git rev-parse --short HEAD)'"
+		-ldflags "-s -w -X 'main.version=$(shell git rev-parse --short HEAD)'"
 
 .PHONY: install
 install: $(GOBIN)/dud
@@ -188,6 +188,10 @@ loc:
 mockery:
 	curl -L https://github.com/vektra/mockery/releases/download/v2.2.1/mockery_2.2.1_Linux_x86_64.tar.gz \
 		| tar -zxvf - mockery
+
+goreleaser:
+	curl -L https://github.com/goreleaser/goreleaser/releases/download/v0.159.0/goreleaser_Linux_x86_64.tar.gz \
+		| tar -zxvf - goreleaser
 
 src/mocks: mockery
 	./mockery --all --output src/mocks
