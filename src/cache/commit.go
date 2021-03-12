@@ -185,7 +185,6 @@ func (ch LocalCache) commitBytes(reader io.Reader, moveFile string) (string, err
 
 func commitDirManifest(ch LocalCache, manifest *directoryManifest) (string, error) {
 	// TODO: Consider using an io.Pipe() instead of a buffer.
-	// For large directories this is probably more important.
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(manifest); err != nil {
 		return "", err
@@ -214,6 +213,9 @@ func commitDirArtifact(
 	baseDir := filepath.Join(workspaceDir, art.Path)
 
 	infos, err := readDir(baseDir, art.DisableRecursion)
+	if err != nil {
+		return err
+	}
 
 	// Start a goroutine to feed files/sub-directories to workers.
 	errGroup, groupCtx := errgroup.WithContext(ctx)
@@ -369,10 +371,10 @@ func dirWorker(
 
 func readDir(path string, excludeDirs bool) (out []os.FileInfo, err error) {
 	dir, err := os.Open(path)
-	defer dir.Close()
 	if err != nil {
 		return
 	}
+	defer dir.Close()
 	out, err = dir.Readdir(0)
 	if err != nil {
 		return

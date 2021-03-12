@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/spf13/cobra"
@@ -39,11 +37,13 @@ out-of-date.`,
 			logger.Fatal(err)
 		}
 
-		idx, err := index.FromFile(".dud/index")
-		if os.IsNotExist(err) {
-			idx = make(index.Index)
-		} else if err != nil {
+		idx, err := index.FromFile(indexPath)
+		if err != nil {
 			logger.Fatal(err)
+		}
+
+		if len(idx) == 0 {
+			logger.Fatal(emptyIndexMessage)
 		}
 
 		if len(args) == 0 {

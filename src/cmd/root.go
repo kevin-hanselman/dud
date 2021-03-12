@@ -12,10 +12,15 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/felixge/fgprof"
+)
+
+const (
+	indexPath = ".dud/index"
+
+	emptyIndexMessage = "index is empty"
 )
 
 var (
@@ -86,9 +91,8 @@ func Main(version string) {
 }
 
 func init() {
-	// This must be a global flag, not one associated with the root Command.
-	pflag.BoolVar(&doProfile, "profile", false, "enable profiling")
-	pflag.BoolVar(&doTrace, "trace", false, "enable tracing")
+	rootCmd.PersistentFlags().BoolVar(&doProfile, "profile", false, "enable profiling")
+	rootCmd.PersistentFlags().BoolVar(&doTrace, "trace", false, "enable tracing")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:    "gen-docs",

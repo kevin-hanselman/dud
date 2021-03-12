@@ -39,8 +39,7 @@ recursively on all upstream stages (i.e. dependencies).`,
 			logger.Fatal("no remote specified in the config")
 		}
 
-		// TODO: Always read stage lock files?
-		idx, err := index.FromFile(".dud/index")
+		idx, err := index.FromFile(indexPath)
 		if err != nil {
 			logger.Fatal(err)
 		}

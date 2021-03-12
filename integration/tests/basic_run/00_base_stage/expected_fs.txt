@@ -1,5 +1,6 @@
 .
 [drwxr-xr-x user            4096]  ./.dud
+[-rw-r--r-- user               7]  ./.dud/.gitignore
 [drwxr-xr-x user            4096]  ./.dud/cache
 [-rw-r--r-- user             376]  ./.dud/config.yaml
 [-rw-r--r-- user              10]  ./.dud/index

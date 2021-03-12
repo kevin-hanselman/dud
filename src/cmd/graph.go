@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -35,11 +34,13 @@ generate images of the stage graph.`,
 	Example: "dud graph | dot -Tpng -o dud.png",
 	PreRun:  cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
-		idx, err := index.FromFile(".dud/index")
-		if os.IsNotExist(err) { // TODO: print error instead?
-			idx = make(index.Index)
-		} else if err != nil {
+		idx, err := index.FromFile(indexPath)
+		if err != nil {
 			logger.Fatal(err)
+		}
+
+		if len(idx) == 0 {
+			logger.Fatal(emptyIndexMessage)
 		}
 
 		if len(args) == 0 { // By default, run on the entire Index

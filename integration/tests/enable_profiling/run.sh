@@ -3,14 +3,14 @@ set -euo pipefail
 
 dud init
 
-dud --profile status
+dud --profile stage gen -o foo.txt
 
 if ! test -s dud.pprof; then
     echo 'profiling output does not exist or is empty' 1>&2
     exit 1
 fi
 
-dud --trace status
+dud --trace stage gen -o foo.txt
 
 if ! test -s dud.trace; then
     echo 'tracing output does not exist or is empty' 1>&2

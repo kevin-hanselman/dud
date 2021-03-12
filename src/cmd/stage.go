@@ -15,8 +15,8 @@ import (
 
 var genStageCmd = &cobra.Command{
 	Use:   "gen [flags] [--] [stage_command]...",
-	Short: "Generate Stage YAML using the CLI",
-	Long: `Gen generates a Stage YAML file and prints it to STDOUT.
+	Short: "Generate stage YAML using the CLI",
+	Long: `Gen generates stage YAML and prints it to standard output.
 
 The output of this command can be redirected to a file and modified further as
 needed.`,
@@ -58,8 +58,8 @@ needed.`,
 
 var addStageCmd = &cobra.Command{
 	Use:   "add stage_file...",
-	Short: "Add one or more stage files to the stage index",
-	Long: `Add adds one or more stage files to the stage index.
+	Short: "Add one or more stage files to the index",
+	Long: `Add adds one or more stage files to the index.
 
 Add loads each stage file passed on the command line, validates its contents,
 checks if it conflicts with any stages already in the index, then adds the
@@ -67,12 +67,8 @@ stage to the index file.`,
 	Args:   cobra.MinimumNArgs(1),
 	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
-		indexPath := ".dud/index"
-
 		idx, err := index.FromFile(indexPath)
-		if os.IsNotExist(err) {
-			idx = make(index.Index)
-		} else if err != nil {
+		if err != nil {
 			logger.Fatal(err)
 		}
 
@@ -80,6 +76,7 @@ stage to the index file.`,
 			if err := idx.AddStageFromPath(path); err != nil {
 				logger.Fatal(err)
 			}
+			logger.Printf("Added %s to the index.", path)
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {

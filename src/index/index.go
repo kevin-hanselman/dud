@@ -61,9 +61,6 @@ func (idx Index) ToFile(path string) error {
 // FromFile reads and returns an Index from the specified file path.
 // See ToFile docs for more context.
 // TODO no tests
-// TODO Add a "full/bare" flag to enable only loading the fileFormat struct?
-//      This would be a nice optimization not to load the whole Index when we
-//      just want to check if a path is in the Index.
 func FromFile(path string) (Index, error) {
 	var idx Index
 	file, err := os.Open(path)

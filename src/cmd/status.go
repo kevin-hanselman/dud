@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -51,10 +50,8 @@ dependencies).`,
 			logger.Fatal(err)
 		}
 
-		idx, err := index.FromFile(".dud/index")
-		if os.IsNotExist(err) {
-			idx = make(index.Index)
-		} else if err != nil {
+		idx, err := index.FromFile(indexPath)
+		if err != nil {
 			logger.Fatal(err)
 		}
 
@@ -62,6 +59,10 @@ dependencies).`,
 			for path := range idx {
 				args = append(args, path)
 			}
+		}
+
+		if len(args) == 0 {
+			logger.Fatal(emptyIndexMessage)
 		}
 
 		status := make(index.Status)

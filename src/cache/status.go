@@ -148,17 +148,17 @@ func dirArtifactStatus(
 		return status, manifest, err
 	}
 	for _, entry := range entries {
-		// only check entries that don't appear in the manifest
+		// Only check entries that don't appear in the manifest.
 		if _, ok := manifest.Contents[entry.Name()]; !ok {
 			if entry.IsDir() {
-				// If the entry is a (untracked) directory,
-				// this is only a mismatch if the artifact is recursive
+				// If the entry is a (untracked) directory, this is only
+				// a mismatch if the artifact is recursive.
 				if !art.DisableRecursion {
 					return status, manifest, nil
 				}
 			} else {
-				// If the entry is a (untracked) file,
-				// this is always a mismatch
+				// If the entry is a (untracked) file, this is always
+				// a mismatch.
 				return status, manifest, nil
 			}
 		}
@@ -172,6 +172,7 @@ func readDirManifest(path string) (man directoryManifest, err error) {
 	if err != nil {
 		return
 	}
+	defer manifestFile.Close()
 	err = json.NewDecoder(manifestFile).Decode(&man)
 	return
 }

@@ -38,6 +38,14 @@ cache: %s
 				logger.Fatal(err)
 			}
 
+			if err := ioutil.WriteFile(indexPath, []byte{}, 0o644); err != nil {
+				logger.Fatal(err)
+			}
+
+			if err := ioutil.WriteFile(".dud/.gitignore", []byte("/cache/"), 0o644); err != nil {
+				logger.Fatal(err)
+			}
+
 			rcloneConf := `# rclone config file
 # Run 'rclone --config .dud/rclone.conf config' to setup a remote Dud cache,
 # and then set 'remote' to a valid rclone remote path.

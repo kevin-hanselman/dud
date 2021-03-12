@@ -1,5 +1,6 @@
 .
 [drwxr-xr-x user            4096]  ./.dud
+[-rw-r--r-- user               7]  ./.dud/.gitignore
 [drwxr-xr-x user            4096]  ./.dud/cache
 [drwxr-xr-x user            4096]  ./.dud/cache/00
 [-r--r--r-- user               2]  ./.dud/cache/00/51fb8f5c8288b80163ea72ab2f482fc402ca9944b580aa57e694eedfc3ad1c

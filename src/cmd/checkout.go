@@ -49,9 +49,7 @@ stages in the index. By default, checkout will act recursively on all upstream s
 			logger.Fatal(err)
 		}
 
-		// TODO: forcing a checkout will require a "force load lock"
-		// flag in index.FromFile
-		idx, err := index.FromFile(".dud/index")
+		idx, err := index.FromFile(indexPath)
 		if err != nil {
 			logger.Fatal(err)
 		}

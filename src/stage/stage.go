@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -95,8 +96,7 @@ var fromYamlFile = func(path string, stg *Stage) error {
 	return decoder.Decode(stg)
 }
 
-// FromFile loads a Stage from a file. If a lock file for the Stage exists,
-// this function uses any Artifact.Checksums it can from the lock file.
+// FromFile loads a Stage from a file.
 var FromFile = func(stagePath string) (stg Stage, err error) {
 	var tempStage Stage
 	if err = fromYamlFile(stagePath, &tempStage); err != nil {
@@ -206,13 +206,11 @@ func (stg Stage) CalculateChecksum() (string, error) {
 	// TODO: Using encoding/gob gives sporadic checksum differences with this
 	// method. Using encoding/json seems to alleviate the issue. We need to
 	// understand this better.
-	reader, writer := io.Pipe()
-	defer reader.Close()
-	go func() {
-		json.NewEncoder(writer).Encode(cleanStage)
-		writer.Close()
-	}()
-	return checksum.Checksum(reader)
+	buf := new(bytes.Buffer)
+	if err := json.NewEncoder(buf).Encode(cleanStage); err != nil {
+		return "", err
+	}
+	return checksum.Checksum(buf)
 }
 
 // CreateCommand return an exec.Cmd for the Stage.
