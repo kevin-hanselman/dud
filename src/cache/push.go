@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/pkg/errors"
 )
 
 // Push uploads an Artifact from the local cache to a remote cache.
@@ -14,12 +15,12 @@ import (
 // Fetch shouldn't care about the workspace at all; they purely interact with
 // the local cache.
 func (ch LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact) error {
-	fetchFiles := make(map[string]struct{})
-	if err := gatherFilesToPush(ch, workspaceDir, art, fetchFiles); err != nil {
-		return err
+	pushFiles := make(map[string]struct{})
+	if err := gatherFilesToPush(ch, workspaceDir, art, pushFiles); err != nil {
+		return errors.Wrapf(err, "push %s", art.Path)
 	}
-	if len(fetchFiles) > 0 {
-		return remoteCopy(ch.dir, remoteDst, fetchFiles)
+	if len(pushFiles) > 0 {
+		return errors.Wrapf(remoteCopy(ch.dir, remoteDst, pushFiles), "push %s", art.Path)
 	}
 	return nil
 }
@@ -100,14 +101,13 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 		return err
 	}
 
-	// Ensure any local files that were created end up as read-only.
-	// Try to chmod all files, ignoring "no such file" errors which are
-	// probably due to the destination being remote.
-	// TODO: Consider making this a standalone function and only call it for
-	// fetch, not push. You could argue that we still want to do this on push
-	// because someone may use a local directory as their "remote".
+	// Ensure any local files that were created end up as read-only.  Try to
+	// chmod all files, ignoring "no such file" errors which are probably due
+	// to the destination being remote. This is important even for push,
+	// because the "remote" might be a local directory.
 	var chmodErr error
 	for file := range fileSet {
+		// Try correcting all the files and return the last error seen.
 		err := os.Chmod(filepath.Join(dst, file), cacheFilePerms)
 		if err != nil && !os.IsNotExist(err) {
 			chmodErr = err

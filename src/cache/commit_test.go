@@ -198,12 +198,15 @@ func testCachePermissions(cache LocalCache, art artifact.Artifact, t *testing.T)
 		t.Fatal(err)
 	}
 	fileCachePath = filepath.Join(cache.dir, fileCachePath)
-	cachedFileInfo, err := os.Stat(fileCachePath)
+	assertFilePermissions(fileCachePath, 0o444, t)
+}
+
+func assertFilePermissions(path string, want os.FileMode, t *testing.T) {
+	info, err := os.Lstat(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	// TODO: check this in cache.Status?
-	if cachedFileInfo.Mode() != 0o444 {
-		t.Fatalf("%#v has perms %#o, want %#o", fileCachePath, cachedFileInfo.Mode(), 0o444)
+	if info.Mode() != want {
+		t.Fatalf("%#v has permissions %#o, want %#o", path, info.Mode(), want)
 	}
 }

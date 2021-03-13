@@ -38,6 +38,9 @@ type InvalidChecksumError struct {
 }
 
 func (err InvalidChecksumError) Error() string {
+	if err.checksum == "" {
+		return "no checksum"
+	}
 	return fmt.Sprintf("invalid checksum: %#v", err.checksum)
 }
 

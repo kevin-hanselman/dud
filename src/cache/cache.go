@@ -46,6 +46,7 @@ func (ch LocalCache) Dir() string {
 // checksum value, this function returns an error.
 func (ch LocalCache) PathForChecksum(checksum string) (string, error) {
 	if len(checksum) < 3 {
+		// TODO: return InvalidChecksumError
 		return "", fmt.Errorf("invalid checksum: %#v", checksum)
 	}
 	return filepath.Join(checksum[:2], checksum[2:]), nil

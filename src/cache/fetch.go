@@ -4,16 +4,17 @@ import (
 	"path/filepath"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/pkg/errors"
 )
 
 // Fetch downloads an Artifact from a remote location to the local cache.
 func (ch LocalCache) Fetch(workspaceDir, remoteSrc string, art artifact.Artifact) error {
 	fetchFiles := make(map[string]struct{})
 	if err := gatherFilesToFetch(ch, workspaceDir, art, remoteSrc, fetchFiles); err != nil {
-		return err
+		return errors.Wrapf(err, "fetch %s", art.Path)
 	}
 	if len(fetchFiles) > 0 {
-		return remoteCopy(remoteSrc, ch.dir, fetchFiles)
+		return errors.Wrapf(remoteCopy(remoteSrc, ch.dir, fetchFiles), "fetch %s", art.Path)
 	}
 	return nil
 }

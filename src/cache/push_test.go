@@ -8,6 +8,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
+	"github.com/pkg/errors"
 )
 
 // See fetch_test.go for various helper functions.
@@ -82,7 +83,7 @@ func TestPushIntegration(t *testing.T) {
 			t.Fatal("expected Push to return error")
 		}
 
-		if _, ok := pushErr.(InvalidChecksumError); !ok {
+		if !errors.Is(pushErr, InvalidChecksumError{}) {
 			t.Fatalf("expected InvalidChecksumError, got %#v", pushErr)
 		}
 	})
@@ -111,7 +112,7 @@ func TestPushIntegration(t *testing.T) {
 			t.Fatal("expected Push to return error")
 		}
 
-		if _, ok := pushErr.(MissingFromCacheError); !ok {
+		if !errors.Is(pushErr, MissingFromCacheError{art.Checksum}) {
 			t.Fatalf("expected MissingFromCacheError, got %#v", pushErr)
 		}
 	})

@@ -9,6 +9,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
+	"github.com/pkg/errors"
 )
 
 func getCacheFiles(cacheDir string) (map[string]struct{}, error) {
@@ -182,7 +183,7 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal("expected Fetch to return error")
 		}
 
-		if _, ok := fetchErr.(InvalidChecksumError); !ok {
+		if !errors.Is(fetchErr, InvalidChecksumError{}) {
 			t.Fatalf("expected InvalidChecksumError, got %#v", fetchErr)
 		}
 	})
