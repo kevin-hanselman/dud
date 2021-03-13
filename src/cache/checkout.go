@@ -19,14 +19,16 @@ func (cache LocalCache) Checkout(
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-) error {
+) (err error) {
 	if art.SkipCache {
-		return nil
+		return
 	}
 	if art.IsDir {
-		return checkoutDir(cache, workspaceDir, art, strat)
+		err = checkoutDir(cache, workspaceDir, art, strat)
+	} else {
+		err = checkoutFile(cache, workspaceDir, art, strat)
 	}
-	return checkoutFile(cache, workspaceDir, art, strat)
+	return errors.Wrapf(err, "checkout %s", art.Path)
 }
 
 // InvalidChecksumError is an error case where a valid checksum was expected
@@ -55,26 +57,25 @@ func checkoutFile(
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	errorPrefix := fmt.Sprintf("checkout %s", art.Path)
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	if !status.HasChecksum {
-		return errors.Wrap(InvalidChecksumError{art.Checksum}, errorPrefix)
+		return InvalidChecksumError{art.Checksum}
 	}
 	if !status.ChecksumInCache {
-		return errors.Wrap(MissingFromCacheError{art.Checksum}, errorPrefix)
+		return MissingFromCacheError{art.Checksum}
 	}
 	if err := os.MkdirAll(filepath.Dir(workPath), 0o755); err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 	switch strat {
 	case strategy.CopyStrategy:
 		srcFile, err := os.Open(cachePath)
 		if err != nil {
-			return errors.Wrap(err, errorPrefix)
+			return err
 		}
 		defer srcFile.Close()
 
@@ -85,29 +86,29 @@ func checkoutFile(
 		// fix the issue.
 		if status.ContentsMatch {
 			if err := os.Remove(workPath); err != nil {
-				return errors.Wrap(err, errorPrefix)
+				return err
 			}
 		}
 
 		dstFile, err := os.OpenFile(workPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
 		if err != nil {
-			return errors.Wrap(err, errorPrefix)
+			return err
 		}
 		defer dstFile.Close()
 
 		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile))
 		if err != nil {
-			return errors.Wrap(err, errorPrefix)
+			return err
 		}
 		if checksum != art.Checksum {
-			return fmt.Errorf("%s: found checksum %#v, expected %#v", errorPrefix, checksum, art.Checksum)
+			return fmt.Errorf("found checksum %#v, expected %#v", checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
 		if status.ContentsMatch {
 			return nil
 		}
 		if err := os.Symlink(cachePath, workPath); err != nil {
-			return errors.Wrap(err, errorPrefix)
+			return err
 		}
 	}
 	return nil
@@ -119,28 +120,26 @@ func checkoutDir(
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) error {
-	errorPrefix := fmt.Sprintf("checkout %s", art.Path)
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 	if !status.HasChecksum {
-		return errors.Wrap(InvalidChecksumError{art.Checksum}, errorPrefix)
+		return InvalidChecksumError{art.Checksum}
 	}
 	if !status.ChecksumInCache {
-		return errors.Wrap(MissingFromCacheError{art.Checksum}, errorPrefix)
+		return MissingFromCacheError{art.Checksum}
 	}
 	if !(status.WorkspaceFileStatus == fsutil.StatusAbsent || status.WorkspaceFileStatus == fsutil.StatusDirectory) {
 		return fmt.Errorf(
-			"%s: expected target to be empty or a directory, found %s",
-			errorPrefix,
+			"expected target to be empty or a directory, found %s",
 			status.WorkspaceFileStatus,
 		)
 	}
 	man, err := readDirManifest(cachePath)
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	for _, childArt := range man.Contents {
 		if err := ch.Checkout(workPath, *childArt, strat); err != nil {

@@ -73,7 +73,7 @@ func (ch LocalCache) Commit(
 	} else {
 		progress.Finish()
 	}
-	return err
+	return errors.Wrapf(err, "commit %s", art.Path)
 }
 
 func commitFileArtifact(
@@ -83,30 +83,29 @@ func commitFileArtifact(
 	strat strategy.CheckoutStrategy,
 	progress *pb.ProgressBar,
 ) error {
-	// ignore cachePath because the artifact likely has a stale or empty checksum
+	// Ignore cachePath because the artifact likely has a stale or empty checksum.
 	status, _, workPath, err := quickStatus(ch, workspaceDir, *art)
-	errorPrefix := fmt.Sprintf("commit file %s", workPath)
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	if status.WorkspaceFileStatus == fsutil.StatusAbsent {
-		return errors.Wrap(errors.Wrap(os.ErrNotExist, workPath), errorPrefix)
+		return errors.Wrap(os.ErrNotExist, workPath)
 	}
 	if status.ContentsMatch {
 		return nil
 	}
 	if status.WorkspaceFileStatus != fsutil.StatusRegularFile {
-		return errors.Wrap(errors.New("not a regular file"), errorPrefix)
+		return errors.New("not a regular file")
 	}
 	fileInfo, err := os.Stat(workPath)
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	progress.AddTotal(fileInfo.Size())
 	progress.Start()
 	srcFile, err := os.Open(workPath)
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	defer srcFile.Close()
 	srcReader := progress.NewProxyReader(srcFile)
@@ -114,7 +113,7 @@ func commitFileArtifact(
 	if art.SkipCache {
 		cksum, err := checksum.Checksum(srcReader)
 		if err != nil {
-			return errors.Wrap(err, errorPrefix)
+			return err
 		}
 		art.Checksum = cksum
 		return nil
@@ -122,7 +121,7 @@ func commitFileArtifact(
 
 	sameFs, err := fsutil.SameFilesystem(workPath, ch.Dir())
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 	moveFile := ""
 	if sameFs && strat == strategy.LinkStrategy {
@@ -131,7 +130,7 @@ func commitFileArtifact(
 
 	cksum, err := ch.commitBytes(srcReader, moveFile)
 	if err != nil {
-		return errors.Wrap(err, errorPrefix)
+		return err
 	}
 
 	art.Checksum = cksum

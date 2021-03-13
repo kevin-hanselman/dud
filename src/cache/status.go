@@ -23,6 +23,7 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 	} else {
 		outputStatus.Status, err = fileArtifactStatus(ch, workspaceDir, art)
 	}
+	err = errors.Wrapf(err, "status %s", art.Path)
 	return
 }
 
@@ -67,9 +68,8 @@ var quickStatus = func(
 
 func fileArtifactStatus(ch LocalCache, workspaceDir string, art artifact.Artifact) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
-	errorPrefix := "file status"
 	if err != nil {
-		return status, errors.Wrap(err, errorPrefix)
+		return status, err
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 
@@ -83,11 +83,11 @@ func fileArtifactStatus(ch LocalCache, workspaceDir string, art artifact.Artifac
 		}
 		fileReader, err := os.Open(workPath)
 		if err != nil {
-			return status, errors.Wrap(err, errorPrefix)
+			return status, err
 		}
 		workspaceFileChecksum, err := checksum.Checksum(fileReader)
 		if err != nil {
-			return status, errors.Wrap(err, errorPrefix)
+			return status, err
 		}
 		status.ContentsMatch = workspaceFileChecksum == art.Checksum
 	} else {
@@ -96,7 +96,7 @@ func fileArtifactStatus(ch LocalCache, workspaceDir string, art artifact.Artifac
 		}
 		status.ContentsMatch, err = fsutil.SameContents(workPath, cachePath)
 		if err != nil {
-			return status, errors.Wrap(err, errorPrefix)
+			return status, err
 		}
 	}
 	return status, nil
