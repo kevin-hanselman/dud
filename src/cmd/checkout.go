@@ -46,12 +46,12 @@ stages in the index. By default, checkout will act recursively on all upstream s
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		if len(args) == 0 {
@@ -75,7 +75,7 @@ stages in the index. By default, checkout will act recursively on all upstream s
 				inProgress,
 				logger,
 			); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 		}
 	},

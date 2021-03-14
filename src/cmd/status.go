@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/kevin-hanselman/dud/src/cache"
@@ -47,12 +48,12 @@ dependencies).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		if len(args) == 0 { // By default, check status of everything in the Index.
@@ -62,7 +63,7 @@ dependencies).`,
 		}
 
 		if len(args) == 0 {
-			logger.Fatal(emptyIndexMessage)
+			fatal(errors.New(emptyIndexMessage))
 		}
 
 		status := make(index.Status)
@@ -70,13 +71,13 @@ dependencies).`,
 			inProgress := make(map[string]bool)
 			err := idx.Status(path, ch, rootDir, status, inProgress)
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 		}
 
 		for path, stageStatus := range status {
 			if err := printStageStatus(path, stageStatus); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 		}
 	},

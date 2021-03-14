@@ -2,8 +2,8 @@ package index
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
@@ -17,7 +17,7 @@ func (idx Index) Commit(
 	strat strategy.CheckoutStrategy,
 	committed map[string]bool,
 	inProgress map[string]bool,
-	logger *log.Logger,
+	logger *agglog.AggLogger,
 ) error {
 	if committed[stagePath] {
 		return nil
@@ -64,7 +64,7 @@ func (idx Index) Commit(
 			art.Checksum = upstreamArt.Checksum
 		}
 	}
-	logger.Printf("committing stage %s\n", stagePath)
+	logger.Info.Printf("committing stage %s\n", stagePath)
 	for _, art := range stg.Outputs {
 		if err := ch.Commit(rootDir, art, strat); err != nil {
 			return err

@@ -1,13 +1,12 @@
 package index
 
 import (
-	"io/ioutil"
-	"log"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/mocks"
@@ -66,7 +65,7 @@ func TestRun(t *testing.T) {
 	}
 
 	// TODO: Consider checking the logs instead of throwing them away.
-	logger := log.New(ioutil.Discard, "", 0)
+	logger := agglog.NewNullLogger()
 
 	t.Run("up-to-date stage without command doesn't suggest run", func(t *testing.T) {
 		defer resetRunCommandMock()

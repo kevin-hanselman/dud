@@ -17,7 +17,7 @@ func init() {
 		Run: func(cmd *cobra.Command, args []string) {
 			cacheDir := ".dud/cache"
 			if err := os.MkdirAll(cacheDir, 0o755); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 
 			dudConf := fmt.Sprintf(`# Dud config file
@@ -35,15 +35,15 @@ cache: %s
 				cacheDir,
 			)
 			if err := ioutil.WriteFile(".dud/config.yaml", []byte(dudConf), 0o644); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 
 			if err := ioutil.WriteFile(indexPath, []byte{}, 0o644); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 
 			if err := ioutil.WriteFile(".dud/.gitignore", []byte("/cache/"), 0o644); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 
 			rcloneConf := `# rclone config file
@@ -52,10 +52,10 @@ cache: %s
 # See: https://rclone.org/docs/#syntax-of-remote-paths
 `
 			if err := ioutil.WriteFile(".dud/rclone.conf", []byte(rcloneConf), 0o644); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 
-			logger.Println(`Dud project initialized.
+			logger.Info.Println(`Dud project initialized.
 See .dud/config.yaml and .dud/rclone.conf to customize the project.`)
 		},
 	})

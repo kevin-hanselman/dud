@@ -2,8 +2,8 @@ package index
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/pkg/errors"
 )
@@ -17,7 +17,7 @@ func (idx Index) Fetch(
 	remote string,
 	fetched map[string]bool,
 	inProgress map[string]bool,
-	logger *log.Logger,
+	logger *agglog.AggLogger,
 ) error {
 	if fetched[stagePath] {
 		return nil
@@ -55,7 +55,7 @@ func (idx Index) Fetch(
 			}
 		}
 	}
-	logger.Printf("fetching stage %s\n", stagePath)
+	logger.Info.Printf("fetching stage %s\n", stagePath)
 	for _, art := range stg.Outputs {
 		if err := ch.Fetch(rootDir, remote, *art); err != nil {
 			return err

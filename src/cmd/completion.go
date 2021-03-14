@@ -64,7 +64,7 @@ To load completions for each session, execute once:
 			err = cmd.Root().GenFishCompletion(os.Stdout, true)
 		}
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 	},
 }

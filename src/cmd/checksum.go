@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/kevin-hanselman/dud/src/checksum"
@@ -38,16 +37,16 @@ The CLI is intended to be compatible with the *sum family of command-line tools
 				cksum, err = checksum.ChecksumBuffer(os.Stdin, buffer)
 			}
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
-			fmt.Printf("%s  -\n", cksum)
+			logger.Info.Printf("%s  -\n", cksum)
 			return
 		}
 
 		for _, path := range args {
 			file, err := os.Open(path)
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 			if buffer == nil {
 				cksum, err = checksum.Checksum(file)
@@ -55,9 +54,9 @@ The CLI is intended to be compatible with the *sum family of command-line tools
 				cksum, err = checksum.ChecksumBuffer(file, buffer)
 			}
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
-			fmt.Printf("%s  %s\n", cksum, path)
+			logger.Info.Printf("%s  %s\n", cksum, path)
 		}
 	},
 }

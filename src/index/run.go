@@ -2,9 +2,9 @@ package index
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/pkg/errors"
 )
@@ -22,7 +22,7 @@ func (idx Index) Run(
 	recursive bool,
 	ran map[string]bool,
 	inProgress map[string]bool,
-	logger *log.Logger,
+	logger *agglog.AggLogger,
 ) error {
 	if _, ok := ran[stagePath]; ok {
 		return nil
@@ -88,12 +88,12 @@ func (idx Index) Run(
 		}
 	}
 	if doRun && hasCommand {
-		logger.Printf("running stage %s\n", stagePath)
+		logger.Info.Printf("running stage %s\n", stagePath)
 		if err := runCommand(stg.CreateCommand()); err != nil {
 			return err
 		}
 	} else {
-		logger.Printf("nothing to do for stage %s\n", stagePath)
+		logger.Info.Printf("nothing to do for stage %s\n", stagePath)
 	}
 	ran[stagePath] = doRun
 	delete(inProgress, stagePath)

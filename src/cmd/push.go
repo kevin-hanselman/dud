@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/spf13/cobra"
@@ -31,17 +33,17 @@ recursively on all upstream stages (i.e. dependencies).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		remote := viper.GetString("remote")
 		if remote == "" {
-			logger.Fatal("no remote specified in the config")
+			fatal(errors.New(noRemote))
 		}
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		if len(args) == 0 {
@@ -65,7 +67,7 @@ recursively on all upstream stages (i.e. dependencies).`,
 				inProgress,
 				logger,
 			); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 		}
 	},

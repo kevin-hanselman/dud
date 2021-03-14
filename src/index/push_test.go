@@ -1,11 +1,10 @@
 package index
 
 import (
-	"io/ioutil"
-	"log"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/mocks"
 	"github.com/kevin-hanselman/dud/src/stage"
@@ -27,7 +26,7 @@ func TestPush(t *testing.T) {
 	remote := "my_remote:my_bucket"
 
 	// TODO: Consider checking the logs instead of throwing them away.
-	logger := log.New(ioutil.Discard, "", 0)
+	logger := agglog.NewNullLogger()
 
 	t.Run("disjoint stages with oprhan dependency", func(t *testing.T) {
 		stgA := stage.Stage{

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/spf13/cobra"
@@ -34,16 +36,16 @@ out-of-date.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		if len(idx) == 0 {
-			logger.Fatal(emptyIndexMessage)
+			fatal(errors.New(emptyIndexMessage))
 		}
 
 		if len(args) == 0 {
@@ -57,7 +59,7 @@ out-of-date.`,
 			inProgress := make(map[string]bool)
 			err := idx.Run(path, ch, rootDir, !runSingleStage, ran, inProgress, logger)
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 		}
 	},

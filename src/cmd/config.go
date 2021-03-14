@@ -64,7 +64,7 @@ func init() {
 			Run: func(cmd *cobra.Command, args []string) {
 				viper.Set(args[0], args[1])
 				if err := viper.WriteConfig(); err != nil {
-					logger.Fatal(err)
+					fatal(err)
 				}
 			},
 		},

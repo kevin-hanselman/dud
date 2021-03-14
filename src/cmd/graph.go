@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/awalterschulze/gographviz"
@@ -36,11 +37,11 @@ generate images of the stage graph.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		if len(idx) == 0 {
-			logger.Fatal(emptyIndexMessage)
+			fatal(errors.New(emptyIndexMessage))
 		}
 
 		if len(args) == 0 { // By default, run on the entire Index
@@ -54,7 +55,7 @@ generate images of the stage graph.`,
 		for _, path := range args {
 			inProgress := make(map[string]bool)
 			if err := idx.Graph(path, inProgress, graph, onlyStages); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 		}
 		fmt.Println(graph.String())

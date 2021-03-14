@@ -3,12 +3,14 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime/trace"
 	"strings"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
@@ -28,71 +30,50 @@ var (
 		Use: "dud",
 		Long: `Dud is a tool for storing, versioning, and reproducing large files alongside
 source code.`,
-		// TODO: Ensure we always close debugOutput to prevent resource
-		// leaks. This probably requires all sub-commands not to call
-		// logger.Fatal() and to leave all exit paths to the root command.
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if verbose {
+				logger.Debug = log.New(os.Stderr, "", 0)
+			}
 			if doProfile && doTrace {
-				logger.Fatal(errors.New("cannot enable both profiling and tracing"))
+				fatal(errors.New("cannot enable both profiling and tracing"))
 			}
 			if doProfile {
-				logger.Println("enabled profiling")
+				logger.Info.Println("enabled profiling")
 				debugOutput, err := os.Create("dud.pprof")
 				if err != nil {
-					logger.Fatal(err)
+					fatal(err)
 				}
 				stopProfiling = fgprof.Start(debugOutput, fgprof.FormatPprof)
 				fgprof.Start(debugOutput, fgprof.FormatPprof)
 			} else if doTrace {
-				logger.Println("enabled tracing")
+				logger.Info.Println("enabled tracing")
 				debugOutput, err := os.Create("dud.trace")
 				if err != nil {
-					logger.Fatal(err)
+					fatal(err)
 				}
 				if err := trace.Start(debugOutput); err != nil {
-					logger.Fatal(err)
+					fatal(err)
 				}
-			}
-		},
-		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			if doProfile {
-				defer debugOutput.Close()
-				logger.Println("writing profiling output to dud.pprof")
-				if err := stopProfiling(); err != nil {
-					logger.Fatal(err)
-				}
-			} else if doTrace {
-				defer debugOutput.Close()
-				logger.Println("writing tracing output to dud.trace")
-				trace.Stop()
 			}
 		},
 		DisableAutoGenTag: true,
 	}
 
 	// This is the Logger for the entire application.
-	logger *log.Logger
+	logger *agglog.AggLogger
 
 	// This is the project root directory.
 	rootDir string
 
-	doProfile, doTrace bool
-	debugOutput        *os.File
-	stopProfiling      func() error
+	doProfile, doTrace, verbose bool
+	debugOutput                 *os.File
+	stopProfiling               func() error
 )
-
-// Main is the entry point to the cobra CLI.
-func Main(version string) {
-	logger = log.New(os.Stdout, "", 0)
-	rootCmd.Version = version
-	if err := rootCmd.Execute(); err != nil {
-		logger.Fatal(err)
-	}
-}
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(&doProfile, "profile", false, "enable profiling")
 	rootCmd.PersistentFlags().BoolVar(&doTrace, "trace", false, "enable tracing")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase output verbosity")
 
 	rootCmd.AddCommand(&cobra.Command{
 		Use:    "gen-docs",
@@ -120,19 +101,59 @@ func init() {
 	})
 }
 
+// Main is the entry point to the cobra CLI.
+func Main(version string) {
+	rootCmd.Version = version
+	logger = &agglog.AggLogger{
+		Error: log.New(os.Stderr, "Error: ", 0),
+		Info:  log.New(os.Stdout, "", 0),
+		Debug: log.New(ioutil.Discard, "", 0),
+	}
+	if err := rootCmd.Execute(); err != nil {
+		fatal(err)
+	}
+	if err := stopDebugging(); err != nil {
+		logger.Error.Fatal(err)
+	}
+}
+
+// fatal ensures we gracefully stop profiling or tracing before exiting.
+func fatal(err error) {
+	debugErr := stopDebugging()
+	if debugErr != nil {
+		logger.Error.Println(debugErr)
+	}
+	logger.Error.Fatal(err)
+}
+
+func stopDebugging() error {
+	if doProfile {
+		defer debugOutput.Close()
+		logger.Info.Println("writing profiling output to dud.pprof")
+		if err := stopProfiling(); err != nil {
+			return err
+		}
+	} else if doTrace {
+		defer debugOutput.Close()
+		logger.Info.Println("writing tracing output to dud.trace")
+		trace.Stop()
+	}
+	return nil
+}
+
 func cdToProjectRootAndReadConfig(_ *cobra.Command, _ []string) {
 	var err error
 	rootDir, err = getProjectRootDir()
 	if err != nil {
-		logger.Fatal(err)
+		fatal(err)
 	}
 	if err := os.Chdir(rootDir); err != nil {
-		logger.Fatal(err)
+		fatal(err)
 	}
 	viper.SetConfigFile(filepath.Join(rootDir, ".dud", "config.yaml"))
 
 	if err := viper.ReadInConfig(); err != nil {
-		logger.Fatal(err)
+		fatal(err)
 	}
 }
 

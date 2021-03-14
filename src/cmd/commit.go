@@ -39,12 +39,12 @@ recursively on all upstream stages (i.e. dependencies).`,
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		if len(args) == 0 { // By default, commit all Stages.
@@ -58,20 +58,20 @@ recursively on all upstream stages (i.e. dependencies).`,
 			inProgress := make(map[string]bool)
 			err := idx.Commit(path, ch, rootDir, strat, committed, inProgress, logger)
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 			stageFile, err := os.Create(path)
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 			defer stageFile.Close()
 			if err := idx[path].Serialize(stageFile); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 	},
 }

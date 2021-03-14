@@ -2,8 +2,8 @@ package index
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
@@ -18,7 +18,7 @@ func (idx Index) Checkout(
 	recursive bool,
 	checkedOut map[string]bool,
 	inProgress map[string]bool,
-	logger *log.Logger,
+	logger *agglog.AggLogger,
 ) error {
 	if checkedOut[stagePath] {
 		return nil
@@ -56,7 +56,7 @@ func (idx Index) Checkout(
 			}
 		}
 	}
-	logger.Printf("checking out stage %s\n", stagePath)
+	logger.Info.Printf("checking out stage %s\n", stagePath)
 	for _, art := range stg.Outputs {
 		if err := ch.Checkout(rootDir, *art, strat); err != nil {
 			return err

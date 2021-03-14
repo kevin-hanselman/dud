@@ -24,11 +24,11 @@ needed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootDir, err := getProjectRootDir()
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 		stageWorkingDir, err := rel(rootDir, stageWorkingDir)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 		stage := stage.Stage{
 			WorkingDir: stageWorkingDir,
@@ -38,7 +38,7 @@ needed.`,
 		for _, path := range stageOutputs {
 			art, err := createArtifactFromPath(rootDir, path)
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 			stage.Outputs[art.Path] = art
 		}
@@ -46,12 +46,12 @@ needed.`,
 		for _, path := range stageDependencies {
 			art, err := createArtifactFromPath(rootDir, path)
 			if err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
 			stage.Dependencies[art.Path] = art
 		}
 		if err := stage.Serialize(os.Stdout); err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 	},
 }
@@ -69,18 +69,18 @@ stage to the index file.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 
 		for _, path := range args {
 			if err := idx.AddStageFromPath(path); err != nil {
-				logger.Fatal(err)
+				fatal(err)
 			}
-			logger.Printf("Added %s to the index.", path)
+			logger.Info.Printf("Added %s to the index.", path)
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {
-			logger.Fatal(err)
+			fatal(err)
 		}
 	},
 }
