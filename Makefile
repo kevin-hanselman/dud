@@ -52,7 +52,8 @@ docker-image:
 		.
 
 .PHONY: fmt
-fmt: $(GOBIN)/gofumpt
+fmt: $(GOBIN)/gofumpt $(GOBIN)/goimports
+	goimports -w -l .
 	gofumpt -w -l .
 
 .PHONY: lint
@@ -216,3 +217,6 @@ $(GOBIN)/gofumpt:
 
 $(GOBIN)/golint:
 	go install golang.org/x/lint/golint@latest
+
+$(GOBIN)/goimports:
+	go install golang.org/x/tools/cmd/goimports@latest

@@ -49,6 +49,7 @@ COPY --chown=user go.mod go.sum ./
 RUN go mod download \
     && rm go.{mod,sum} \
     && go install mvdan.cc/gofumpt@latest \
+    && go install golang.org/x/tools/cmd/goimports@latest \
     && go install golang.org/x/lint/golint@latest \
     && rm -rf /home/user/go/src
 

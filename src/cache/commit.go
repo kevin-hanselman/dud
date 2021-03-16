@@ -16,6 +16,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
+	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
@@ -29,7 +30,7 @@ const (
 	// First string will be used as value for format time duration string, default is "%s".
 	// Second string will be used when bar finished and value indicates elapsed time, default is "%s"
 	// Third string will be used when value not available, default is "?"
-	barTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
+	progressTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
 		`  {{percent . "%3.0f%%"}}  {{speed . "%s/s" "?/s"}}  {{rtime . "ETA %s" "%s total"}}`
 )
 
@@ -52,8 +53,17 @@ func (ch LocalCache) Commit(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 ) (err error) {
-	progress := barTemplate.New(0).SetMaxWidth(120).SetRefreshRate(100 * time.Millisecond)
-	progress.Set("prefix", art.Path)
+	// Only show the progress report if stderr is a terminal. Otherwise, don't
+	// bother updating the progress report and send any incidental output to
+	// /dev/null. Either way we instantiate the progress tracker because we
+	// still need it to tell us how many bytes we've written during the commit.
+	progress := progressTemplate.New(0)
+	if isatty.IsTerminal(os.Stderr.Fd()) {
+		progress.SetRefreshRate(100 * time.Millisecond).SetWriter(os.Stderr)
+		progress.SetMaxWidth(120).Set("prefix", art.Path)
+	} else {
+		progress.SetRefreshRate(time.Hour).SetWriter(ioutil.Discard)
+	}
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = commitDirArtifact(

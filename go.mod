@@ -12,6 +12,7 @@ require (
 	github.com/google/go-cmp v0.5.4
 	github.com/google/pprof v0.0.0-20201203190320-1bf35d6f28c2 // indirect
 	github.com/magiconair/properties v1.8.4 // indirect
+	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/mitchellh/mapstructure v1.4.0 // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
