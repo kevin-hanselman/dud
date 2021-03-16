@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -25,11 +24,9 @@ func printStageStatus(stagePath string, status stage.Status) error {
 	} else {
 		stageFileStatus = "not checksummed"
 	}
-	fmt.Printf("%s   (stage definition %s)\n", stagePath, stageFileStatus)
+	logger.Info.Printf("%s   (stage definition %s)\n", stagePath, stageFileStatus)
 	for path, artStatus := range status.ArtifactStatus {
-		if _, err := fmt.Printf("  %s  %s\n", path, artStatus); err != nil {
-			return err
-		}
+		logger.Info.Printf("  %s  %s\n", path, artStatus)
 	}
 	return nil
 }

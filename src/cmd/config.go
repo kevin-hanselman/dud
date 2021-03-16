@@ -29,7 +29,7 @@ func init() {
 			ValidArgs: validFields,
 			Args:      cobra.ExactValidArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Println(viper.Get(args[0]))
+				logger.Info.Println(viper.Get(args[0]))
 			},
 		},
 	)

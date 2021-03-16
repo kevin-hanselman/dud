@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -19,6 +20,8 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		t.Skip()
 	}
 
+	logger := agglog.NewNullLogger()
+
 	maxSharedWorkers = 1
 	maxDedicatedWorkers = 1
 
@@ -27,7 +30,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -53,7 +56,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -61,7 +64,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -87,7 +90,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
 			t.Fatal(err)
 		}
 
@@ -95,7 +98,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
 			t.Fatal(err)
 		}
 

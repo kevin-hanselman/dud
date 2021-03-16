@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -16,13 +17,15 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 		t.Skip()
 	}
 
+	logger := agglog.NewNullLogger()
+
 	// TODO: add more tests
 	t.Run("committed and absent from workspace", func(t *testing.T) {
 		dirs, art, cache := setupDirTest(t)
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
 			t.Fatal(err)
 		}
 

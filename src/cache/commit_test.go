@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -160,6 +161,9 @@ func TestFileCommitIntegration(t *testing.T) {
 }
 
 func testCommitIntegration(in testInput, expectedOut testExpectedOutput, t *testing.T) {
+	// TODO: Consider checking the logs instead of throwing them away.
+	logger := agglog.NewNullLogger()
+
 	dirs, art, err := testutil.CreateArtifactTestCase(in.Status)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
@@ -171,7 +175,7 @@ func testCommitIntegration(in testInput, expectedOut testExpectedOutput, t *test
 		t.Fatal(err)
 	}
 
-	commitErr := cache.Commit(dirs.WorkDir, &art, in.CheckoutStrategy)
+	commitErr := cache.Commit(dirs.WorkDir, &art, in.CheckoutStrategy, logger)
 
 	// Strip any context from the error (e.g. "commit hello.txt:").
 	commitErr = errors.Cause(commitErr)

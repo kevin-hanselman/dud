@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
@@ -52,6 +52,7 @@ func (ch LocalCache) Commit(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	logger *agglog.AggLogger,
 ) (err error) {
 	// Only show the progress report if stderr is a terminal. Otherwise, don't
 	// bother updating the progress report and send any incidental output to
@@ -79,7 +80,7 @@ func (ch LocalCache) Commit(
 		err = commitFileArtifact(ch, workspaceDir, art, strat, progress)
 	}
 	if err == nil && progress.Current() <= 0 {
-		fmt.Printf("%s up-to-date; skipping commit\n", art.Path)
+		logger.Info.Printf("  %s up-to-date; skipping commit\n", art.Path)
 	} else {
 		progress.Finish()
 	}

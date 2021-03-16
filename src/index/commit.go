@@ -46,7 +46,7 @@ func (idx Index) Commit(
 			// create Stages to test against. To be safe, it's best to leave
 			// this here.
 			art.SkipCache = true
-			if err := ch.Commit(rootDir, art, strat); err != nil {
+			if err := ch.Commit(rootDir, art, strat, logger); err != nil {
 				return err
 			}
 		} else {
@@ -66,7 +66,7 @@ func (idx Index) Commit(
 	}
 	logger.Info.Printf("committing stage %s\n", stagePath)
 	for _, art := range stg.Outputs {
-		if err := ch.Commit(rootDir, art, strat); err != nil {
+		if err := ch.Commit(rootDir, art, strat, logger); err != nil {
 			return err
 		}
 	}

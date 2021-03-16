@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -58,6 +57,6 @@ generate images of the stage graph.`,
 				fatal(err)
 			}
 		}
-		fmt.Println(graph.String())
+		logger.Info.Println(graph.String())
 	},
 }

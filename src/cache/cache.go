@@ -5,18 +5,19 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/strategy"
 )
 
 // A Cache provides a means to store Artifacts.
 type Cache interface {
-	Commit(workspaceDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error
-	Checkout(workspaceDir string, art artifact.Artifact, strat strategy.CheckoutStrategy) error
+	Commit(workDir string, art *artifact.Artifact, s strategy.CheckoutStrategy, l *agglog.AggLogger) error
+	Checkout(workDir string, art artifact.Artifact, s strategy.CheckoutStrategy) error
 	PathForChecksum(checksum string) (string, error)
-	Status(workspaceDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
-	Fetch(workspaceDir, remoteSrc string, art artifact.Artifact) error
-	Push(workspaceDir, remoteDst string, art artifact.Artifact) error
+	Status(workDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
+	Fetch(workDir, remoteSrc string, art artifact.Artifact) error
+	Push(workDir, remoteDst string, art artifact.Artifact) error
 }
 
 // A LocalCache is a concrete Cache that uses a directory on a local filesystem.

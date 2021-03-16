@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
@@ -17,6 +18,8 @@ func TestPushIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
+
+	logger := agglog.NewNullLogger()
 
 	remoteCopyOrig := remoteCopy
 	remoteCopyPanic := func(src, dst string, fileSet map[string]struct{}) error {
@@ -124,7 +127,7 @@ func TestPushIntegration(t *testing.T) {
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
 			t.Fatal(err)
 		}
 

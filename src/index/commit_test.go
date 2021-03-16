@@ -9,9 +9,10 @@ import (
 	"github.com/kevin-hanselman/dud/src/mocks"
 	"github.com/kevin-hanselman/dud/src/stage"
 	"github.com/kevin-hanselman/dud/src/strategy"
+	"github.com/stretchr/testify/mock"
 )
 
-func mockCommit(workDir string, art *artifact.Artifact, strat strategy.CheckoutStrategy) error {
+func mockCommit(_ string, art *artifact.Artifact, _ strategy.CheckoutStrategy, _ *agglog.AggLogger) error {
 	art.Checksum = "committed"
 	return nil
 }
@@ -23,7 +24,7 @@ func expectOutputsCommitted(
 	strat strategy.CheckoutStrategy,
 ) {
 	for _, art := range stg.Outputs {
-		mockCache.On("Commit", rootDir, art, strat).Return(mockCommit).Once()
+		mockCache.On("Commit", rootDir, art, strat, mock.AnythingOfType("*agglog.AggLogger")).Return(mockCommit).Once()
 	}
 }
 
@@ -63,7 +64,7 @@ func TestCommit(t *testing.T) {
 
 		orphanCopy := orphanArt
 		orphanCopy.SkipCache = true
-		mockCache.On("Commit", rootDir, &orphanCopy, strat).Return(mockCommit).Once()
+		mockCache.On("Commit", rootDir, &orphanCopy, strat, mock.AnythingOfType("*agglog.AggLogger")).Return(mockCommit).Once()
 
 		committed := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -144,7 +145,7 @@ func TestCommit(t *testing.T) {
 
 		// The linked Artifact should not be committed as a dependency.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Commit", rootDir, &linkedArtifactOrig, strat)
+		mockCache.AssertNotCalled(t, "Commit", rootDir, &linkedArtifactOrig, strat, mock.AnythingOfType("*agglog.AggLogger"))
 
 		mockCache.AssertExpectations(t)
 
