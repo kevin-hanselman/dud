@@ -41,6 +41,7 @@ ENV PATH=$PATH:/home/user/go/bin:/home/user/.local/bin
 
 RUN pip install --no-cache --user dvc \
     && dvc config --global core.analytics false \
+    && dvc config --global core.check_update false \
     && dvc config --global cache.type symlink
 
 # Pre-download the Go dependencies for Dud.

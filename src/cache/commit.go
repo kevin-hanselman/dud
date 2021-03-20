@@ -34,18 +34,6 @@ const (
 		`  {{percent . "%3.0f%%"}}  {{speed . "%s/s" "?/s"}}  {{rtime . "ETA %s" "%s total"}}`
 )
 
-// These are somewhat arbitrary numbers. We need to profile more.
-var (
-	// The number of concurrent workers available to a top-level directory
-	// artifact and all its child artifacts.
-	maxSharedWorkers = 64
-	// The number of concurrent workers available to each individual directory
-	// artifact (and not its children). Dedicated workers are necessary because
-	// without them, deadlocks can occur when maxSharedWorkers is less than the
-	// directory depth.
-	maxDedicatedWorkers = 1
-)
-
 // Commit calculates the checksum of the artifact, moves it to the cache, then
 // performs a checkout.
 func (ch LocalCache) Commit(

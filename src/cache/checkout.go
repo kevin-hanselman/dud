@@ -31,29 +31,6 @@ func (cache LocalCache) Checkout(
 	return errors.Wrapf(err, "checkout %s", art.Path)
 }
 
-// InvalidChecksumError is an error case where a valid checksum was expected
-// but not found.
-type InvalidChecksumError struct {
-	checksum string
-}
-
-func (err InvalidChecksumError) Error() string {
-	if err.checksum == "" {
-		return "no checksum"
-	}
-	return fmt.Sprintf("invalid checksum: %#v", err.checksum)
-}
-
-// MissingFromCacheError is an error case where a cache file was expected but
-// not found.
-type MissingFromCacheError struct {
-	checksum string
-}
-
-func (err MissingFromCacheError) Error() string {
-	return fmt.Sprintf("checksum missing from cache: %#v", err.checksum)
-}
-
 func checkoutFile(
 	ch LocalCache,
 	workspaceDir string,

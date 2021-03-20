@@ -10,6 +10,18 @@ import (
 	"github.com/kevin-hanselman/dud/src/strategy"
 )
 
+// These are somewhat arbitrary numbers. We need to profile more.
+var (
+	// The number of concurrent workers available to a top-level directory
+	// artifact and all its child artifacts.
+	maxSharedWorkers = 64
+	// The number of concurrent workers available to each individual directory
+	// artifact (and not its children). Dedicated workers are necessary because
+	// without them, deadlocks can occur when maxSharedWorkers is less than the
+	// directory depth.
+	maxDedicatedWorkers = 1
+)
+
 // A Cache provides a means to store Artifacts.
 type Cache interface {
 	Commit(workDir string, art *artifact.Artifact, s strategy.CheckoutStrategy, l *agglog.AggLogger) error
@@ -56,4 +68,27 @@ func (ch LocalCache) PathForChecksum(checksum string) (string, error) {
 type directoryManifest struct {
 	Path     string
 	Contents map[string]*artifact.Artifact
+}
+
+// InvalidChecksumError is an error case where a valid checksum was expected
+// but not found.
+type InvalidChecksumError struct {
+	checksum string
+}
+
+func (err InvalidChecksumError) Error() string {
+	if err.checksum == "" {
+		return "no checksum"
+	}
+	return fmt.Sprintf("invalid checksum: %#v", err.checksum)
+}
+
+// MissingFromCacheError is an error case where a cache file was expected but
+// not found.
+type MissingFromCacheError struct {
+	checksum string
+}
+
+func (err MissingFromCacheError) Error() string {
+	return fmt.Sprintf("checksum missing from cache: %#v", err.checksum)
 }

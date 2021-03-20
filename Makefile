@@ -92,7 +92,9 @@ hugo/notebooks/%.md:
 hugo/content/benchmarks/_index.md: \
 	integration/benchmarks/markdown/00_front_matter.md \
 	integration/benchmarks/markdown/few_large_files/commit/table.md \
-	integration/benchmarks/markdown/many_small_files/commit/table.md
+	integration/benchmarks/markdown/many_small_files/commit/table.md \
+	integration/benchmarks/markdown/few_large_files/checkout/table.md \
+	integration/benchmarks/markdown/many_small_files/checkout/table.md
 	mkdir -p $(dir $@)
 	find integration/benchmarks/markdown -type f -name '*.md' | sort | xargs cat > $@
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-cd $1
+cd "$1"
 
 dataset_src_dir=$2
 
