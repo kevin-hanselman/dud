@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/kevin-hanselman/dud/src/agglog"
@@ -16,22 +15,8 @@ import (
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
-	"github.com/mattn/go-isatty"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
-)
-
-const (
-	cacheFilePerms = 0o444
-
-	// Template for progress report.
-	//
-	// rtime docs copied from cheggaaa/pb:
-	// First string will be used as value for format time duration string, default is "%s".
-	// Second string will be used when bar finished and value indicates elapsed time, default is "%s"
-	// Third string will be used when value not available, default is "?"
-	progressTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
-		`  {{percent . "%3.0f%%"}}  {{speed . "%s/s" "?/s"}}  {{rtime . "ETA %s" "%s total"}}`
 )
 
 // Commit calculates the checksum of the artifact, moves it to the cache, then
@@ -42,17 +27,7 @@ func (ch LocalCache) Commit(
 	strat strategy.CheckoutStrategy,
 	logger *agglog.AggLogger,
 ) (err error) {
-	// Only show the progress report if stderr is a terminal. Otherwise, don't
-	// bother updating the progress report and send any incidental output to
-	// /dev/null. Either way we instantiate the progress tracker because we
-	// still need it to tell us how many bytes we've written during the commit.
-	progress := progressTemplate.New(0)
-	if isatty.IsTerminal(os.Stderr.Fd()) {
-		progress.SetRefreshRate(100 * time.Millisecond).SetWriter(os.Stderr)
-		progress.SetMaxWidth(120).Set("prefix", art.Path)
-	} else {
-		progress.SetRefreshRate(time.Hour).SetWriter(ioutil.Discard)
-	}
+	progress := newProgress(art.Path)
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = commitDirArtifact(

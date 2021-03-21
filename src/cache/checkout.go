@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
@@ -23,11 +24,13 @@ func (cache LocalCache) Checkout(
 	if art.SkipCache {
 		return
 	}
+	progress := newProgress(art.Path)
 	if art.IsDir {
-		err = checkoutDir(cache, workspaceDir, art, strat)
+		err = checkoutDir(cache, workspaceDir, art, strat, progress)
 	} else {
-		err = checkoutFile(cache, workspaceDir, art, strat)
+		err = checkoutFile(cache, workspaceDir, art, strat, progress)
 	}
+	progress.Finish()
 	return errors.Wrapf(err, "checkout %s", art.Path)
 }
 
@@ -36,6 +39,7 @@ func checkoutFile(
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	progress *pb.ProgressBar,
 ) error {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
@@ -53,6 +57,13 @@ func checkoutFile(
 	cachePath = filepath.Join(ch.dir, cachePath)
 	switch strat {
 	case strategy.CopyStrategy:
+		srcInfo, err := os.Lstat(cachePath)
+		if err != nil {
+			return err
+		}
+		progress.AddTotal(srcInfo.Size())
+		progress.Start()
+
 		srcFile, err := os.Open(cachePath)
 		if err != nil {
 			return err
@@ -76,7 +87,9 @@ func checkoutFile(
 		}
 		defer dstFile.Close()
 
-		checksum, err := checksum.Checksum(io.TeeReader(srcFile, dstFile))
+		// Might as well checksum the file while we copy to check data integrity.
+		srcReader := io.TeeReader(progress.NewProxyReader(srcFile), dstFile)
+		checksum, err := checksum.Checksum(srcReader)
 		if err != nil {
 			return err
 		}
@@ -99,6 +112,7 @@ func checkoutDir(
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	progress *pb.ProgressBar,
 ) error {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
@@ -122,8 +136,14 @@ func checkoutDir(
 		return err
 	}
 	for _, childArt := range man.Contents {
-		if err := ch.Checkout(workPath, *childArt, strat); err != nil {
-			return err
+		if childArt.IsDir {
+			if err := checkoutDir(ch, workPath, *childArt, strat, progress); err != nil {
+				return err
+			}
+		} else {
+			if err := checkoutFile(ch, workPath, *childArt, strat, progress); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

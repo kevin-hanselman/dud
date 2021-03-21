@@ -33,10 +33,12 @@ var checkoutCmd = &cobra.Command{
 	Short: "Load committed artifacts from the cache",
 	Long: `Checkout loads previously committed artifacts from the cache.
 
-For each stage file passed in, checkout attempts to load all output artifacts
-from the cache for the given. If no stage files are passed in, checkout will act on all
-stages in the index. By default, checkout will act recursively on all upstream stages
-(i.e. dependencies).`,
+For each stage file passed in, checkout makes the stage's output artifacts
+available in the workspace. By default, checkout creates symlinks to the cache,
+but copies of the cached artifacts can be checked out using --copy. If no
+stage files are passed in, checkout will act on all stages in the index. By
+default, checkout will act recursively on all upstream stages (i.e.
+dependencies).`,
 	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 		strat := strategy.LinkStrategy
