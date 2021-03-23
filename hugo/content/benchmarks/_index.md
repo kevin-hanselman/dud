@@ -6,10 +6,9 @@
 
 **RAM**: 16 GB
 
-**Dud version**: dud version 2471dca
+**Dud version**: dud version efa43d9
 
 **DVC version**: DVC version: 2.0.6 (pip)
-
 ## Few large files
 
 This dataset consists of four 1 GB files in a single directory.
@@ -18,8 +17,8 @@ This dataset consists of four 1 GB files in a single directory.
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
 |:---|---:|---:|---:|---:|
-| `Dud` | 0.013 ± 0.003 | 0.010 | 0.016 | 1.00 |
-| `DVC` | 0.325 ± 0.050 | 0.281 | 0.379 | 24.51 ± 7.34 |
+| `Dud` | 0.008 ± 0.000 | 0.008 | 0.008 | 1.00 |
+| `DVC` | 0.280 ± 0.020 | 0.260 | 0.301 | 36.31 ± 2.65 |
 ### commit
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
@@ -34,8 +33,8 @@ This dataset consists of twenty thousand 100 KB files in a single directory.
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
 |:---|---:|---:|---:|---:|
-| `Dud` | 3.354 ± 4.152 | 0.950 | 8.148 | 1.00 |
-| `DVC` | 10.091 ± 0.760 | 9.571 | 10.963 | 3.01 ± 3.73 |
+| `Dud` | 1.024 ± 0.170 | 0.860 | 1.200 | 1.00 |
+| `DVC` | 8.540 ± 0.240 | 8.308 | 8.787 | 8.34 ± 1.41 |
 ### commit
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |

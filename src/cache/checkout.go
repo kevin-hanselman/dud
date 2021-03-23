@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 // Checkout finds the artifact in the cache and adds a copy of/link to said
@@ -26,7 +28,16 @@ func (cache LocalCache) Checkout(
 	}
 	progress := newProgress(art.Path)
 	if art.IsDir {
-		err = checkoutDir(cache, workspaceDir, art, strat, progress)
+		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
+		err = checkoutDir(
+			context.Background(),
+			cache,
+			workspaceDir,
+			art,
+			strat,
+			activeSharedWorkers,
+			progress,
+		)
 	} else {
 		err = checkoutFile(cache, workspaceDir, art, strat, progress)
 	}
@@ -97,6 +108,12 @@ func checkoutFile(
 			return fmt.Errorf("found checksum %#v, expected %#v", checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
+		// Increment the count of files linked. If we're part of a directory,
+		// checkoutDir() has already accounted for this file and started the
+		// report. If we're a single file, this operation is essentially
+		// instant, so we let this be a noop and don't bother starting
+		// a report.
+		defer progress.Increment()
 		if status.ContentsMatch {
 			return nil
 		}
@@ -108,10 +125,12 @@ func checkoutFile(
 }
 
 func checkoutDir(
+	ctx context.Context,
 	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	activeSharedWorkers chan struct{},
 	progress *pb.ProgressBar,
 ) error {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
@@ -125,7 +144,8 @@ func checkoutDir(
 	if !status.ChecksumInCache {
 		return MissingFromCacheError{art.Checksum}
 	}
-	if !(status.WorkspaceFileStatus == fsutil.StatusAbsent || status.WorkspaceFileStatus == fsutil.StatusDirectory) {
+	if !(status.WorkspaceFileStatus == fsutil.StatusAbsent ||
+		status.WorkspaceFileStatus == fsutil.StatusDirectory) {
 		return fmt.Errorf(
 			"expected target to be empty or a directory, found %s",
 			status.WorkspaceFileStatus,
@@ -135,16 +155,103 @@ func checkoutDir(
 	if err != nil {
 		return err
 	}
-	for _, childArt := range man.Contents {
-		if childArt.IsDir {
-			if err := checkoutDir(ch, workPath, *childArt, strat, progress); err != nil {
-				return err
-			}
-		} else {
-			if err := checkoutFile(ch, workPath, *childArt, strat, progress); err != nil {
-				return err
+
+	// When linking, the progress report counts files linked. Add all of the
+	// files we know about here to the total, and let checkoutFile handle
+	// updating the report. (When copying, checkoutFile handles updating the
+	// bytes transferred completely.)
+	if strat == strategy.LinkStrategy {
+		progress.AddTotal(int64(len(man.Contents)))
+		progress.Start()
+	}
+
+	// Start a goroutine to feed artifacts to workers.
+	errGroup, groupCtx := errgroup.WithContext(ctx)
+	childArtifacts := make(chan *artifact.Artifact)
+	errGroup.Go(func() error {
+		for _, childArt := range man.Contents {
+			select {
+			case childArtifacts <- childArt:
+			case <-groupCtx.Done():
+				return groupCtx.Err()
 			}
 		}
+		close(childArtifacts)
+		return nil
+	})
+
+	// Start workers to checkout artifacts.
+	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
+	for i := 0; i < len(man.Contents); i++ {
+		select {
+		case <-groupCtx.Done():
+			break
+		case activeSharedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeSharedWorkers }()
+				return checkoutWorker(
+					groupCtx,
+					ch,
+					workPath,
+					childArtifacts,
+					strat,
+					activeSharedWorkers,
+					progress,
+				)
+			})
+		case activeDedicatedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeDedicatedWorkers }()
+				return checkoutWorker(
+					groupCtx,
+					ch,
+					workPath,
+					childArtifacts,
+					strat,
+					activeSharedWorkers,
+					progress,
+				)
+			})
+		}
 	}
-	return nil
+	// Wait for all goroutines to exit and collect the group error.
+	return errGroup.Wait()
+}
+
+func checkoutWorker(
+	ctx context.Context,
+	ch LocalCache,
+	workPath string,
+	input <-chan *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+	activeSharedWorkers chan struct{},
+	progress *pb.ProgressBar,
+) error {
+	for {
+		select {
+		case childArt, ok := <-input:
+			if !ok {
+				return nil
+			}
+			if childArt.IsDir {
+				if err := checkoutDir(
+					ctx,
+					ch,
+					workPath,
+					*childArt,
+					strat,
+					activeSharedWorkers,
+					progress,
+				); err != nil {
+					return err
+				}
+			} else {
+				if err := checkoutFile(ch, workPath, *childArt, strat, progress); err != nil {
+					return err
+				}
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }

@@ -209,8 +209,12 @@ func commitDirArtifact(
 	childArtifacts := make(chan *artifact.Artifact)
 	manifestReady := make(chan struct{})
 
-	newManifest := &directoryManifest{Path: art.Path}
-	newManifest.Contents = make(map[string]*artifact.Artifact)
+	// Start a goroutine to build the directory manifest from committed
+	// artifacts.
+	newManifest := &directoryManifest{
+		Path:     art.Path,
+		Contents: make(map[string]*artifact.Artifact),
+	}
 	errGroup.Go(func() error {
 		// There should be exactly len(infos) Artifacts returned in the
 		// childArtifacts channel. This fact is critical for enabling the
@@ -229,19 +233,20 @@ func commitDirArtifact(
 		return nil
 	})
 
-	// Start workers to commit child Artifacts. We spawn workers when there's
-	// free space in either of the "active worker" channels. We quit when
-	// either we've either scheduled as many workers as files/sub-dirs, the
-	// manifest builder says the manifest is ready, or the group was cancelled.
+	// Start workers to commit artifacts. We spawn workers when there's free
+	// space in either of the "active worker" channels. We quit when either
+	// we've either scheduled as many workers as files/sub-dirs, the manifest
+	// builder says the manifest is ready, or the group was cancelled.
 	for i := 0; i < len(infos); i++ {
 		select {
 		case <-groupCtx.Done():
+			break
 		case <-manifestReady:
 			break
 		case activeSharedWorkers <- struct{}{}:
 			errGroup.Go(func() error {
 				defer func() { <-activeSharedWorkers }()
-				return dirWorker(
+				return commitWorker(
 					groupCtx,
 					ch,
 					*art,
@@ -257,7 +262,7 @@ func commitDirArtifact(
 		case activeDedicatedWorkers <- struct{}{}:
 			errGroup.Go(func() error {
 				defer func() { <-activeDedicatedWorkers }()
-				return dirWorker(
+				return commitWorker(
 					groupCtx,
 					ch,
 					*art,
@@ -288,7 +293,7 @@ func commitDirArtifact(
 	return nil
 }
 
-func dirWorker(
+func commitWorker(
 	ctx context.Context,
 	ch LocalCache,
 	art artifact.Artifact,
@@ -302,8 +307,8 @@ func dirWorker(
 ) error {
 	for info := range inputFiles {
 		path := info.Name()
-		// See if we can recover a sub-artifact from an existing
-		// dirManifest. This enables skipping up-to-date artifacts.
+		// See if we can recover a sub-artifact from an existing dirManifest.
+		// This enables skipping up-to-date artifacts.
 		var childArt *artifact.Artifact
 		childArt, ok := dirMan.Contents[path]
 		if !ok {

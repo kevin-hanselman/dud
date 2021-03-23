@@ -19,6 +19,9 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 
 	logger := agglog.NewNullLogger()
 
+	maxSharedWorkers = 1
+	maxDedicatedWorkers = 1
+
 	// TODO: add more tests
 	t.Run("committed and absent from workspace", func(t *testing.T) {
 		dirs, art, cache := setupDirTest(t)
