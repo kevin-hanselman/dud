@@ -98,5 +98,5 @@ func (idx Index) findOwner(artPath string) (string, *artifact.Artifact, error) {
 			return stagePath, art, nil
 		}
 	}
-	return "", &artifact.Artifact{}, nil
+	return "", nil, nil
 }

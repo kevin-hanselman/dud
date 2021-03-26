@@ -43,8 +43,8 @@ func (idx Index) Commit(
 		if ownerPath == "" {
 			// Always skip the cache for dependencies. This is also enforced in
 			// stage.FromFile, but most tests obviously don't use FromFile to
-			// create Stages to test against. To be safe, it's best to leave
-			// this here.
+			// create Stages to test against. To be safe, it's best to force
+			// SkipCache to true here.
 			art.SkipCache = true
 			if err := ch.Commit(rootDir, art, strat, logger); err != nil {
 				return err

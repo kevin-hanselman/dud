@@ -41,6 +41,7 @@ var quickStatus = func(
 	workPath = filepath.Join(workspaceDir, art.Path)
 	cachePath, err = ch.PathForChecksum(art.Checksum)
 	absCachePath := filepath.Join(ch.dir, cachePath)
+	// TODO: assert InvalidChecksumError
 	if err != nil { // An error means the checksum is invalid
 		status.HasChecksum = false
 	} else {

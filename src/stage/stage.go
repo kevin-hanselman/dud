@@ -243,8 +243,8 @@ func FindDirArtifactOwnerForPath(
 	for _, part := range parts {
 		dir := filepath.Join(dir, part)
 		owner, ok := artifacts[dir]
-		// If we find a matching Artifact for any ancestor directory, the Stage
-		// in question is only the owner if the Artifact is recursive, or we've
+		// If we find a matching Artifact for any ancestor directory, the Artifact
+		// in question is only the owner if it is recursive, or if we've
 		// reached the immediate parent directory of the input.
 		if ok && (!owner.DisableRecursion || dir == fullDir) {
 			return owner, true, nil

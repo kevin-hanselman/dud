@@ -93,7 +93,7 @@ func commitFileArtifact(
 		return nil
 	}
 
-	sameFs, err := fsutil.SameFilesystem(workPath, ch.Dir())
+	sameFs, err := fsutil.SameFilesystem(workPath, ch.dir)
 	if err != nil {
 		return err
 	}

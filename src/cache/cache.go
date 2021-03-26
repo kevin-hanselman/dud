@@ -44,7 +44,6 @@ var (
 type Cache interface {
 	Commit(workDir string, art *artifact.Artifact, s strategy.CheckoutStrategy, l *agglog.AggLogger) error
 	Checkout(workDir string, art artifact.Artifact, s strategy.CheckoutStrategy) error
-	PathForChecksum(checksum string) (string, error)
 	Status(workDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
 	Fetch(workDir, remoteSrc string, art artifact.Artifact) error
 	Push(workDir, remoteDst string, art artifact.Artifact) error
@@ -67,18 +66,12 @@ func NewLocalCache(dir string) (ch LocalCache, err error) {
 	return ch, nil
 }
 
-// Dir returns the root directory for the LocalCache.
-func (ch LocalCache) Dir() string {
-	return ch.dir
-}
-
 // PathForChecksum returns the expected location of an object with the
 // given checksum in the cache. If the checksum has an invalid (e.g. empty)
 // checksum value, this function returns an error.
 func (ch LocalCache) PathForChecksum(checksum string) (string, error) {
 	if len(checksum) < 3 {
-		// TODO: return InvalidChecksumError
-		return "", fmt.Errorf("invalid checksum: %#v", checksum)
+		return "", InvalidChecksumError{checksum: checksum}
 	}
 	return filepath.Join(checksum[:2], checksum[2:]), nil
 }

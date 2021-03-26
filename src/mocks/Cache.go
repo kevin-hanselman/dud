@@ -58,27 +58,6 @@ func (_m *Cache) Fetch(workDir string, remoteSrc string, art artifact.Artifact) 
 	return r0
 }
 
-// PathForChecksum provides a mock function with given fields: checksum
-func (_m *Cache) PathForChecksum(checksum string) (string, error) {
-	ret := _m.Called(checksum)
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(checksum)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(checksum)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Push provides a mock function with given fields: workDir, remoteDst, art
 func (_m *Cache) Push(workDir string, remoteDst string, art artifact.Artifact) error {
 	ret := _m.Called(workDir, remoteDst, art)

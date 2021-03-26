@@ -98,7 +98,7 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 		)
 	}
 
-	cachePath = filepath.Join(ch.Dir(), cachePath)
+	cachePath = filepath.Join(dirs.CacheDir, cachePath)
 	// verify cachePath matches status.ChecksumInCache
 	if status.HasChecksum {
 		cachePathExists, err := fsutil.Exists(cachePath, false)
