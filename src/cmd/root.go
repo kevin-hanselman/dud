@@ -127,16 +127,17 @@ func fatal(err error) {
 }
 
 func stopDebugging() error {
-	if doProfile {
+	if debugOutput != nil {
 		defer debugOutput.Close()
+	}
+	if doTrace {
+		logger.Info.Println("writing tracing output to dud.trace")
+		trace.Stop()
+	} else if stopProfiling != nil {
 		logger.Info.Println("writing profiling output to dud.pprof")
 		if err := stopProfiling(); err != nil {
 			return err
 		}
-	} else if doTrace {
-		defer debugOutput.Close()
-		logger.Info.Println("writing tracing output to dud.trace")
-		trace.Stop()
 	}
 	return nil
 }
