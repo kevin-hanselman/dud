@@ -32,8 +32,12 @@ in the index.
 You can pipe the output of this command to 'dot' from the graphviz package to
 generate images of the stage graph.`,
 	Example: "dud graph | dot -Tpng -o dud.png",
-	PreRun:  cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
+		_, paths, err := cdToProjectRootAndReadConfig(args)
+		if err != nil {
+			fatal(err)
+		}
+
 		idx, err := index.FromFile(indexPath)
 		if err != nil {
 			fatal(err)
@@ -43,15 +47,15 @@ generate images of the stage graph.`,
 			fatal(errors.New(emptyIndexMessage))
 		}
 
-		if len(args) == 0 { // By default, run on the entire Index
+		if len(paths) == 0 { // By default, run on the entire Index
 			for path := range idx {
-				args = append(args, path)
+				paths = append(paths, path)
 			}
 		}
 
 		graph := gographviz.NewEscape()
 		graph.SetDir(true)
-		for _, path := range args {
+		for _, path := range paths {
 			inProgress := make(map[string]bool)
 			if err := idx.Graph(path, inProgress, graph, onlyStages); err != nil {
 				fatal(err)

@@ -56,7 +56,9 @@ var quickStatus = func(
 	if err != nil {
 		return
 	}
-	if status.HasChecksum && status.ChecksumInCache && status.WorkspaceFileStatus == fsutil.StatusLink {
+	if status.HasChecksum &&
+		status.ChecksumInCache &&
+		status.WorkspaceFileStatus == fsutil.StatusLink {
 		var linkDst string
 		linkDst, err = os.Readlink(workPath)
 		if err != nil {

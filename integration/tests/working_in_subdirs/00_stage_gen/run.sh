@@ -6,7 +6,7 @@ dud init
 mkdir subdir
 cd subdir
 
-dud stage gen -w . -o foo.txt > stage.yaml
+dud stage gen -w . -o foo.txt -- 'echo foobar > foo.txt' > stage.yaml
 
 grep -Fq 'working-dir: subdir' stage.yaml
 

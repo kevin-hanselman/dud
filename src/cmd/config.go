@@ -15,10 +15,9 @@ var validFields = []string{
 
 func init() {
 	configCmd := &cobra.Command{
-		Use:              "config {get|set}",
-		Short:            "Print or modify fields in the config file",
-		Long:             "Config prints or modifies fields in the config file",
-		PersistentPreRun: cdToProjectRootAndReadConfig,
+		Use:   "config {get|set}",
+		Short: "Print or modify fields in the config file",
+		Long:  "Config prints or modifies fields in the config file",
 	}
 
 	configCmd.AddCommand(
@@ -29,6 +28,10 @@ func init() {
 			ValidArgs: validFields,
 			Args:      cobra.ExactValidArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
+				_, _, err := cdToProjectRootAndReadConfig(nil)
+				if err != nil {
+					fatal(err)
+				}
 				logger.Info.Println(viper.Get(args[0]))
 			},
 		},
@@ -62,6 +65,10 @@ func init() {
 				return nil
 			},
 			Run: func(cmd *cobra.Command, args []string) {
+				_, _, err := cdToProjectRootAndReadConfig(nil)
+				if err != nil {
+					fatal(err)
+				}
 				viper.Set(args[0], args[1])
 				if err := viper.WriteConfig(); err != nil {
 					fatal(err)

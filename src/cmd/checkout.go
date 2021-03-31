@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -39,11 +41,15 @@ but copies of the cached artifacts can be checked out using --copy. If no
 stage files are passed in, checkout will act on all stages in the index. By
 default, checkout will act recursively on all upstream stages (i.e.
 dependencies).`,
-	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
 		strat := strategy.LinkStrategy
 		if useCopyStrategy {
 			strat = strategy.CopyStrategy
+		}
+
+		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+		if err != nil {
+			fatal(err)
 		}
 
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
@@ -56,16 +62,20 @@ dependencies).`,
 			fatal(err)
 		}
 
-		if len(args) == 0 {
+		if len(idx) == 0 {
+			fatal(errors.New(emptyIndexMessage))
+		}
+
+		if len(paths) == 0 {
 			// Ignore disableRecursion flag when no args passed.
 			disableRecursion = false
 			for path := range idx {
-				args = append(args, path)
+				paths = append(paths, path)
 			}
 		}
 
 		checkedOut := make(map[string]bool)
-		for _, path := range args {
+		for _, path := range paths {
 			inProgress := make(map[string]bool)
 			if err := idx.Checkout(
 				path,

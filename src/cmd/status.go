@@ -41,8 +41,12 @@ For each stage file passed in, status will print the current state of the
 stage.  If no stage files are passed in, status will act on all stages in the
 index. By default, status will act recursively on all upstream stages (i.e.
 dependencies).`,
-	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
+		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+		if err != nil {
+			fatal(err)
+		}
+
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
 			fatal(err)
@@ -53,18 +57,18 @@ dependencies).`,
 			fatal(err)
 		}
 
-		if len(args) == 0 { // By default, check status of everything in the Index.
-			for path := range idx {
-				args = append(args, path)
-			}
-		}
-
-		if len(args) == 0 {
+		if len(idx) == 0 {
 			fatal(errors.New(emptyIndexMessage))
 		}
 
+		if len(paths) == 0 { // By default, check status of everything in the Index.
+			for path := range idx {
+				paths = append(paths, path)
+			}
+		}
+
 		status := make(index.Status)
-		for _, path := range args {
+		for _, path := range paths {
 			inProgress := make(map[string]bool)
 			err := idx.Status(path, ch, rootDir, status, inProgress)
 			if err != nil {

@@ -32,8 +32,12 @@ If no stage files are passed in, run will act on all stages in the index. By
 default, run will act recursively on all upstream stages (i.e. dependencies),
 and thus run will execute a stage's command if any upstream stages are
 out-of-date.`,
-	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
+		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+		if err != nil {
+			fatal(err)
+		}
+
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
 			fatal(err)
@@ -48,14 +52,14 @@ out-of-date.`,
 			fatal(errors.New(emptyIndexMessage))
 		}
 
-		if len(args) == 0 {
+		if len(paths) == 0 {
 			for path := range idx {
-				args = append(args, path)
+				paths = append(paths, path)
 			}
 		}
 
 		ran := make(map[string]bool)
-		for _, path := range args {
+		for _, path := range paths {
 			inProgress := make(map[string]bool)
 			err := idx.Run(path, ch, rootDir, !runSingleStage, ran, inProgress, logger)
 			if err != nil {

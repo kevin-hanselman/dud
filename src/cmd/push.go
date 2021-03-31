@@ -29,8 +29,12 @@ For each stage passed in, push uploads the stage's committed outputs to the
 remote cache specified in the Dud config file. If no stage files are passed
 in, push will act on all stages in the index. By default, push will act
 recursively on all upstream stages (i.e. dependencies).`,
-	PreRun: cdToProjectRootAndReadConfig,
 	Run: func(cmd *cobra.Command, args []string) {
+		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+		if err != nil {
+			fatal(err)
+		}
+
 		ch, err := cache.NewLocalCache(viper.GetString("cache"))
 		if err != nil {
 			fatal(err)
@@ -46,16 +50,20 @@ recursively on all upstream stages (i.e. dependencies).`,
 			fatal(err)
 		}
 
-		if len(args) == 0 {
+		if len(idx) == 0 {
+			fatal(errors.New(emptyIndexMessage))
+		}
+
+		if len(paths) == 0 {
 			// Ignore disableRecursion flag when no args passed.
 			disableRecursion = false
 			for path := range idx {
-				args = append(args, path)
+				paths = append(paths, path)
 			}
 		}
 
 		pushed := make(map[string]bool)
-		for _, path := range args {
+		for _, path := range paths {
 			inProgress := make(map[string]bool)
 			if err := idx.Push(
 				path,

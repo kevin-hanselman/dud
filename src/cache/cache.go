@@ -49,7 +49,7 @@ type Cache interface {
 	Push(workDir, remoteDst string, art artifact.Artifact) error
 }
 
-// A LocalCache is a concrete Cache that uses a directory on a local filesystem.
+// A LocalCache is a Cache that uses a directory on a local filesystem.
 type LocalCache struct {
 	dir string
 }

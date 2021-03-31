@@ -62,9 +62,6 @@ source code.`,
 	// This is the Logger for the entire application.
 	logger *agglog.AggLogger
 
-	// This is the project root directory.
-	rootDir string
-
 	doProfile, doTrace, verbose bool
 	debugOutput                 *os.File
 	stopProfiling               func() error
@@ -142,20 +139,32 @@ func stopDebugging() error {
 	return nil
 }
 
-func cdToProjectRootAndReadConfig(_ *cobra.Command, _ []string) {
-	var err error
+// This function also converts any paths passed in to be relative to the
+// project root.
+// TODO: This function does a lot. Find a better abstraction (or group of
+// abstractions).
+func cdToProjectRootAndReadConfig(paths []string) (
+	rootDir string,
+	relPaths []string,
+	err error,
+) {
 	rootDir, err = getProjectRootDir()
 	if err != nil {
-		fatal(err)
+		return
 	}
-	if err := os.Chdir(rootDir); err != nil {
-		fatal(err)
+	relPaths = make([]string, len(paths))
+	for i, path := range paths {
+		relPaths[i], err = pathAbsThenRel(rootDir, path)
+		if err != nil {
+			return
+		}
+	}
+	if err = os.Chdir(rootDir); err != nil {
+		return
 	}
 	viper.SetConfigFile(filepath.Join(rootDir, ".dud", "config.yaml"))
-
-	if err := viper.ReadInConfig(); err != nil {
-		fatal(err)
-	}
+	err = viper.ReadInConfig()
+	return
 }
 
 func getProjectRootDir() (string, error) {
