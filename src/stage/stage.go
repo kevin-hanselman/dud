@@ -97,7 +97,7 @@ var fromYamlFile = func(path string, stg *Stage) error {
 }
 
 // FromFile loads a Stage from a file.
-var FromFile = func(stagePath string) (stg Stage, err error) {
+func FromFile(stagePath string) (stg Stage, err error) {
 	var tempStage Stage
 	if err = fromYamlFile(stagePath, &tempStage); err != nil {
 		return
@@ -112,12 +112,12 @@ var FromFile = func(stagePath string) (stg Stage, err error) {
 
 	for path, art := range tempStage.Dependencies {
 		// yaml.v2 (and currently v3 as well) deserializes "  path.txt:" as
-		// a nil map value, while "  path.txt: {}" deserializes as an zero map
-		// value.  Because of this, it's important to check for null pointers
+		// a nil map value, while "  path.txt: {}" deserializes as a zero map
+		// value. Because of this, it's important to check for null pointers
 		// here. This issue may be related:
 		// https://github.com/go-yaml/yaml/issues/681
 		if art == nil {
-			art = &artifact.Artifact{}
+			art = new(artifact.Artifact)
 		}
 		art.Path = filepath.Clean(path)
 		// Dependencies are only committed-to/checked-out-of the Cache if they
@@ -128,7 +128,7 @@ var FromFile = func(stagePath string) (stg Stage, err error) {
 	}
 	for path, art := range tempStage.Outputs {
 		if art == nil {
-			art = &artifact.Artifact{}
+			art = new(artifact.Artifact)
 		}
 		art.Path = filepath.Clean(path)
 		stg.Outputs[art.Path] = art

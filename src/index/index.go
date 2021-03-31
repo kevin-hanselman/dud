@@ -11,17 +11,13 @@ import (
 )
 
 // An Index holds an exhaustive set of Stages for a repository.
-// TODO: Not threadsafe
+// Not threadsafe.
 type Index map[string]*stage.Stage
 
-// AddStageFromPath adds a Stage at the given file path to the Index.
-func (idx *Index) AddStageFromPath(path string) error {
+// AddStage adds the given Stage to the Index, with the given path as the key.
+func (idx *Index) AddStage(stg stage.Stage, path string) error {
 	if _, ok := (*idx)[path]; ok {
 		return fmt.Errorf("stage %s already in index", path)
-	}
-	stg, err := stage.FromFile(path)
-	if err != nil {
-		return err
 	}
 	for artPath := range stg.Outputs {
 		ownerPath, _, err := idx.findOwner(artPath)
@@ -75,7 +71,11 @@ func FromFile(path string) (Index, error) {
 		if line == "" {
 			continue
 		}
-		if err := idx.AddStageFromPath(line); err != nil {
+		stg, err := stage.FromFile(line)
+		if err != nil {
+			return idx, err
+		}
+		if err := idx.AddStage(stg, line); err != nil {
 			return idx, err
 		}
 	}

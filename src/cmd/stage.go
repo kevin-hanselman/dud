@@ -26,7 +26,7 @@ needed.`,
 		if err != nil {
 			fatal(err)
 		}
-		stageWorkingDir, err := rel(rootDir, stageWorkingDir)
+		stageWorkingDir, err := pathAbsThenRel(rootDir, stageWorkingDir)
 		if err != nil {
 			fatal(err)
 		}
@@ -64,22 +64,35 @@ var addStageCmd = &cobra.Command{
 Add loads each stage file passed on the command line, validates its contents,
 checks if it conflicts with any stages already in the index, then adds the
 stage to the index file.`,
-	Args:   cobra.MinimumNArgs(1),
-	PreRun: cdToProjectRootAndReadConfig,
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		idx, err := index.FromFile(indexPath)
+		rootDir, err := getProjectRootDir()
+		if err != nil {
+			fatal(err)
+		}
+
+		fullIndexPath := filepath.Join(rootDir, indexPath)
+		idx, err := index.FromFile(fullIndexPath)
 		if err != nil {
 			fatal(err)
 		}
 
 		for _, path := range args {
-			if err := idx.AddStageFromPath(path); err != nil {
+			pathRelToRoot, err := pathAbsThenRel(rootDir, path)
+			if err != nil {
+				fatal(err)
+			}
+			stg, err := stage.FromFile(path)
+			if err != nil {
+				fatal(err)
+			}
+			if err := idx.AddStage(stg, pathRelToRoot); err != nil {
 				fatal(err)
 			}
 			logger.Info.Printf("Added %s to the index.", path)
 		}
 
-		if err := idx.ToFile(indexPath); err != nil {
+		if err := idx.ToFile(fullIndexPath); err != nil {
 			fatal(err)
 		}
 	},
@@ -125,18 +138,8 @@ func init() {
 	rootCmd.AddCommand(stageCmd)
 }
 
-// rel ensures path is absolute before calling filepath.Rel.
-func rel(rootDir, path string) (relPath string, err error) {
-	path, err = filepath.Abs(path)
-	if err != nil {
-		return
-	}
-	relPath, err = filepath.Rel(rootDir, path)
-	return
-}
-
 func createArtifactFromPath(rootDir, path string) (art *artifact.Artifact, err error) {
-	cleanPath, err := rel(rootDir, path)
+	cleanPath, err := pathAbsThenRel(rootDir, path)
 	if err != nil {
 		return
 	}

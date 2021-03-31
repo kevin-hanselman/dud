@@ -1,7 +1,6 @@
 package index
 
 import (
-	"os"
 	"testing"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
@@ -9,17 +8,11 @@ import (
 )
 
 func TestAdd(t *testing.T) {
-	stageFromFileOrig := stage.FromFile
-	stage.FromFile = func(path string) (stage.Stage, error) {
-		return stage.Stage{}, nil
-	}
-	defer func() { stage.FromFile = stageFromFileOrig }()
-
 	t.Run("add new stage", func(t *testing.T) {
 		idx := make(Index)
 		path := "foo/bar.dud"
 
-		if err := idx.AddStageFromPath(path); err != nil {
+		if err := idx.AddStage(stage.Stage{}, path); err != nil {
 			t.Fatal(err)
 		}
 
@@ -36,33 +29,16 @@ func TestAdd(t *testing.T) {
 		var stg stage.Stage
 		idx[path] = &stg
 
-		if err := idx.AddStageFromPath(path); err == nil {
+		if err := idx.AddStage(stg, path); err == nil {
 			t.Fatal("expected error")
 		}
 	})
 
-	t.Run("error if invalid stage", func(t *testing.T) {
-		idx := make(Index)
-		path := "foo/bar.dud"
-
-		stage.FromFile = func(path string) (stage.Stage, error) {
-			return stage.Stage{}, os.ErrNotExist
-		}
-
-		err := idx.AddStageFromPath(path)
-		if err == nil {
-			t.Fatal("expected error, got nil")
-		}
-	})
-
 	t.Run("error if new stage declares already owned outputs", func(t *testing.T) {
-		stage.FromFile = func(path string) (stage.Stage, error) {
-			stg := stage.Stage{
-				Outputs: map[string]*artifact.Artifact{
-					"subDir/foo.bin": {Path: "subDir/foo.bin"},
-				},
-			}
-			return stg, nil
+		stg := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"subDir/foo.bin": {Path: "subDir/foo.bin"},
+			},
 		}
 		idx := Index{
 			"foo.yaml": &stage.Stage{
@@ -72,7 +48,7 @@ func TestAdd(t *testing.T) {
 				},
 			},
 		}
-		err := idx.AddStageFromPath("bar.yaml")
+		err := idx.AddStage(stg, "bar.yaml")
 		if err == nil {
 			t.Fatal("expected error")
 		}
@@ -83,13 +59,10 @@ func TestAdd(t *testing.T) {
 	})
 
 	t.Run("working dir should have no effect on artifact paths", func(t *testing.T) {
-		stage.FromFile = func(path string) (stage.Stage, error) {
-			stg := stage.Stage{
-				Outputs: map[string]*artifact.Artifact{
-					"subDir/foo.bin": {Path: "subDir/foo.bin"},
-				},
-			}
-			return stg, nil
+		stg := stage.Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"subDir/foo.bin": {Path: "subDir/foo.bin"},
+			},
 		}
 		idx := Index{
 			"foo.yaml": &stage.Stage{
@@ -99,7 +72,7 @@ func TestAdd(t *testing.T) {
 				},
 			},
 		}
-		err := idx.AddStageFromPath("bar.yaml")
+		err := idx.AddStage(stg, "bar.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}

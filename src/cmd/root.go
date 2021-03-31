@@ -181,3 +181,13 @@ func getProjectRootDir() (string, error) {
 		}
 	}
 }
+
+// pathAbsThenRel ensures target is absolute before calling
+// filepath.Rel(base, target).
+func pathAbsThenRel(base, target string) (string, error) {
+	target, err := filepath.Abs(target)
+	if err != nil {
+		return "", err
+	}
+	return filepath.Rel(base, target)
+}
