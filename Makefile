@@ -5,7 +5,7 @@ GOBIN ?= $(GOPATH)/bin
 
 dud: test
 	go build -o dud \
-		-ldflags "-s -w -X 'main.version=$(shell git rev-parse --short HEAD)'"
+		-ldflags "-s -w -X 'main.version=$(shell git describe --tags)'"
 
 .PHONY: install
 install: $(GOBIN)/dud
