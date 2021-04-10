@@ -112,7 +112,8 @@ func newProgress(prefix string) (progress *pb.ProgressBar) {
 	progress = progressTemplate.New(0)
 	if isatty.IsTerminal(os.Stderr.Fd()) {
 		progress.SetRefreshRate(100 * time.Millisecond).SetWriter(os.Stderr)
-		progress.SetMaxWidth(120).Set("prefix", prefix)
+		progress.SetMaxWidth(120).Set(pb.TimeRound, time.Millisecond)
+		progress.Set("prefix", fmt.Sprintf("%-20s", prefix))
 	} else {
 		progress.SetRefreshRate(time.Hour).SetWriter(ioutil.Discard)
 	}
