@@ -25,11 +25,6 @@ jobs:
         with:
           go-version: 1.16
 
-      - name: Set environment variables
-        shell: bash
-        run: |
-          export GO111MODULE=on
-
       - name: Build
         run: make website
 
