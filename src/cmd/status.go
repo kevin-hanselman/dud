@@ -24,9 +24,9 @@ func printStageStatus(stagePath string, status stage.Status) error {
 	} else {
 		stageFileStatus = "not checksummed"
 	}
-	logger.Info.Printf("%s   (stage definition %s)\n", stagePath, stageFileStatus)
+	logger.Info.Printf("%-22s  stage definition %s\n", stagePath, stageFileStatus)
 	for path, artStatus := range status.ArtifactStatus {
-		logger.Info.Printf("  %s  %s\n", path, artStatus)
+		logger.Info.Printf("  %-20s  %s\n", path, artStatus)
 	}
 	return nil
 }

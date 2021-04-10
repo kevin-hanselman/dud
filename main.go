@@ -12,8 +12,12 @@ var version string = "NONE"
 
 func main() {
 	if os.Geteuid() == 0 {
-		fmt.Println("refusing to run as root")
-		os.Exit(1)
+		fmt.Printf(`WARNING: Running as root.
+The root user does not respect read-only files. You can (and eventually will)
+accidentally corrupt your Dud cache by overwriting an artifact linked to the
+cache. Please consider running as a non-root user.
+
+`)
 	}
 	cmd.Main(version)
 }
