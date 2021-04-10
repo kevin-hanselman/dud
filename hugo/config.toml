@@ -17,11 +17,17 @@ disablePathToLower = false
 
 # (Optional) Set this to true to enable 'Last Modified by' date and git author
 #  information on 'doc' type pages.
-enableGitInfo = true
+enableGitInfo = false
 
 # (Optional) Theme is intended for documentation use, therefore it doesn't render taxonomy.
 # You can remove related files with config below
 disableKinds = ['taxonomy', 'taxonomyTerm']
+
+[menu]
+[[menu.after]]
+name = "Source code"
+url = "https://github.com/kevin-hanselman/dud"
+weight = -100
 
 [params]
   # (Optional, default light) Sets color theme: light, dark or auto.
