@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestSameFileAndContentsIntegration(t *testing.T) {
+func TestSameContents(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -30,25 +30,9 @@ func TestSameFileAndContentsIntegration(t *testing.T) {
 		t.Run(
 			paths[0]+"=="+paths[1],
 			func(t *testing.T) {
-				testSameFile(paths[0], paths[1], shouldBeSame, t)
-			},
-		)
-		t.Run(
-			paths[0]+"=="+paths[1],
-			func(t *testing.T) {
 				testSameContents(paths[0], paths[1], shouldBeSame, t)
 			},
 		)
-	}
-}
-
-func testSameFile(pathA, pathB string, shouldBeSame bool, t *testing.T) {
-	same, err := SameFile(pathA, pathB)
-	if err != nil {
-		t.Errorf("SameFile(%#v, %#v) raised error: %v", pathA, pathB, err)
-	}
-	if same != shouldBeSame {
-		t.Errorf("SameFile(%#v, %#v) = %v", pathA, pathB, same)
 	}
 }
 

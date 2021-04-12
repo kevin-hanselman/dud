@@ -27,6 +27,12 @@ func (ch LocalCache) Commit(
 	strat strategy.CheckoutStrategy,
 	logger *agglog.AggLogger,
 ) (err error) {
+	// Ensure the cache directory is created. While commitFileArtifact will
+	// eventually create the directory, some commands (e.g. SameFilesystem)
+	// assume that the cache directory already exists.
+	if err := os.MkdirAll(ch.dir, 0o755); err != nil {
+		return errors.Wrapf(err, "commit %s", art.Path)
+	}
 	progress := newProgress(art.Path)
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)

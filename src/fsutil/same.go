@@ -9,19 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// SameFile wraps os.SameFile and handles calling os.Stat on both paths.
-func SameFile(pathA, pathB string) (bool, error) {
-	aInfo, err := os.Stat(pathA)
-	if err != nil {
-		return false, errors.Wrapf(err, "stat %#v failed", pathA)
-	}
-	bInfo, err := os.Stat(pathB)
-	if err != nil {
-		return false, errors.Wrapf(err, "stat %#v failed", pathB)
-	}
-	return os.SameFile(aInfo, bInfo), nil
-}
-
 // SameContents checks that two files contain the same bytes
 func SameContents(pathA, pathB string) (bool, error) {
 	fileA, err := os.Open(pathA)
