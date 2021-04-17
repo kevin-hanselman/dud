@@ -94,7 +94,9 @@ hugo/content/benchmarks/_index.md: \
 	integration/benchmarks/markdown/few_large_files/commit/table.md \
 	integration/benchmarks/markdown/many_small_files/commit/table.md \
 	integration/benchmarks/markdown/few_large_files/checkout/table.md \
-	integration/benchmarks/markdown/many_small_files/checkout/table.md
+	integration/benchmarks/markdown/many_small_files/checkout/table.md \
+	integration/benchmarks/markdown/few_large_files/status/table.md \
+	integration/benchmarks/markdown/many_small_files/status/table.md
 	mkdir -p $(dir $@)
 	find integration/benchmarks/markdown -type f -name '*.md' | sort | xargs cat > $@
 
@@ -123,6 +125,7 @@ integration/benchmarks/markdown/00_front_matter.md: $(GOBIN)/dud
 # Dud executable being newer than the target (i.e. table.md), and thus Make
 # will always run this rule. Order-only prerequisites ignore timestamps.
 # See also: https://stackoverflow.com/a/58040049/857893
+# TODO: move the body of this rule into a shell script for better readability
 integration/benchmarks/markdown/%/table.md: | $(GOBIN)/dud
 	$(eval parent_dirs = $(subst /, ,$*))
 	mkdir ~/dud-bench
@@ -146,13 +149,7 @@ serve-hugo:
 %-test-cov: %-test.coverage
 	go tool cover -html=$<
 
-unit-test.coverage:
-	go test -short ./... -coverprofile=$@
-
-int-test.coverage:
-	go test -run Integration ./... -coverprofile=$@
-
-all-test.coverage:
+test.coverage:
 	go test ./... -coverprofile=$@
 
 .PHONY: integration-test
@@ -171,7 +168,7 @@ deep-lint:
 .PHONY: clean
 clean:
 	rm -rf hugo/content/docs/cli/dud*.md ./website
-	rm -f *.coverage *.bin depgraph.png mockery $(GOBIN)/dud
+	rm -f *.coverage *.bin depgraph.png goreleaser mockery $(GOBIN)/dud
 	go clean ./...
 
 .PHONY: clean-docker
