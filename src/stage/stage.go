@@ -12,6 +12,7 @@ import (
 
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
+	"github.com/pkg/errors"
 
 	"gopkg.in/yaml.v2"
 )
@@ -88,12 +89,17 @@ func (stg Stage) toFileFormat() (out Stage) {
 
 var fromYamlFile = func(path string, stg *Stage) error {
 	file, err := os.Open(path)
+	defer file.Close()
 	if err != nil {
-		return err
+		return errors.Wrap(err, path)
 	}
 	decoder := yaml.NewDecoder(file)
 	decoder.SetStrict(true)
-	return decoder.Decode(stg)
+	err = decoder.Decode(stg)
+	if err != nil {
+		return errors.Wrap(err, path)
+	}
+	return nil
 }
 
 // FromFile loads a Stage from a file.
