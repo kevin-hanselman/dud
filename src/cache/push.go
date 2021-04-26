@@ -69,7 +69,10 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 		// but I haven't found a way to add them.
 		// See: https://github.com/rclone/rclone/issues/2697
 		"--progress",
-		"--immutable", // TODO: Assess this flag further.
+		"--immutable",
+		// If file modification times change locally, without "--size-only",
+		// rclone will error-out because of the "--immutable" flag above.
+		"--size-only",
 		"copy",
 		// "--files-from -" means to get the list of files to copy from STDIN.
 		"--files-from",
@@ -101,7 +104,7 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 		return err
 	}
 
-	// Ensure any local files that were created end up as read-only.  Try to
+	// Ensure any local files that were created end up as read-only. Try to
 	// chmod all files, ignoring "no such file" errors which are probably due
 	// to the destination being remote. This is important even for push,
 	// because the "remote" might be a local directory.
