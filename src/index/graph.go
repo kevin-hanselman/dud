@@ -54,14 +54,22 @@ func (idx Index) Graph(
 	}
 
 	// Ensure the graph is directed, and disallow multiple edges between the same nodes.
-	graph.SetDir(true)
-	graph.SetStrict(true)
+	if err := graph.SetDir(true); err != nil {
+		return errors.Wrapf(err, "graph %s", stagePath)
+	}
+	if err := graph.SetStrict(true); err != nil {
+		return errors.Wrapf(err, "graph %s", stagePath)
+	}
 	// Draw the graph left to right. When drawn top-down, graph edges tend to
 	// be drawn through stage names.
-	graph.AddAttr(graph.Name, "rankdir", "LR")
+	if err := graph.AddAttr(graph.Name, "rankdir", "LR"); err != nil {
+		return errors.Wrapf(err, "graph %s", stagePath)
+	}
 	// Must be true for edges to be directly connected to a subgraph.
 	// See: https://stackoverflow.com/a/2012106/857893
-	graph.AddAttr(graph.Name, "compound", "true")
+	if err := graph.AddAttr(graph.Name, "compound", "true"); err != nil {
+		return errors.Wrapf(err, "graph %s", stagePath)
+	}
 	for artPath := range stg.Dependencies {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
@@ -73,7 +81,9 @@ func (idx Index) Graph(
 		// one exists.
 		if !onlyStages {
 			if !graph.IsNode(artPath) {
-				graph.AddNode(graph.Name, artPath, nil)
+				if err := graph.AddNode(graph.Name, artPath, nil); err != nil {
+					return errors.Wrapf(err, "graph %s", stagePath)
+				}
 			}
 			// Draw the edge from the subgraph (stage) to the Artifact
 			// dependency. Unfortunately this requires serious chicanery.
@@ -113,7 +123,9 @@ func (idx Index) Graph(
 		if err != nil {
 			return err
 		}
-		tmpl.Execute(&buf, stageNode{Path: stagePath, Command: stg.Command})
+		if err := tmpl.Execute(&buf, stageNode{Path: stagePath, Command: stg.Command}); err != nil {
+			return errors.Wrapf(err, "graph %s", stagePath)
+		}
 		if err := graph.AddSubGraph(
 			graph.Name,
 			stageSubgraphName,

@@ -54,7 +54,9 @@ generate images of the stage graph.`,
 		}
 
 		graph := gographviz.NewEscape()
-		graph.SetDir(true)
+		if err := graph.SetDir(true); err != nil {
+			fatal(err)
+		}
 		for _, path := range paths {
 			inProgress := make(map[string]bool)
 			if err := idx.Graph(path, inProgress, graph, onlyStages); err != nil {

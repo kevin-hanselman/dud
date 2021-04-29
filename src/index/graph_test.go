@@ -9,6 +9,12 @@ import (
 	"github.com/kevin-hanselman/dud/src/stage"
 )
 
+func check(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func assertGraphsEqual(
 	graphWant *gographviz.Escape,
 	graphGot *gographviz.Escape,
@@ -68,11 +74,11 @@ func TestGraph(t *testing.T) {
 			}
 
 			expectedGraph := gographviz.NewEscape()
-			expectedGraph.SetDir(true)
-			expectedGraph.SetStrict(true)
-			expectedGraph.Attrs.Add("compound", "true")
-			expectedGraph.Attrs.Add("rankdir", "LR")
-			expectedGraph.AddNode("", "foo.yaml", nil)
+			check(t, expectedGraph.SetDir(true))
+			check(t, expectedGraph.SetStrict(true))
+			check(t, expectedGraph.Attrs.Add("compound", "true"))
+			check(t, expectedGraph.Attrs.Add("rankdir", "LR"))
+			check(t, expectedGraph.AddNode("", "foo.yaml", nil))
 
 			assertGraphsEqual(expectedGraph, graph, t)
 		})
@@ -86,16 +92,16 @@ func TestGraph(t *testing.T) {
 			}
 
 			expectedGraph := gographviz.NewEscape()
-			expectedGraph.SetDir(true)
-			expectedGraph.SetStrict(true)
-			expectedGraph.Attrs.Add("compound", "true")
-			expectedGraph.Attrs.Add("rankdir", "LR")
+			check(t, expectedGraph.SetDir(true))
+			check(t, expectedGraph.SetStrict(true))
+			check(t, expectedGraph.Attrs.Add("compound", "true"))
+			check(t, expectedGraph.Attrs.Add("rankdir", "LR"))
 			// See stageSubGraphName for explanation of "cluster" prefix.
-			expectedGraph.AddSubGraph("", "cluster_foo.yaml", nil)
-			expectedGraph.AddNode("cluster_foo.yaml", "foo.yaml", hiddenAttr)
-			expectedGraph.AddNode("", "orphan.bin", nil)
-			expectedGraph.AddNode("cluster_foo.yaml", "foo.bin", nil)
-			expectedGraph.AddEdge("foo.yaml", "orphan.bin", true, map[string]string{"ltail": "cluster_foo.yaml"})
+			check(t, expectedGraph.AddSubGraph("", "cluster_foo.yaml", nil))
+			check(t, expectedGraph.AddNode("cluster_foo.yaml", "foo.yaml", hiddenAttr))
+			check(t, expectedGraph.AddNode("", "orphan.bin", nil))
+			check(t, expectedGraph.AddNode("cluster_foo.yaml", "foo.bin", nil))
+			check(t, expectedGraph.AddEdge("foo.yaml", "orphan.bin", true, map[string]string{"ltail": "cluster_foo.yaml"}))
 
 			assertGraphsEqual(expectedGraph, graph, t)
 		})
@@ -129,13 +135,13 @@ func TestGraph(t *testing.T) {
 			}
 
 			expectedGraph := gographviz.NewEscape()
-			expectedGraph.SetDir(true)
-			expectedGraph.SetStrict(true)
-			expectedGraph.Attrs.Add("compound", "true")
-			expectedGraph.Attrs.Add("rankdir", "LR")
-			expectedGraph.AddNode("", "bar.yaml", nil)
-			expectedGraph.AddNode("", "foo.yaml", nil)
-			expectedGraph.AddEdge("foo.yaml", "bar.yaml", true, nil)
+			check(t, expectedGraph.SetDir(true))
+			check(t, expectedGraph.SetStrict(true))
+			check(t, expectedGraph.Attrs.Add("compound", "true"))
+			check(t, expectedGraph.Attrs.Add("rankdir", "LR"))
+			check(t, expectedGraph.AddNode("", "bar.yaml", nil))
+			check(t, expectedGraph.AddNode("", "foo.yaml", nil))
+			check(t, expectedGraph.AddEdge("foo.yaml", "bar.yaml", true, nil))
 
 			assertGraphsEqual(expectedGraph, graph, t)
 		})
@@ -149,17 +155,17 @@ func TestGraph(t *testing.T) {
 			}
 
 			expectedGraph := gographviz.NewEscape()
-			expectedGraph.SetDir(true)
-			expectedGraph.SetStrict(true)
-			expectedGraph.Attrs.Add("compound", "true")
-			expectedGraph.Attrs.Add("rankdir", "LR")
-			expectedGraph.AddSubGraph("", "cluster_foo.yaml", nil)
-			expectedGraph.AddNode("cluster_foo.yaml", "foo.yaml", hiddenAttr)
-			expectedGraph.AddSubGraph("", "cluster_bar.yaml", nil)
-			expectedGraph.AddNode("cluster_bar.yaml", "bar.yaml", hiddenAttr)
-			expectedGraph.AddNode("cluster_foo.yaml", "foo.bin", nil)
-			expectedGraph.AddNode("cluster_bar.yaml", "bar.bin", nil)
-			expectedGraph.AddEdge("foo.yaml", "bar.bin", true, map[string]string{"ltail": "cluster_foo.yaml"})
+			check(t, expectedGraph.SetDir(true))
+			check(t, expectedGraph.SetStrict(true))
+			check(t, expectedGraph.Attrs.Add("compound", "true"))
+			check(t, expectedGraph.Attrs.Add("rankdir", "LR"))
+			check(t, expectedGraph.AddSubGraph("", "cluster_foo.yaml", nil))
+			check(t, expectedGraph.AddNode("cluster_foo.yaml", "foo.yaml", hiddenAttr))
+			check(t, expectedGraph.AddSubGraph("", "cluster_bar.yaml", nil))
+			check(t, expectedGraph.AddNode("cluster_bar.yaml", "bar.yaml", hiddenAttr))
+			check(t, expectedGraph.AddNode("cluster_foo.yaml", "foo.bin", nil))
+			check(t, expectedGraph.AddNode("cluster_bar.yaml", "bar.bin", nil))
+			check(t, expectedGraph.AddEdge("foo.yaml", "bar.bin", true, map[string]string{"ltail": "cluster_foo.yaml"}))
 
 			assertGraphsEqual(expectedGraph, graph, t)
 		})
@@ -205,16 +211,16 @@ func TestGraph(t *testing.T) {
 			}
 
 			expectedGraph := gographviz.NewEscape()
-			expectedGraph.SetDir(true)
-			expectedGraph.SetStrict(true)
-			expectedGraph.Attrs.Add("compound", "true")
-			expectedGraph.Attrs.Add("rankdir", "LR")
-			expectedGraph.AddNode("", "a.yaml", nil)
-			expectedGraph.AddNode("", "b.yaml", nil)
-			expectedGraph.AddNode("", "c.yaml", nil)
-			expectedGraph.AddEdge("c.yaml", "a.yaml", true, nil)
-			expectedGraph.AddEdge("c.yaml", "b.yaml", true, nil)
-			expectedGraph.AddEdge("b.yaml", "a.yaml", true, nil)
+			check(t, expectedGraph.SetDir(true))
+			check(t, expectedGraph.SetStrict(true))
+			check(t, expectedGraph.Attrs.Add("compound", "true"))
+			check(t, expectedGraph.Attrs.Add("rankdir", "LR"))
+			check(t, expectedGraph.AddNode("", "a.yaml", nil))
+			check(t, expectedGraph.AddNode("", "b.yaml", nil))
+			check(t, expectedGraph.AddNode("", "c.yaml", nil))
+			check(t, expectedGraph.AddEdge("c.yaml", "a.yaml", true, nil))
+			check(t, expectedGraph.AddEdge("c.yaml", "b.yaml", true, nil))
+			check(t, expectedGraph.AddEdge("b.yaml", "a.yaml", true, nil))
 
 			assertGraphsEqual(expectedGraph, graph, t)
 		})
@@ -228,22 +234,22 @@ func TestGraph(t *testing.T) {
 			}
 
 			expectedGraph := gographviz.NewEscape()
-			expectedGraph.SetDir(true)
-			expectedGraph.SetStrict(true)
-			expectedGraph.Attrs.Add("compound", "true")
-			expectedGraph.Attrs.Add("rankdir", "LR")
-			expectedGraph.AddSubGraph("", "cluster_a.yaml", nil)
-			expectedGraph.AddSubGraph("", "cluster_b.yaml", nil)
-			expectedGraph.AddSubGraph("", "cluster_c.yaml", nil)
-			expectedGraph.AddNode("cluster_a.yaml", "a.yaml", hiddenAttr)
-			expectedGraph.AddNode("cluster_b.yaml", "b.yaml", hiddenAttr)
-			expectedGraph.AddNode("cluster_c.yaml", "c.yaml", hiddenAttr)
-			expectedGraph.AddNode("cluster_a.yaml", "a.bin", nil)
-			expectedGraph.AddNode("cluster_b.yaml", "b.bin", nil)
-			expectedGraph.AddNode("cluster_c.yaml", "c.bin", nil)
-			expectedGraph.AddEdge("c.yaml", "b.bin", true, map[string]string{"ltail": "cluster_c.yaml"})
-			expectedGraph.AddEdge("c.yaml", "a.bin", true, map[string]string{"ltail": "cluster_c.yaml"})
-			expectedGraph.AddEdge("b.yaml", "a.bin", true, map[string]string{"ltail": "cluster_b.yaml"})
+			check(t, expectedGraph.SetDir(true))
+			check(t, expectedGraph.SetStrict(true))
+			check(t, expectedGraph.Attrs.Add("compound", "true"))
+			check(t, expectedGraph.Attrs.Add("rankdir", "LR"))
+			check(t, expectedGraph.AddSubGraph("", "cluster_a.yaml", nil))
+			check(t, expectedGraph.AddSubGraph("", "cluster_b.yaml", nil))
+			check(t, expectedGraph.AddSubGraph("", "cluster_c.yaml", nil))
+			check(t, expectedGraph.AddNode("cluster_a.yaml", "a.yaml", hiddenAttr))
+			check(t, expectedGraph.AddNode("cluster_b.yaml", "b.yaml", hiddenAttr))
+			check(t, expectedGraph.AddNode("cluster_c.yaml", "c.yaml", hiddenAttr))
+			check(t, expectedGraph.AddNode("cluster_a.yaml", "a.bin", nil))
+			check(t, expectedGraph.AddNode("cluster_b.yaml", "b.bin", nil))
+			check(t, expectedGraph.AddNode("cluster_c.yaml", "c.bin", nil))
+			check(t, expectedGraph.AddEdge("c.yaml", "b.bin", true, map[string]string{"ltail": "cluster_c.yaml"}))
+			check(t, expectedGraph.AddEdge("c.yaml", "a.bin", true, map[string]string{"ltail": "cluster_c.yaml"}))
+			check(t, expectedGraph.AddEdge("b.yaml", "a.bin", true, map[string]string{"ltail": "cluster_b.yaml"}))
 
 			assertGraphsEqual(expectedGraph, graph, t)
 		})

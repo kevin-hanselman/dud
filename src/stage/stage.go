@@ -89,10 +89,10 @@ func (stg Stage) toFileFormat() (out Stage) {
 
 var fromYamlFile = func(path string, stg *Stage) error {
 	file, err := os.Open(path)
-	defer file.Close()
 	if err != nil {
 		return errors.Wrap(err, path)
 	}
+	defer file.Close()
 	decoder := yaml.NewDecoder(file)
 	decoder.SetStrict(true)
 	err = decoder.Decode(stg)

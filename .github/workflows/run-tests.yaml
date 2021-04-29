@@ -1,23 +1,18 @@
 name: build
-on: push
+on:
+  push:
+  pull_request:
+
 jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 1
+      - uses: actions/checkout@v2
 
       - name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-
-      - name: Set environment variables
-        shell: bash
-        run: |
-          export GO111MODULE=on
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
@@ -35,3 +30,14 @@ jobs:
         shell: bash
         run: |
           make integration-test
+
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
