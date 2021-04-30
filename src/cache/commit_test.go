@@ -22,7 +22,7 @@ func TestFileCommitIntegration(t *testing.T) {
 
 	allStrategies := []strategy.CheckoutStrategy{strategy.LinkStrategy, strategy.CopyStrategy}
 
-	t.Run("happy path", func(t *testing.T) {
+	happyPath := func(t *testing.T) {
 		for _, strat := range allStrategies {
 			in := testInput{
 				Status: artifact.ArtifactWithStatus{
@@ -52,7 +52,9 @@ func TestFileCommitIntegration(t *testing.T) {
 				testCommitIntegration(in, out, t)
 			})
 		}
-	})
+	}
+
+	t.Run("happy path", happyPath)
 
 	t.Run("already up-to-date", func(t *testing.T) {
 		for _, strat := range allStrategies {
@@ -157,6 +159,17 @@ func TestFileCommitIntegration(t *testing.T) {
 				testCommitIntegration(in, out, t)
 			})
 		}
+	})
+
+	t.Run("fallback to copying files", func(t *testing.T) {
+		canRenameFileBetweenDirsOrig := canRenameFileBetweenDirs
+		canRenameFileBetweenDirs = func(_, _ string) (bool, error) {
+			return false, nil
+		}
+		defer func() {
+			canRenameFileBetweenDirs = canRenameFileBetweenDirsOrig
+		}()
+		happyPath(t)
 	})
 }
 
