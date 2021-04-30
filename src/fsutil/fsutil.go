@@ -1,9 +1,7 @@
 package fsutil
 
 import (
-	"fmt"
 	"os"
-	"syscall"
 )
 
 // FileStatus enumerates the states of a file on the filesystem.
@@ -89,32 +87,4 @@ func FileStatusFromPath(path string) (FileStatus, error) {
 	}
 
 	return StatusOther, nil
-}
-
-// SameFilesystem returns true if two files live on the same filesystem; it
-// returns false otherwise. Follows links.
-func SameFilesystem(pathA, pathB string) (bool, error) {
-	devA, err := getFileDevice(pathA)
-	if err != nil {
-		return false, err
-	}
-	devB, err := getFileDevice(pathB)
-	if err != nil {
-		return false, err
-	}
-	return devA == devB, nil
-}
-
-func getFileDevice(path string) (uint64, error) {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		return 0, err
-	}
-	sys := fileInfo.Sys()
-	if sys == nil {
-		return 0, fmt.Errorf("os.FileInfo.Sys() on %#v returned nil", path)
-	}
-	// Dev is type int32 on darwin_arm64 -- requires cast.
-	// TODO: Instead of panicking, check the type assertion and return an error.
-	return uint64(sys.(*syscall.Stat_t).Dev), nil
 }

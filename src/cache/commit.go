@@ -27,10 +27,14 @@ func (ch LocalCache) Commit(
 	strat strategy.CheckoutStrategy,
 	logger *agglog.AggLogger,
 ) (err error) {
-	// Ensure the cache directory is created. While commitFileArtifact will
-	// eventually create the directory, some commands (e.g. SameFilesystem)
-	// assume that the cache directory already exists.
 	if err := os.MkdirAll(ch.dir, 0o755); err != nil {
+		return errors.Wrapf(err, "commit %s", art.Path)
+	}
+	// Try to move a dummy file between the workspace and the cache. If we can
+	// move files (via rename syscall), we can avoid writing to disk
+	// for file commits, dramatically improving performance.
+	canMoveFile, err := canMoveFileBetweenDirs(workspaceDir, ch.dir)
+	if err != nil {
 		return errors.Wrapf(err, "commit %s", art.Path)
 	}
 	progress := newProgress(art.Path)
@@ -44,9 +48,10 @@ func (ch LocalCache) Commit(
 			strat,
 			activeSharedWorkers,
 			progress,
+			canMoveFile,
 		)
 	} else {
-		err = commitFileArtifact(ch, workspaceDir, art, strat, progress)
+		err = commitFileArtifact(ch, workspaceDir, art, strat, progress, canMoveFile)
 	}
 	if err == nil && progress.Current() <= 0 {
 		logger.Info.Printf("  %s up-to-date; skipping commit\n", art.Path)
@@ -56,12 +61,39 @@ func (ch LocalCache) Commit(
 	return errors.Wrapf(err, "commit %s", art.Path)
 }
 
+func canMoveFileBetweenDirs(srcDir, dstDir string) (bool, error) {
+	// Touch a file in each directory.
+	srcFile, err := ioutil.TempFile(srcDir, "")
+	if err != nil {
+		return false, err
+	}
+	srcFile.Close()
+	dstFile, err := ioutil.TempFile(dstDir, "")
+	if err != nil {
+		return false, err
+	}
+	dstFile.Close()
+
+	// Attempt the rename.
+	renameErr := os.Rename(srcFile.Name(), dstFile.Name())
+
+	// Cleanup the temp files.
+	if err := os.Remove(srcFile.Name()); err != nil && !os.IsNotExist(err) {
+		return false, err
+	}
+	if err := os.Remove(dstFile.Name()); err != nil {
+		return false, err
+	}
+	return renameErr == nil, nil
+}
+
 func commitFileArtifact(
 	ch LocalCache,
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 	progress *pb.ProgressBar,
+	canMoveFile bool,
 ) error {
 	// Ignore cachePath because the artifact likely has a stale or empty checksum.
 	status, _, workPath, err := quickStatus(ch, workspaceDir, *art)
@@ -99,12 +131,8 @@ func commitFileArtifact(
 		return nil
 	}
 
-	sameFs, err := fsutil.SameFilesystem(workPath, ch.dir)
-	if err != nil {
-		return err
-	}
 	moveFile := ""
-	if sameFs && strat == strategy.LinkStrategy {
+	if canMoveFile && strat == strategy.LinkStrategy {
 		moveFile = workPath
 	}
 
@@ -179,6 +207,7 @@ func commitDirArtifact(
 	strat strategy.CheckoutStrategy,
 	activeSharedWorkers chan struct{},
 	progress *pb.ProgressBar,
+	canMoveFile bool,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
 	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art)
@@ -263,6 +292,7 @@ func commitDirArtifact(
 					childArtifacts,
 					activeSharedWorkers,
 					progress,
+					canMoveFile,
 				)
 			})
 		case activeDedicatedWorkers <- struct{}{}:
@@ -279,6 +309,7 @@ func commitDirArtifact(
 					childArtifacts,
 					activeSharedWorkers,
 					progress,
+					canMoveFile,
 				)
 			})
 		}
@@ -310,6 +341,7 @@ func commitWorker(
 	outputArtifacts chan<- *artifact.Artifact,
 	activeSharedWorkers chan struct{},
 	progress *pb.ProgressBar,
+	canMoveFile bool,
 ) error {
 	for info := range inputFiles {
 		path := info.Name()
@@ -330,6 +362,7 @@ func commitWorker(
 				strat,
 				activeSharedWorkers,
 				progress,
+				canMoveFile,
 			); err != nil {
 				return err
 			}
@@ -340,6 +373,7 @@ func commitWorker(
 				childArt,
 				strat,
 				progress,
+				canMoveFile,
 			); err != nil {
 				return err
 			}

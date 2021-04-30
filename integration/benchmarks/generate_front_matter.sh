@@ -6,6 +6,9 @@ BENCH_SYS_MEM_GB=$(free --giga | grep '^Mem' | awk '{print $2}')
 # Strip the minor version and misc qualifiers
 BENCH_OS=$(uname -sr | sed -e 's;\([0-9]\.[0-9]\+\)\.\S\+;\1;')
 
+command -v dud &>/dev/null || { echo >&2 'dud not installed'; exit 1; }
+command -v dvc &>/dev/null || { echo >&2 'dvc not installed'; exit 1; }
+
 cat << EOF
 # Benchmarks
 
