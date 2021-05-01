@@ -145,8 +145,8 @@ serve-hugo:
 		--baseUrl $(shell hostname -i | xargs)/dud/
 # xargs trims whitespace from the hostname
 
-.PHONY: %-test-cov
-%-test-cov: %-test.coverage
+.PHONY: coverage
+coverage: test.coverage
 	go tool cover -html=$<
 
 test.coverage:

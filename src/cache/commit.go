@@ -33,7 +33,7 @@ func (ch LocalCache) Commit(
 	// Try to move a dummy file between the workspace and the cache. If we can
 	// move files (via rename syscall), we can avoid writing to disk
 	// for file commits, dramatically improving performance.
-	canMoveFile, err := canMoveFileBetweenDirs(workspaceDir, ch.dir)
+	canRenameFile, err := canRenameFileBetweenDirs(workspaceDir, ch.dir)
 	if err != nil {
 		return errors.Wrapf(err, "commit %s", art.Path)
 	}
@@ -48,10 +48,10 @@ func (ch LocalCache) Commit(
 			strat,
 			activeSharedWorkers,
 			progress,
-			canMoveFile,
+			canRenameFile,
 		)
 	} else {
-		err = commitFileArtifact(ch, workspaceDir, art, strat, progress, canMoveFile)
+		err = commitFileArtifact(ch, workspaceDir, art, strat, progress, canRenameFile)
 	}
 	if err == nil && progress.Current() <= 0 {
 		logger.Info.Printf("  %s up-to-date; skipping commit\n", art.Path)
@@ -61,7 +61,7 @@ func (ch LocalCache) Commit(
 	return errors.Wrapf(err, "commit %s", art.Path)
 }
 
-func canMoveFileBetweenDirs(srcDir, dstDir string) (bool, error) {
+var canRenameFileBetweenDirs = func(srcDir, dstDir string) (bool, error) {
 	// Touch a file in each directory.
 	srcFile, err := ioutil.TempFile(srcDir, "")
 	if err != nil {
@@ -93,7 +93,7 @@ func commitFileArtifact(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 	progress *pb.ProgressBar,
-	canMoveFile bool,
+	canRenameFile bool,
 ) error {
 	// Ignore cachePath because the artifact likely has a stale or empty checksum.
 	status, _, workPath, err := quickStatus(ch, workspaceDir, *art)
@@ -132,7 +132,7 @@ func commitFileArtifact(
 	}
 
 	moveFile := ""
-	if canMoveFile && strat == strategy.LinkStrategy {
+	if canRenameFile && strat == strategy.LinkStrategy {
 		moveFile = workPath
 	}
 
@@ -145,6 +145,13 @@ func commitFileArtifact(
 	// There's no need to call Checkout if using CopyStrategy; the original
 	// file still exists.
 	if strat == strategy.LinkStrategy {
+		// If we can't rename the file then we copied it, and we need to remove
+		// it before linking.
+		if !canRenameFile {
+			if err := os.Remove(workPath); err != nil {
+				return err
+			}
+		}
 		return ch.Checkout(workspaceDir, *art, strat)
 	}
 	return nil
@@ -207,7 +214,7 @@ func commitDirArtifact(
 	strat strategy.CheckoutStrategy,
 	activeSharedWorkers chan struct{},
 	progress *pb.ProgressBar,
-	canMoveFile bool,
+	canRenameFile bool,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
 	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art)
@@ -292,7 +299,7 @@ func commitDirArtifact(
 					childArtifacts,
 					activeSharedWorkers,
 					progress,
-					canMoveFile,
+					canRenameFile,
 				)
 			})
 		case activeDedicatedWorkers <- struct{}{}:
@@ -309,7 +316,7 @@ func commitDirArtifact(
 					childArtifacts,
 					activeSharedWorkers,
 					progress,
-					canMoveFile,
+					canRenameFile,
 				)
 			})
 		}
@@ -341,7 +348,7 @@ func commitWorker(
 	outputArtifacts chan<- *artifact.Artifact,
 	activeSharedWorkers chan struct{},
 	progress *pb.ProgressBar,
-	canMoveFile bool,
+	canRenameFile bool,
 ) error {
 	for info := range inputFiles {
 		path := info.Name()
@@ -362,7 +369,7 @@ func commitWorker(
 				strat,
 				activeSharedWorkers,
 				progress,
-				canMoveFile,
+				canRenameFile,
 			); err != nil {
 				return err
 			}
@@ -373,7 +380,7 @@ func commitWorker(
 				childArt,
 				strat,
 				progress,
-				canMoveFile,
+				canRenameFile,
 			); err != nil {
 				return err
 			}
