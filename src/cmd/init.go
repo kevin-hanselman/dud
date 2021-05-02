@@ -48,7 +48,8 @@ cache: %s
 
 			rcloneConf := `# rclone config file
 # Run 'rclone --config .dud/rclone.conf config' to setup a remote Dud cache,
-# and then set 'remote' to a valid rclone remote path.
+# and then set the 'remote' value in .dud/config.yaml to a valid rclone remote
+# path.
 # See: https://rclone.org/docs/#syntax-of-remote-paths
 `
 			if err := ioutil.WriteFile(".dud/rclone.conf", []byte(rcloneConf), 0o644); err != nil {

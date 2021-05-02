@@ -28,7 +28,10 @@ var pushCmd = &cobra.Command{
 For each stage passed in, push uploads the stage's committed outputs to the
 remote cache specified in the Dud config file. If no stage files are passed
 in, push will act on all stages in the index. By default, push will act
-recursively on all upstream stages (i.e. dependencies).`,
+recursively on all upstream stages (i.e. dependencies).
+
+This command requires rclone to be installed on your machine. Visit
+https://rclone.org/ for more information and installation instructions.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
 		if err != nil {

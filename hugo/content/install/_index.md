@@ -1,6 +1,6 @@
 ---
 weight: 1
-title: Installation
+title: Install
 ---
 
 # Installing Dud
@@ -8,12 +8,20 @@ title: Installation
 ## System Requirements
 
 Dud requires a UNIX-based operating system. Dud does not run on Windows and is
-only tested against Linux. That said, Dud _should_ work on [Windows Subsystem
-for Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) and macOS.
-If you want to kick Dud's tires in one of these environments, great! If you
-encounter a problem, please [submit a Github
+only tested on Linux with a 64-bit x86 CPU. That said, Dud _should_ work on
+[Windows Subsystem for
+Linux](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) and macOS
+operating systems, as well as 32-bit x86 and ARM CPU architectures. If you want
+to kick Dud's tires in any of these environments, great! If you encounter
+a problem, please [submit a Github
 issue](https://github.com/kevin-hanselman/dud/issues/new/choose). Thanks in
 advance!
+
+### rclone
+
+Dud uses [rclone](https://rclone.org) to interact with remote storage. Rclone is
+required for the `push` and `fetch` commands. Visit https://rclone.org for more
+information and installation instructions.
 
 
 ## Installing Dud from a release

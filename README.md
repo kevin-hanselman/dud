@@ -15,7 +15,10 @@ recipes can **run the commands to generate the data**, sort of like
 **create data pipelines**.
 
 Dud is heavily inspired by [DVC](https://dvc.org/). If DVC is [Django][1], Dud
-aims to be [Flask][1].
+aims to be [Flask][1]. Dud is [much
+faster](https://kevin-hanselman.github.io/dud/benchmarks) and has
+a [significantly smaller and simpler
+CLI](https://kevin-hanselman.github.io/dud/cli/dud).
 
 [1]: https://hackr.io/blog/flask-vs-django
 
