@@ -26,11 +26,12 @@ var graphCmd = &cobra.Command{
 	Long: `Graph prints the stage graph in graphviz DOT format.
 
 For each stage file passed in, graph will print the graph of the stage and all
-upstream stages. If no stage files are passed in, graph will act on all stages
-in the index.
+upstream stages in Graphviz DOT format. If no stage files are passed in, graph
+will act on all stages in the index.
 
 You can pipe the output of this command to 'dot' from the graphviz package to
-generate images of the stage graph.`,
+generate images of the stage graph. Visit https://graphviz.org for more
+information about Graphviz and for installation instructions.`,
 	Example: "dud graph | dot -Tpng -o dud.png",
 	Run: func(cmd *cobra.Command, args []string) {
 		_, paths, err := cdToProjectRootAndReadConfig(args)

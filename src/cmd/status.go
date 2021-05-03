@@ -2,6 +2,10 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"os"
+	"text/tabwriter"
 
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
@@ -14,8 +18,7 @@ func init() {
 	rootCmd.AddCommand(statusCmd)
 }
 
-func printStageStatus(stagePath string, status stage.Status) error {
-	// TODO: use text/tabwriter?
+func writeStageStatus(writer io.Writer, stagePath string, status stage.Status) error {
 	var stageFileStatus string
 	if status.ChecksumMatches {
 		stageFileStatus = "up-to-date"
@@ -24,9 +27,9 @@ func printStageStatus(stagePath string, status stage.Status) error {
 	} else {
 		stageFileStatus = "not checksummed"
 	}
-	logger.Info.Printf("%-22s  stage definition %s\n", stagePath, stageFileStatus)
+	fmt.Fprintf(writer, "%s\tstage definition %s\n", stagePath, stageFileStatus)
 	for path, artStatus := range status.ArtifactStatus {
-		logger.Info.Printf("  %-20s  %s\n", path, artStatus)
+		fmt.Fprintf(writer, "  %s\t%s\n", path, artStatus)
 	}
 	return nil
 }
@@ -76,10 +79,12 @@ dependencies).`,
 			}
 		}
 
+		writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		for path, stageStatus := range status {
-			if err := printStageStatus(path, stageStatus); err != nil {
+			if err := writeStageStatus(writer, path, stageStatus); err != nil {
 				fatal(err)
 			}
 		}
+		writer.Flush()
 	},
 }
