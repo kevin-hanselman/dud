@@ -21,7 +21,7 @@
 [-r--r--r-- user               2]  ./.dud/cache/ec/2c76a158a4c8ef05a9bfd56c9e9fa993fef6de549c9e0a62791a0e5c592eb1
 [-rw-r--r-- user             376]  ./.dud/config.yaml
 [-rw-r--r-- user              11]  ./.dud/index
-[-rw-r--r-- user             208]  ./.dud/rclone.conf
+[-rw-r--r-- user             240]  ./.dud/rclone.conf
 [drwxr-xr-x user            4096]  ./foo
 [lrwxrwxrwx user             138]  ./foo/1.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/50/cc1102b1c612e6962547aacdcef9a400d4416ef8dd9388e885991853c400c9
 [lrwxrwxrwx user             138]  ./foo/2.txt -> /tmp/dud_integration_tests/basic_directory_ops_recursive/repo/.dud/cache/b9/a1a3183dd350f0e896d0f4b59c87e7bda8b1ed3a1af76afc86c1cb8f7cbbde

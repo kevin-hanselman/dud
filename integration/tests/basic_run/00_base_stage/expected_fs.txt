@@ -4,6 +4,6 @@
 [drwxr-xr-x user            4096]  ./.dud/cache
 [-rw-r--r-- user             376]  ./.dud/config.yaml
 [-rw-r--r-- user              10]  ./.dud/index
-[-rw-r--r-- user             208]  ./.dud/rclone.conf
+[-rw-r--r-- user             240]  ./.dud/rclone.conf
 [-rw-r--r-- user              51]  ./base.txt
 [-rw-r--r-- user              68]  ./base.yaml
