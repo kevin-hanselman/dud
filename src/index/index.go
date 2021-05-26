@@ -8,6 +8,7 @@ import (
 
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/stage"
+	"github.com/pkg/errors"
 )
 
 // An Index holds an exhaustive set of Stages for a repository.
@@ -58,10 +59,11 @@ func (idx Index) ToFile(path string) error {
 // See ToFile docs for more context.
 // TODO no tests
 func FromFile(path string) (Index, error) {
+	errPrefix := fmt.Sprintf("load index from %s", path)
 	var idx Index
 	file, err := os.Open(path)
 	if err != nil {
-		return idx, err
+		return idx, errors.Wrap(err, errPrefix)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -73,14 +75,14 @@ func FromFile(path string) (Index, error) {
 		}
 		stg, err := stage.FromFile(line)
 		if err != nil {
-			return idx, err
+			return idx, errors.Wrap(err, errPrefix)
 		}
 		if err := idx.AddStage(stg, line); err != nil {
-			return idx, err
+			return idx, errors.Wrap(err, errPrefix)
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return idx, err
+		return idx, errors.Wrap(err, errPrefix)
 	}
 	return idx, nil
 }

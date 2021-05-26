@@ -147,6 +147,9 @@ func (stg Stage) validate() error {
 	if strings.Contains(stg.WorkingDir, "..") {
 		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
 	}
+	if len(stg.Dependencies)+len(stg.Outputs) == 0 {
+		return errors.New("declared no dependencies and no outputs")
+	}
 	// First, check for direct overlap between Outputs and Dependencies.
 	// Consolidate all Artifacts into a single map to facilitate the next step.
 	// TODO: Only consolidate Artifacts with IsDir = true?
