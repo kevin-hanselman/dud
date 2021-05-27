@@ -140,10 +140,12 @@ func FromFile(stagePath string) (stg Stage, err error) {
 		stg.Outputs[art.Path] = art
 	}
 
-	return stg, stg.validate()
+	return stg, stg.Validate()
 }
 
-func (stg Stage) validate() error {
+// Validate returns an error describing a problem with the given Stage.
+// If there are no problems with the Stage definition this method returns nil.
+func (stg Stage) Validate() error {
 	if strings.Contains(stg.WorkingDir, "..") {
 		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
 	}
