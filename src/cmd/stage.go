@@ -30,27 +30,30 @@ needed.`,
 		if err != nil {
 			fatal(err)
 		}
-		stage := stage.Stage{
+		stg := stage.Stage{
 			WorkingDir: stageWorkingDir,
 			Command:    strings.Join(args, " "),
 		}
-		stage.Outputs = make(map[string]*artifact.Artifact, len(stageOutputs))
+		stg.Outputs = make(map[string]*artifact.Artifact, len(stageOutputs))
 		for _, path := range stageOutputs {
 			art, err := createArtifactFromPath(rootDir, path)
 			if err != nil {
 				fatal(err)
 			}
-			stage.Outputs[art.Path] = art
+			stg.Outputs[art.Path] = art
 		}
-		stage.Dependencies = make(map[string]*artifact.Artifact, len(stageDependencies))
+		stg.Dependencies = make(map[string]*artifact.Artifact, len(stageDependencies))
 		for _, path := range stageDependencies {
 			art, err := createArtifactFromPath(rootDir, path)
 			if err != nil {
 				fatal(err)
 			}
-			stage.Dependencies[art.Path] = art
+			stg.Dependencies[art.Path] = art
 		}
-		if err := stage.Serialize(os.Stdout); err != nil {
+		if err := stg.Validate(); err != nil {
+			fatal(err)
+		}
+		if err := stg.Serialize(os.Stdout); err != nil {
 			fatal(err)
 		}
 	},

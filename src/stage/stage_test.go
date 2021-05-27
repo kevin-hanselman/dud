@@ -156,6 +156,32 @@ func TestFromFile(t *testing.T) {
 		}
 	})
 
+	t.Run("no deps and no outputs causes error", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stageFile := Stage{
+			WorkingDir:   "workDir",
+			Dependencies: map[string]*artifact.Artifact{},
+			Outputs:      map[string]*artifact.Artifact{},
+		}
+		fromYamlFile = func(path string, output *Stage) error {
+			if path == "stage.yaml" {
+				*output = stageFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+
+		expectedError := "declared no dependencies and no outputs"
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
+		}
+	})
+
 	t.Run("cleans paths", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
