@@ -1,0 +1,14 @@
+.
+[drwxr-xr-x user            4096]  ./.dud
+[-rw-r--r-- user               7]  ./.dud/.gitignore
+[drwxr-xr-x user            4096]  ./.dud/cache
+[drwxr-xr-x user            4096]  ./.dud/cache/b3
+[-r--r--r-- user               4]  ./.dud/cache/b3/199d36d434044e6778b77d13f8dbaba32a73d9522c1ae8d0f73ef1ff14e71f
+[-rw-r--r-- user              38]  ./.dud/config.yaml
+[-rw-r--r-- user               9]  ./.dud/index
+[-rw-r--r-- user             240]  ./.dud/rclone.conf
+[drwxr-xr-x user            4096]  ./fake_remote
+[drwxr-xr-x user            4096]  ./fake_remote/b3
+[-r--r--r-- user               4]  ./fake_remote/b3/199d36d434044e6778b77d13f8dbaba32a73d9522c1ae8d0f73ef1ff14e71f
+[lrwxrwxrwx user             113]  ./foo.txt -> /tmp/dud_integration_tests/pull/repo/.dud/cache/b3/199d36d434044e6778b77d13f8dbaba32a73d9522c1ae8d0f73ef1ff14e71f
+[-rw-r--r-- user             189]  ./foo.yaml
