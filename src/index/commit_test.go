@@ -36,11 +36,11 @@ func TestCommit(t *testing.T) {
 
 	rootDir := "project/root"
 
-	t.Run("disjoint stages with orphan dependency", func(t *testing.T) {
+	t.Run("disjoint stages with orphan input", func(t *testing.T) {
 		orphanArt := artifact.Artifact{Path: "bish.bin"}
 		stgA := stage.Stage{
 			WorkingDir: "a",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.bin": &orphanArt,
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -85,8 +85,8 @@ func TestCommit(t *testing.T) {
 		if stgA.Outputs["foo.bin"].Checksum == "" {
 			t.Fatal("expected output Artifact to have Checksum set")
 		}
-		if stgA.Dependencies["bish.bin"].Checksum == "" {
-			t.Fatal("expected dependency Artifact to have Checksum set")
+		if stgA.Inputs["bish.bin"].Checksum == "" {
+			t.Fatal("expected input Artifact to have Checksum set")
 		}
 		if stgA.Checksum == "" {
 			t.Fatal("expected Stage to have Checksum set")
@@ -112,7 +112,7 @@ func TestCommit(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": &linkedArtifactB,
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -143,7 +143,7 @@ func TestCommit(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// The linked Artifact should not be committed as a dependency.
+		// The linked Artifact should not be committed as a input.
 		linkedArtifactOrig.SkipCache = true
 		mockCache.AssertNotCalled(t, "Commit", rootDir, &linkedArtifactOrig, strat, mock.AnythingOfType("*agglog.AggLogger"))
 
@@ -183,7 +183,7 @@ func TestCommit(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.bin": {Path: "bish.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -191,7 +191,7 @@ func TestCommit(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bash.bin": {Path: "bash.bin"},
 				"bish.bin": {Path: "bish.bin"},
 			},
@@ -241,7 +241,7 @@ func TestCommit(t *testing.T) {
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^
 		stgA := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"c.bin": {Path: "c.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -249,7 +249,7 @@ func TestCommit(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -257,7 +257,7 @@ func TestCommit(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b.bin": {Path: "b.bin"},
 				"d.bin": {Path: "d.bin"},
 			},

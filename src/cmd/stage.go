@@ -42,13 +42,13 @@ needed.`,
 			}
 			stg.Outputs[art.Path] = art
 		}
-		stg.Dependencies = make(map[string]*artifact.Artifact, len(stageDependencies))
-		for _, path := range stageDependencies {
+		stg.Inputs = make(map[string]*artifact.Artifact, len(stageInputs))
+		for _, path := range stageInputs {
 			art, err := createArtifactFromPath(rootDir, path)
 			if err != nil {
 				fatal(err)
 			}
-			stg.Dependencies[art.Path] = art
+			stg.Inputs[art.Path] = art
 		}
 		if err := stg.Validate(); err != nil {
 			fatal(err)
@@ -102,8 +102,8 @@ stage to the index file.`,
 }
 
 var (
-	stageOutputs, stageDependencies []string
-	stageWorkingDir                 string
+	stageOutputs, stageInputs []string
+	stageWorkingDir           string
 )
 
 func init() {
@@ -116,11 +116,11 @@ func init() {
 	)
 
 	genStageCmd.Flags().StringSliceVarP(
-		&stageDependencies,
-		"dep",
-		"d",
+		&stageInputs,
+		"in",
+		"i",
 		[]string{},
-		"one or more dependent files or directories",
+		"one or more input files or directories",
 	)
 
 	genStageCmd.Flags().StringVarP(

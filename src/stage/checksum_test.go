@@ -16,7 +16,7 @@ func TestCalculateChecksum(t *testing.T) {
 				"foo.txt": {Checksum: "bish", Path: "foo.txt"},
 				"bar.txt": {Checksum: "bash", Path: "bar.txt"},
 			},
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b": {Checksum: "bosh", Path: "b", IsDir: true},
 			},
 		}
@@ -140,14 +140,14 @@ func TestCalculateChecksum(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		stg.Dependencies["b"].DisableRecursion = true
+		stg.Inputs["b"].DisableRecursion = true
 
 		newChecksum, err := stg.CalculateChecksum()
 		if err != nil {
 			t.Fatal(err)
 		}
 		if originalChecksum == newChecksum {
-			t.Fatal("changing stage.Dependencies should have affected checksum")
+			t.Fatal("changing stage.Inputs should have affected checksum")
 		}
 	})
 }

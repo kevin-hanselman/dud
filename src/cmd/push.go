@@ -15,7 +15,7 @@ func init() {
 		"single-stage",
 		"s",
 		false,
-		"don't recursively operate on dependencies",
+		"disable recursive operation on upstream stages",
 	)
 	rootCmd.AddCommand(pushCmd)
 }
@@ -27,8 +27,8 @@ var pushCmd = &cobra.Command{
 
 For each stage passed in, push uploads the stage's committed outputs to the
 remote cache specified in the Dud config file. If no stage files are passed
-in, push will act on all stages in the index. By default, push will act
-recursively on all upstream stages (i.e. dependencies).
+in, push will act on all stages in the index. By default, push will
+act recursively on all stages upstream of the given stage(s).
 
 This command requires rclone to be installed on your machine. Visit
 https://rclone.org/ for more information and installation instructions.`,

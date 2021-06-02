@@ -32,8 +32,8 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 // a link and the other status booleans are true; checking to see if a link
 // points to the cache is, as this function suggests, quick.
 var quickStatus = func(
-	// TODO: It may be worth exposing this version of status (bypassing the full
-	// status check) using a CLI flag
+	// TODO: It may be worth exposing this version of status (bypassing the
+	// full status check) using a CLI flag.
 	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
@@ -88,6 +88,7 @@ func fileArtifactStatus(ch LocalCache, workspaceDir string, art artifact.Artifac
 		if err != nil {
 			return status, err
 		}
+		defer fileReader.Close()
 		workspaceFileChecksum, err := checksum.Checksum(fileReader)
 		if err != nil {
 			return status, err

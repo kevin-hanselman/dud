@@ -9,7 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Commit commits the given Stage's Outputs and recursive Dependencies.
+// Commit commits the given Stage's Outputs and recursively acts on all
+// upstream Stages.
 func (idx Index) Commit(
 	stagePath string,
 	ch cache.Cache,
@@ -35,13 +36,13 @@ func (idx Index) Commit(
 		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
 
-	for artPath, art := range stg.Dependencies {
+	for artPath, art := range stg.Inputs {
 		ownerPath, upstreamArt, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
 		}
 		if ownerPath == "" {
-			// Always skip the cache for dependencies. This is also enforced in
+			// Always skip the cache for inputs. This is also enforced in
 			// stage.FromFile, but most tests obviously don't use FromFile to
 			// create Stages to test against. To be safe, it's best to force
 			// SkipCache to true here.

@@ -48,7 +48,7 @@ func assertGraphsEqual(
 func TestGraph(t *testing.T) {
 	t.Run("disjoint stages", func(t *testing.T) {
 		stgA := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"orphan.bin": {Path: "orphan.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -109,7 +109,7 @@ func TestGraph(t *testing.T) {
 
 	t.Run("connected stages", func(t *testing.T) {
 		stgA := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bar.bin": {Path: "bar.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -180,7 +180,7 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -188,7 +188,7 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b.bin": {Path: "b.bin"},
 				"a.bin": {Path: "a.bin"},
 			},
@@ -259,7 +259,7 @@ func TestGraph(t *testing.T) {
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^
 		stgA := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"c.bin": {Path: "c.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -267,7 +267,7 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -275,7 +275,7 @@ func TestGraph(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b.bin": {Path: "b.bin"},
 				"d.bin": {Path: "d.bin"},
 			},

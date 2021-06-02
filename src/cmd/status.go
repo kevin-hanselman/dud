@@ -41,9 +41,9 @@ var statusCmd = &cobra.Command{
 	Long: `Status prints the state of one or more stages.
 
 For each stage file passed in, status will print the current state of the
-stage.  If no stage files are passed in, status will act on all stages in the
-index. By default, status will act recursively on all upstream stages (i.e.
-dependencies).`,
+stage. If no stage files are passed in, status will act on all stages in the
+index. By default, status will act recursively on all stages upstream of the
+given stage(s).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
 		if err != nil {

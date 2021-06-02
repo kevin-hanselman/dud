@@ -29,12 +29,12 @@ type Stage struct {
 	// WorkingDir is the directory in which the Stage's command is executed. It
 	// is a directory path relative to the Dud root directory. An
 	// empty value means the Stage's working directory _is_ the Dud root
-	// directory. WorkingDir only affects the Stage's command; all outputs and
-	// dependencies of the Stage should have paths relative to the project root.
+	// directory. WorkingDir only affects the Stage's command; all inputs and
+	// outputs of the Stage should have paths relative to the project root.
 	WorkingDir string `yaml:"working-dir,omitempty"`
-	// Dependencies is a set of Artifacts which the Stage's Command needs to
+	// Inputs is a set of Artifacts which the Stage's Command needs to
 	// operate. The Artifacts are keyed by their Path for faster lookup.
-	Dependencies map[string]*artifact.Artifact `yaml:",omitempty"`
+	Inputs map[string]*artifact.Artifact `yaml:",omitempty"`
 	// Outputs is a set of Artifacts which are owned by the Stage. The
 	// Artifacts are keyed by their Path for faster lookup.
 	Outputs map[string]*artifact.Artifact
@@ -62,17 +62,17 @@ func (stg Stage) toFileFormat() (out Stage) {
 	out.Command = stg.Command
 	out.WorkingDir = stg.WorkingDir
 
-	if len(stg.Dependencies) > 0 {
-		out.Dependencies = make(map[string]*artifact.Artifact, len(stg.Dependencies))
-		for _, art := range stg.Dependencies {
-			// SkipCache is implicitly true for all dependencies. It's
+	if len(stg.Inputs) > 0 {
+		out.Inputs = make(map[string]*artifact.Artifact, len(stg.Inputs))
+		for _, art := range stg.Inputs {
+			// SkipCache is implicitly true for all inputs. It's
 			// redundant and noisy to write it to the Stage file, so we hide
 			// it (making use of the 'omitempty' YAML directive) and set
 			// SkipCache to true when loading the file (see FromFile).
 			art.SkipCache = false
 			path := art.Path
 			art.Path = ""
-			out.Dependencies[path] = art
+			out.Inputs[path] = art
 		}
 	}
 
@@ -110,13 +110,13 @@ func FromFile(stagePath string) (stg Stage, err error) {
 	}
 	stg.Checksum = tempStage.Checksum
 	stg.Command = tempStage.Command
-	stg.Dependencies = make(map[string]*artifact.Artifact, len(stg.Dependencies))
+	stg.Inputs = make(map[string]*artifact.Artifact, len(stg.Inputs))
 	stg.Outputs = make(map[string]*artifact.Artifact, len(stg.Outputs))
 
 	// Clean all user-editable paths.
 	stg.WorkingDir = filepath.Clean(tempStage.WorkingDir)
 
-	for path, art := range tempStage.Dependencies {
+	for path, art := range tempStage.Inputs {
 		// yaml.v2 (and currently v3 as well) deserializes "  path.txt:" as
 		// a nil map value, while "  path.txt: {}" deserializes as a zero map
 		// value. Because of this, it's important to check for null pointers
@@ -126,11 +126,11 @@ func FromFile(stagePath string) (stg Stage, err error) {
 			art = new(artifact.Artifact)
 		}
 		art.Path = filepath.Clean(path)
-		// Dependencies are only committed-to/checked-out-of the Cache if they
+		// Inputs are only committed-to/checked-out-of the Cache if they
 		// are an output of (i.e. owned by) another Stage, in which case said
 		// owner Stage is responsible for interacting with the Cache.
 		art.SkipCache = true
-		stg.Dependencies[art.Path] = art
+		stg.Inputs[art.Path] = art
 	}
 	for path, art := range tempStage.Outputs {
 		if art == nil {
@@ -149,23 +149,23 @@ func (stg Stage) Validate() error {
 	if strings.Contains(stg.WorkingDir, "..") {
 		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
 	}
-	if len(stg.Dependencies)+len(stg.Outputs) == 0 {
-		return errors.New("declared no dependencies and no outputs")
+	if len(stg.Inputs)+len(stg.Outputs) == 0 {
+		return errors.New("declared no inputs and no outputs")
 	}
-	// First, check for direct overlap between Outputs and Dependencies.
+	// First, check for direct overlap between Outputs and Inputs.
 	// Consolidate all Artifacts into a single map to facilitate the next step.
 	// TODO: Only consolidate Artifacts with IsDir = true?
-	allArtifacts := make(map[string]*artifact.Artifact, len(stg.Dependencies)+len(stg.Outputs))
+	allArtifacts := make(map[string]*artifact.Artifact, len(stg.Inputs)+len(stg.Outputs))
 	for artPath, art := range stg.Outputs {
-		if _, ok := stg.Dependencies[artPath]; ok {
+		if _, ok := stg.Inputs[artPath]; ok {
 			return fmt.Errorf(
-				"artifact %s is both a dependency and an output",
+				"artifact %s is both an input and an output",
 				artPath,
 			)
 		}
 		allArtifacts[artPath] = art
 	}
-	for artPath, art := range stg.Dependencies {
+	for artPath, art := range stg.Inputs {
 		allArtifacts[artPath] = art
 	}
 
@@ -202,11 +202,11 @@ func (stg Stage) CalculateChecksum() (string, error) {
 		Command:    stg.Command,
 		WorkingDir: stg.WorkingDir,
 	}
-	cleanStage.Dependencies = make(map[string]*artifact.Artifact, len(stg.Dependencies))
-	for _, art := range stg.Dependencies {
+	cleanStage.Inputs = make(map[string]*artifact.Artifact, len(stg.Inputs))
+	for _, art := range stg.Inputs {
 		newArt := *art
 		newArt.Checksum = ""
-		cleanStage.Dependencies[art.Path] = &newArt
+		cleanStage.Inputs[art.Path] = &newArt
 	}
 	cleanStage.Outputs = make(map[string]*artifact.Artifact, len(stg.Outputs))
 	for _, art := range stg.Outputs {

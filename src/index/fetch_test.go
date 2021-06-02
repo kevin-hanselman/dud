@@ -28,10 +28,10 @@ func TestFetch(t *testing.T) {
 	// TODO: Consider checking the logs instead of throwing them away.
 	logger := agglog.NewNullLogger()
 
-	t.Run("disjoint stages with orphan dependency", func(t *testing.T) {
+	t.Run("disjoint stages with orphan input", func(t *testing.T) {
 		stgA := stage.Stage{
 			WorkingDir: "a",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.bin": {Path: "bish.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -90,7 +90,7 @@ func TestFetch(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": &linkedArtifactB,
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -122,7 +122,7 @@ func TestFetch(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// The linked Artifact should not be fetched as a dependency.
+		// The linked Artifact should not be fetched as a input.
 		linkedArtifactOrig.SkipCache = true
 		mockCache.AssertNotCalled(t, "Fetch", rootDir, remote, linkedArtifactOrig)
 
@@ -146,7 +146,7 @@ func TestFetch(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.bin": {Path: "bish.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -154,7 +154,7 @@ func TestFetch(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bash.bin": {Path: "bash.bin"},
 				"bish.bin": {Path: "bish.bin"},
 			},
@@ -205,7 +205,7 @@ func TestFetch(t *testing.T) {
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^
 		stgA := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"c.bin": {Path: "c.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -213,7 +213,7 @@ func TestFetch(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -221,7 +221,7 @@ func TestFetch(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b.bin": {Path: "b.bin"},
 				"d.bin": {Path: "d.bin"},
 			},
@@ -290,7 +290,7 @@ func TestFetch(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": &linkedArtifactB,
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -321,7 +321,7 @@ func TestFetch(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// The linked Artifact should not be fetched as a dependency.
+		// The linked Artifact should not be fetched as a input.
 		linkedArtifactOrig.SkipCache = true
 		mockCache.AssertNotCalled(t, "Fetch", stgB.WorkingDir, remote, linkedArtifactOrig)
 

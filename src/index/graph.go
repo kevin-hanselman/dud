@@ -70,15 +70,14 @@ func (idx Index) Graph(
 	if err := graph.AddAttr(graph.Name, "compound", "true"); err != nil {
 		return errors.Wrapf(err, "graph %s", stagePath)
 	}
-	for artPath := range stg.Dependencies {
+	for artPath := range stg.Inputs {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err
 		}
 		hasOwner := ownerPath != ""
-		// If we're drawing the full graph, always draw an edge to the
-		// dependency Artifact. Otherwise, draw an edge to the owner Stage if
-		// one exists.
+		// If we're drawing the full graph, always draw an edge to the input
+		// Artifact. Otherwise, draw an edge to the owner Stage if one exists.
 		if !onlyStages {
 			if !graph.IsNode(artPath) {
 				if err := graph.AddNode(graph.Name, artPath, nil); err != nil {

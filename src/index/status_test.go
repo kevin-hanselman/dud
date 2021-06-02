@@ -143,7 +143,7 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -185,7 +185,7 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -193,7 +193,7 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b.bin": {Path: "b.bin"},
 				"a.bin": {Path: "a.bin"},
 			},
@@ -232,7 +232,7 @@ func TestStatus(t *testing.T) {
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^
 		stgA := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"c.bin": {Path: "c.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -240,7 +240,7 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -248,7 +248,7 @@ func TestStatus(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b.bin": {Path: "b.bin"},
 				"d.bin": {Path: "d.bin"},
 			},
@@ -296,10 +296,10 @@ func TestStatus(t *testing.T) {
 		}
 	})
 
-	t.Run("handle dependencies with no owner", func(t *testing.T) {
+	t.Run("handle inputs with no owner", func(t *testing.T) {
 		orphanArt := artifact.Artifact{Path: "bish.bin"}
 		stg := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.bin": &orphanArt,
 			},
 			Outputs: map[string]*artifact.Artifact{

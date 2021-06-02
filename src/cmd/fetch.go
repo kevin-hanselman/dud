@@ -32,7 +32,7 @@ var fetchCmd = &cobra.Command{
 For each stage passed in, fetch downloads the stage's committed outputs from the
 remote cache specified in the Dud config file. If no stage files are passed
 in, fetch will act on all stages in the index. By default, fetch will act
-recursively on all upstream stages (i.e. dependencies).
+recursively on all stages upstream of the given stage(s).
 
 This command requires rclone to be installed on your machine. Visit
 https://rclone.org/ for more information and installation instructions.`,

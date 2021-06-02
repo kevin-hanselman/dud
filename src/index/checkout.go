@@ -34,7 +34,7 @@ func (idx Index) Checkout(
 		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
 
-	for artPath := range stg.Dependencies {
+	for artPath := range stg.Inputs {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err

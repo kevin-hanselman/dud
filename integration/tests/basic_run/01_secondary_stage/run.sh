@@ -11,7 +11,7 @@ command: awk '{print $1 * 2}' base.txt > second.txt
 EOF
 ) > second.yaml
 
-dud stage gen -d base.txt -o second.txt >> second.yaml
+dud stage gen -i base.txt -o second.txt >> second.yaml
 
 dud stage add second.yaml
 

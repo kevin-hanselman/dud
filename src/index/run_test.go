@@ -220,7 +220,7 @@ func TestRun(t *testing.T) {
 		updateChecksum(&stgA, t)
 		stgB := stage.Stage{
 			Command: "echo 'run stage B'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -269,7 +269,7 @@ func TestRun(t *testing.T) {
 		updateChecksum(&stgA, t)
 		stgB := stage.Stage{
 			Command: "echo 'run stage B'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -321,7 +321,7 @@ func TestRun(t *testing.T) {
 		updateChecksum(&stgA, t)
 		stgB := stage.Stage{
 			Command: "echo 'run stage B'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -378,7 +378,7 @@ func TestRun(t *testing.T) {
 		updateChecksum(&depB, t)
 		downstream := stage.Stage{
 			Command: "echo 'generating bosh.bin'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.bin": {Path: "bish.bin"},
 				"bash.bin": {Path: "bash.bin"},
 			},
@@ -427,7 +427,7 @@ func TestRun(t *testing.T) {
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^
 		stgA := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"c.bin": {Path: "c.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -435,7 +435,7 @@ func TestRun(t *testing.T) {
 			},
 		}
 		stgB := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"a.bin": {Path: "a.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -443,7 +443,7 @@ func TestRun(t *testing.T) {
 			},
 		}
 		stgC := stage.Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"b.bin": {Path: "b.bin"},
 				"d.bin": {Path: "d.bin"},
 			},
@@ -503,7 +503,7 @@ func TestRun(t *testing.T) {
 		}
 		stg := stage.Stage{
 			Command: "echo 'generating bosh.bin'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.bin": &(bish.Artifact),
 				"bash.bin": &(bash.Artifact),
 			},
@@ -551,7 +551,7 @@ func TestRun(t *testing.T) {
 		}
 		stgB := stage.Stage{
 			Command: "echo 'run stage B'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -602,7 +602,7 @@ func TestRun(t *testing.T) {
 			WorkingDir: "b",
 			Checksum:   "stale",
 			Command:    "echo running stage B",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{

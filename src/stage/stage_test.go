@@ -15,12 +15,12 @@ func TestFromFile(t *testing.T) {
 	}
 	resetFromYamlFileMock := func() { fromYamlFile = fromYamlFileOrig }
 
-	t.Run("skipCache is always true for dependencies", func(t *testing.T) {
+	t.Run("skipCache is always true for inputs", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
 			WorkingDir: "foo",
 			Command:    "echo 'new command'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.txt":  {},
 				"bish.txt": {},
 			},
@@ -35,7 +35,7 @@ func TestFromFile(t *testing.T) {
 		expectedStage := Stage{
 			WorkingDir: "foo",
 			Command:    "echo 'new command'",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.txt": {
 					Path:      "foo.txt",
 					SkipCache: true,
@@ -62,7 +62,7 @@ func TestFromFile(t *testing.T) {
 	t.Run("fail if artifact in both deps and outputs", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo.txt": {},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -86,7 +86,7 @@ func TestFromFile(t *testing.T) {
 	t.Run("fail if output dir artifact would contain a dep", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo/bar.txt": {},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -110,7 +110,7 @@ func TestFromFile(t *testing.T) {
 	t.Run("fail if dep dir artifact would contain a dir output", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo": {IsDir: true},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -135,7 +135,7 @@ func TestFromFile(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
 			WorkingDir: "workDir",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo": {IsDir: true},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -159,9 +159,9 @@ func TestFromFile(t *testing.T) {
 	t.Run("no deps and no outputs causes error", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
-			WorkingDir:   "workDir",
-			Dependencies: map[string]*artifact.Artifact{},
-			Outputs:      map[string]*artifact.Artifact{},
+			WorkingDir: "workDir",
+			Inputs:     map[string]*artifact.Artifact{},
+			Outputs:    map[string]*artifact.Artifact{},
 		}
 		fromYamlFile = func(path string, output *Stage) error {
 			if path == "stage.yaml" {
@@ -176,7 +176,7 @@ func TestFromFile(t *testing.T) {
 			t.Fatal("expected FromFile to return error")
 		}
 
-		expectedError := "declared no dependencies and no outputs"
+		expectedError := "declared no inputs and no outputs"
 		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
 			t.Fatalf("error -want +got:\n%s", diff)
 		}
@@ -186,7 +186,7 @@ func TestFromFile(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
 			WorkingDir: "foo/",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"foo/../bish.txt": {},
 			},
 			Outputs: map[string]*artifact.Artifact{
@@ -204,7 +204,7 @@ func TestFromFile(t *testing.T) {
 
 		expectedStage := Stage{
 			WorkingDir: "foo",
-			Dependencies: map[string]*artifact.Artifact{
+			Inputs: map[string]*artifact.Artifact{
 				"bish.txt": {Path: "bish.txt", SkipCache: true},
 			},
 			Outputs: map[string]*artifact.Artifact{

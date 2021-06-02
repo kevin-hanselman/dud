@@ -45,7 +45,7 @@ func (idx Index) Status(
 		stageStatus.ChecksumMatches = realChecksum == stg.Checksum
 	}
 
-	for artPath, art := range stg.Dependencies {
+	for artPath, art := range stg.Inputs {
 		ownerPath, _, err := idx.findOwner(artPath)
 		if err != nil {
 			return err

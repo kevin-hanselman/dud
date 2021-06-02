@@ -16,7 +16,7 @@ func init() {
 		"single-stage",
 		"s",
 		false,
-		"don't recursively operate on dependencies",
+		"disable recursive operation on upstream stages",
 	)
 }
 
@@ -29,7 +29,7 @@ var runCmd = &cobra.Command{
 
 For each stage passed in, run executes a stage's command if it is out-of-date.
 If no stage files are passed in, run will act on all stages in the index. By
-default, run will act recursively on all upstream stages (i.e. dependencies),
+default, run will act recursively on all stages upstream of the given stage,
 and thus run will execute a stage's command if any upstream stages are
 out-of-date.`,
 	Run: func(cmd *cobra.Command, args []string) {

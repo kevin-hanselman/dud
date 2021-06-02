@@ -24,7 +24,7 @@ func init() {
 		"single-stage",
 		"s",
 		false,
-		"don't recursively operate on dependencies",
+		"disable recursive operation on upstream stages",
 	)
 }
 
@@ -39,8 +39,8 @@ For each stage file passed in, checkout makes the stage's output artifacts
 available in the workspace. By default, checkout creates symlinks to the cache,
 but copies of the cached artifacts can be checked out using --copy. If no
 stage files are passed in, checkout will act on all stages in the index. By
-default, checkout will act recursively on all upstream stages (i.e.
-dependencies).`,
+default, checkout will act recursively on all stages upstream of the given
+stage(s).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		strat := strategy.LinkStrategy
 		if useCopyStrategy {
