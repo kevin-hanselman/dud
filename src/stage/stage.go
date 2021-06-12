@@ -149,6 +149,9 @@ func (stg Stage) Validate() error {
 	if strings.Contains(stg.WorkingDir, "..") {
 		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
 	}
+	if filepath.IsAbs(stg.WorkingDir) {
+		return fmt.Errorf("working directory %s is an absolute path", stg.WorkingDir)
+	}
 	if len(stg.Inputs)+len(stg.Outputs) == 0 {
 		return errors.New("declared no inputs and no outputs")
 	}
@@ -174,6 +177,9 @@ func (stg Stage) Validate() error {
 	for artPath := range allArtifacts {
 		if strings.Contains(artPath, "..") {
 			return fmt.Errorf("artifact %s is outside of the project root", artPath)
+		}
+		if filepath.IsAbs(artPath) {
+			return fmt.Errorf("artifact %s is an absolute path", artPath)
 		}
 		parentArt, ok, err := FindDirArtifactOwnerForPath(artPath, allArtifacts)
 		if err != nil {

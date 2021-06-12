@@ -2,6 +2,7 @@ package stage
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -221,32 +222,75 @@ func TestFromFile(t *testing.T) {
 		}
 	})
 
-	t.Run("disallow working dirs outside project root", func(t *testing.T) {
+	t.Run("disallow dirs outside project root", func(t *testing.T) {
 		defer resetFromYamlFileMock()
-		stageFile := Stage{
-			WorkingDir: "foo/../../bar",
-			Outputs: map[string]*artifact.Artifact{
-				"bar": {IsDir: true},
-			},
-		}
 
-		fromYamlFile = func(path string, output *Stage) error {
-			if path == "stage.yaml" {
-				*output = stageFile
-				return nil
+		assert := func(t *testing.T, stageFile Stage, want string) {
+			fromYamlFile = func(path string, output *Stage) error {
+				if path == "stage.yaml" {
+					*output = stageFile
+					return nil
+				}
+				return os.ErrNotExist
 			}
-			return os.ErrNotExist
+			_, err := FromFile("stage.yaml")
+			if err == nil {
+				t.Fatal("expected FromFile to return error")
+			}
+
+			got := err.Error()
+			if !strings.Contains(got, want) {
+				t.Fatalf("error want: %v got: %v", want, got)
+			}
 		}
 
-		_, err := FromFile("stage.yaml")
-		if err == nil {
-			t.Fatal("expcted FromFile to return error")
-		}
+		t.Run("double dot", func(t *testing.T) {
+			badPath := "foo/../../bar"
+			want := "outside of the project root"
 
-		expectedError := "working directory ../bar is outside of the project root"
-		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
-			t.Fatalf("error -want +got:\n%s", diff)
-		}
+			t.Run("working dir", func(t *testing.T) {
+				stageFile := Stage{
+					WorkingDir: badPath,
+					Outputs: map[string]*artifact.Artifact{
+						"out": {},
+					},
+				}
+				assert(t, stageFile, want)
+			})
+
+			t.Run("artifact", func(t *testing.T) {
+				stageFile := Stage{
+					Outputs: map[string]*artifact.Artifact{
+						badPath: {},
+					},
+				}
+				assert(t, stageFile, want)
+			})
+		})
+
+		t.Run("abs path", func(t *testing.T) {
+			badPath := "/foo/bar"
+			want := "absolute path"
+
+			t.Run("working dir", func(t *testing.T) {
+				stageFile := Stage{
+					WorkingDir: badPath,
+					Outputs: map[string]*artifact.Artifact{
+						"out": {},
+					},
+				}
+				assert(t, stageFile, want)
+			})
+
+			t.Run("artifact", func(t *testing.T) {
+				stageFile := Stage{
+					Outputs: map[string]*artifact.Artifact{
+						badPath: {},
+					},
+				}
+				assert(t, stageFile, want)
+			})
+		})
 	})
 
 	t.Run("disallow artifact paths outside project root", func(t *testing.T) {

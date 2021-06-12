@@ -175,6 +175,10 @@ clean:
 clean-docker:
 	docker rmi -f $(docker_image)
 
+.PHONY: mod-update
+mod-update:
+	go get -u -t ./...
+
 .PHONY: tidy
 tidy:
 	go mod tidy -v
