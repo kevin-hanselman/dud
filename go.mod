@@ -9,7 +9,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/felixge/fgprof v0.9.1
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.6
 	github.com/google/pprof v0.0.0-20210423192551-a2663126120b // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-isatty v0.0.12
