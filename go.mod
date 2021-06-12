@@ -12,7 +12,7 @@ require (
 	github.com/google/go-cmp v0.5.4
 	github.com/google/pprof v0.0.0-20210423192551-a2663126120b // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
-	github.com/mattn/go-isatty v0.0.12
+	github.com/mattn/go-isatty v0.0.13
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/pkg/errors v0.9.1
