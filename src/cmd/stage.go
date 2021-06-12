@@ -13,6 +13,70 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var stageCmd = &cobra.Command{
+	Use:   "stage",
+	Short: "Commands for interacting with stages and the index",
+	Long: `Stage is a group of commands for interacting with stages and the index.
+
+A Stage is a group of Artifacts, or an operation that consumes and/or produces
+a group of Artifacts. Stages are defined by the user in YAML files and should be
+tracked with source control.
+
+Below is a fully-annotated Stage YAML file for reference.
+
+` + "``` yaml" + `
+# The checksum of this Stage definition, written during 'dud commit'. This
+# checksum is used to determine when a Stage definition has been modified by
+# a user. The checksum does not include Artifact checksums.
+checksum: abcdefghijklmnopqrstuvwxyz1234567890
+
+# The shell command to run when 'dud run' is called. '/bin/sh' is used to
+# run the command. (Stage commands are optional.)
+command: python train.py
+
+# The directory in which the Stage's command is executed. Like all paths in
+# a Stage definition, it must be a directory path relative to the project's root
+# directory. An empty or omitted value means the command is executed in the
+# project root directory. The working directory only affects the Stage's command;
+# all inputs and outputs of the Stage must also have paths relative to the
+# project root.
+working-dir: .
+
+# The set of Artifacts which the Stage requires to run 'command' above.
+inputs:
+  # The Artifact path. All paths are relative to the project's root
+  # directory.
+  train.py:
+    # The checksum of the artifact's contents, written during 'dud commit'.
+    checksum: abcdefghijklmnopqrstuvwxyz1234567890
+
+# The set of Artifacts which are owned by the Stage.
+outputs:
+  # This is how to define a file Artifact with default options. The colon (:)
+  # at the end is still required. You may see 'dud stage gen' include empty curly
+  # braces ({}) after the colon; this is equivalent to the below.
+  model.pkl:
+  tensorboard:
+    # 'is-dir' tells Dud to expect this Artifact to be a directory, not a file.
+    # Defaults to false when omitted.
+    is-dir: true
+
+    # 'disable-recursion' tells Dud not to recurse directories when operating on
+    # this directory Artifact; all sub-directories will be ignored. Defaults to
+    # false (applies recursion) when omitted. Not applicable for file
+    # Artifacts.
+    disable-recursion: true
+
+  metrics.json:
+    # 'skip-cache' tells Dud not to commit this Artifact to the cache. Dud will
+    # still write a checksum for this Artifact during 'dud commit', and it will
+    # use the checksum to inform other actions, such as 'dud run'. This is useful
+    # for declaring Stage outputs which can be safely stored in source control
+    # rather than Dud. This option is implicit for Artifacts in 'inputs'.
+    skip-cache: true
+` + "```",
+}
+
 var genStageCmd = &cobra.Command{
 	Use:   "gen [flags] [--] [stage_command]...",
 	Short: "Generate stage YAML using the CLI",
@@ -131,11 +195,6 @@ func init() {
 		"working directory for the stage's command",
 	)
 
-	stageCmd := &cobra.Command{
-		Use:   "stage",
-		Short: "Commands for interacting with stages and the index",
-		Long:  "Stage is a group of sub-commands for interacting with stages and the index.",
-	}
 	stageCmd.AddCommand(genStageCmd)
 	stageCmd.AddCommand(addStageCmd)
 	rootCmd.AddCommand(stageCmd)
