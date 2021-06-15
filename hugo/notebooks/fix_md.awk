@@ -1,5 +1,5 @@
 BEGIN {
-    inBash = 0
+    inShell = 0
     numEmpty = 0
     rmNextIfEmpty = 0
     inPython = 0
@@ -8,10 +8,12 @@ BEGIN {
 {
     # Remove all trailing whitespace and carriage returns.
     sub(/[ \t\r]+$/, "")
+    # Remove all ANSI escape sequences (e.g. terminal colors and cursor movements).
+    gsub(/\033\[[0-9;]*[a-zA-Z]/, "")
 }
 
 /\w+_files\// {
-    sub(/\w+_files\//, "../")
+    gsub(/\w+_files\//, "../")
 }
 
 /^```\s*python/ {
@@ -20,8 +22,8 @@ BEGIN {
 }
 
 /^```$/ {
-    if (inBash) {
-        inBash = 0
+    if (inShell) {
+        inShell = 0
         rmNextIfEmpty = 1
         next
     }
@@ -46,11 +48,11 @@ BEGIN {
         # If the first line in the code block starts with a bang, this is
         # actually a shell command. In this case, we remove the code fence
         # posts (and with them the Python syntax highlighting), change the bang
-        # to a dollar sign, and indent the entire block (see inBash clause
+        # to a dollar sign, and indent the entire block (see inShell clause
         # below). If there is no bang, this is actually a Python block, so we
         # add the starting fence back.
         if (/^!/) {
-            inBash = 1
+            inShell = 1
             sub(/^!/, "$ ", $0)
         } else {
             print inPython
@@ -69,7 +71,7 @@ BEGIN {
 }
 
 {
-    if (inBash) {
+    if (inShell) {
         print "    "$0
     } else {
         print

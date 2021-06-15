@@ -76,7 +76,10 @@ bench: test-short
 serve-jupyter: $(GOBIN)/dud
 	jupyter notebook -y --ip=0.0.0.0 ./hugo/notebooks/
 
+# First delete stale supporting files, then convert the notebook to markdown,
+# and finally clear the notebook outputs.
 hugo/notebooks/%.md:
+	rm -f $(patsubst %.md,%_files,$@)/*
 	jupyter nbconvert \
 		--to markdown \
 		--TagRemovePreprocessor.remove_input_tags 'hide_input' \

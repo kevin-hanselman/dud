@@ -3,6 +3,11 @@
 [![Build status](https://github.com/kevin-hanselman/dud/workflows/build/badge.svg)](https://github.com/kevin-hanselman/dud/actions?query=workflow%3Abuild)
 [![Go report card](https://goreportcard.com/badge/github.com/kevin-hanselman/dud)](https://goreportcard.com/report/github.com/kevin-hanselman/dud)
 
+[Website](https://kevin-hanselman.github.io/dud/)
+| [Install](https://kevin-hanselman.github.io/dud/install)
+| [Getting Started](https://kevin-hanselman.github.io/dud/getting_started)
+| [Source Code](https://github.com/kevin-hanselman/dud)
+
 Dud is a tool for storing, versioning, and reproducing large files alongside
 source code.
 
@@ -12,22 +17,19 @@ stages) for retrieving your data in small YAML files. These recipes can be
 stored in source control to **link your data to your code**. On top of that, the
 recipes can **run the commands to generate the data**, sort of like
 [Make](https://www.gnu.org/software/make/). Recipes can be chained together to
-**create data pipelines**.
+**create data pipelines**. See the [Getting
+Started](https://kevin-hanselman.github.io/dud/getting_started) guide for
+a hands-on overview.
 
 Dud is heavily inspired by [DVC](https://dvc.org/). If DVC is [Django][1], Dud
 aims to be [Flask][1]. Dud is [much
-faster](https://kevin-hanselman.github.io/dud/benchmarks) and has
-a [significantly smaller and simpler
-CLI](https://kevin-hanselman.github.io/dud/cli/dud).
+faster](https://kevin-hanselman.github.io/dud/benchmarks), it has a [smaller
+feature set](https://kevin-hanselman.github.io/dud/cli/dud), and it is
+distributed as a single executable.
 
 [1]: https://hackr.io/blog/flask-vs-django
 
-Check out [the whirlwind
-tour](https://kevin-hanselman.github.io/dud/getting_started/tour/) to get a feel
-for using Dud.
-
-Oh, and Dud is pronounced "duhd". Don't ask it where your car is; it doesn't
-know.
+Dud is pronounced "duhd", not "dood".
 
 
 ## Design Principles
@@ -60,28 +62,3 @@ Dud should explain itself early and often.
 Dud should maintain its state in a human-readable (and ideally human-editable)
 form.
 
-
-## Terminology
-
-### Artifact
-
-An Artifact is a file or directory that is tracked by Dud. Artifacts are usually
-stored in the Cache, but it isn't strictly necessary.
-
-### Stage
-
-A Stage is a group of Artifacts, or an operation that consumes and/or produces
-a group of Artifacts. Stages are defined by the user in YAML files and should be
-tracked with source control.
-
-### Index
-
-The Index is the comprehensive group of Stages in a project. The Index forms
-a dependency graph of Stages, enabling the user to define data pipelines.
-
-### Cache
-
-The Cache is a local directory where Dud stores and versions the contents of
-Artifacts. The Cache is content-addressed, which (among other things)
-facilitates storing all versions of all Artifacts without conflicts or
-duplication.
