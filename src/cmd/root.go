@@ -26,6 +26,9 @@ const (
 )
 
 var (
+	// Version is the version of the app.
+	Version string
+
 	rootCmd = &cobra.Command{
 		Use: "dud",
 		Long: `Dud is a tool for storing, versioning, and reproducing large files alongside
@@ -96,11 +99,19 @@ func init() {
 			return doc.GenMarkdownTreeCustom(rootCmd, dir, filePrepender, linkHandler)
 		},
 	})
+
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Print the version number and exit",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(Version)
+		},
+	})
 }
 
 // Main is the entry point to the cobra CLI.
-func Main(version string) {
-	rootCmd.Version = version
+func Main() {
 	logger = &agglog.AggLogger{
 		Error: log.New(os.Stderr, "Error: ", 0),
 		Info:  log.New(os.Stdout, "", 0),

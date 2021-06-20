@@ -20,7 +20,7 @@ cat << EOF
 
 **Software versions**:
 
-$(dud --version | xargs)
+Dud version: $(dud version | xargs)
 
 $(dvc version | head -n1 | xargs)
 EOF

@@ -11,6 +11,7 @@ import (
 var version string = "NONE"
 
 func main() {
+	cmd.Version = version
 	if os.Geteuid() == 0 {
 		fmt.Printf(`WARNING: Running as root.
 The root user does not respect read-only files. You can (and eventually will)
@@ -19,5 +20,5 @@ cache. Please consider running as a non-root user.
 
 `)
 	}
-	cmd.Main(version)
+	cmd.Main()
 }
