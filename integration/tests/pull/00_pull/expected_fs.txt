@@ -10,5 +10,5 @@
 [drwxr-xr-x user            4096]  ./fake_remote
 [drwxr-xr-x user            4096]  ./fake_remote/b3
 [-r--r--r-- user               4]  ./fake_remote/b3/199d36d434044e6778b77d13f8dbaba32a73d9522c1ae8d0f73ef1ff14e71f
-[lrwxrwxrwx user             113]  ./foo.txt -> /tmp/dud_integration_tests/pull/repo/.dud/cache/b3/199d36d434044e6778b77d13f8dbaba32a73d9522c1ae8d0f73ef1ff14e71f
+[lrwxrwxrwx user              76]  ./foo.txt -> .dud/cache/b3/199d36d434044e6778b77d13f8dbaba32a73d9522c1ae8d0f73ef1ff14e71f
 [-rw-r--r-- user             189]  ./foo.yaml

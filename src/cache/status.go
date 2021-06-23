@@ -2,6 +2,7 @@ package cache
 
 import (
 	"encoding/json"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,24 +33,31 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 // a link and the other status booleans are true; checking to see if a link
 // points to the cache is, as this function suggests, quick.
 var quickStatus = func(
-	// TODO: It may be worth exposing this version of status (bypassing the
-	// full status check) using a CLI flag.
 	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 ) (status artifact.Status, cachePath, workPath string, err error) {
+	// These FileInfos are used to verify a committed file is correctly linked
+	// to the cache.
+	var cacheFileInfo, workFileInfo fs.FileInfo
+
 	workPath = filepath.Join(workspaceDir, art.Path)
 	cachePath, err = ch.PathForChecksum(art.Checksum)
 	absCachePath := filepath.Join(ch.dir, cachePath)
-	// TODO: assert InvalidChecksumError
-	if err != nil { // An error means the checksum is invalid
+
+	if _, ok := err.(InvalidChecksumError); ok {
 		status.HasChecksum = false
+	} else if err != nil {
+		return
 	} else {
 		status.HasChecksum = true
-		// TODO: check for regular file?
-		status.ChecksumInCache, err = fsutil.Exists(absCachePath, false)
-		if err != nil {
-			return
+		cacheFileInfo, err = os.Stat(absCachePath)
+		if err == nil {
+			status.ChecksumInCache = true
+		} else if os.IsNotExist(err) {
+			status.ChecksumInCache = false
+		} else {
+			return status, cachePath, workPath, err
 		}
 	}
 	status.WorkspaceFileStatus, err = fsutil.FileStatusFromPath(workPath)
@@ -59,17 +67,25 @@ var quickStatus = func(
 	if status.HasChecksum &&
 		status.ChecksumInCache &&
 		status.WorkspaceFileStatus == fsutil.StatusLink {
-		var linkDst string
-		linkDst, err = os.Readlink(workPath)
-		if err != nil {
+		workFileInfo, err = os.Stat(workPath)
+		// A NotExist error here means the link is dead. Leave ContentsMatch as
+		// false and let the caller handle the invalid link.
+		if os.IsNotExist(err) {
+			err = nil
+			return
+		} else if err != nil {
 			return
 		}
-		status.ContentsMatch = linkDst == absCachePath
+		status.ContentsMatch = os.SameFile(cacheFileInfo, workFileInfo)
 	}
 	return
 }
 
-func fileArtifactStatus(ch LocalCache, workspaceDir string, art artifact.Artifact) (artifact.Status, error) {
+func fileArtifactStatus(
+	ch LocalCache,
+	workspaceDir string,
+	art artifact.Artifact,
+) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
 		return status, err
@@ -146,25 +162,25 @@ func dirArtifactStatus(
 
 	// Second, get a directory listing and check for untracked files;
 	// quit early if any exist.
-	// TODO: Consider replacing ReadDir with filepath.Walk to better handle massive directories.
 	entries, err := ioutil.ReadDir(workPath)
 	if err != nil {
 		return status, manifest, err
 	}
 	for _, entry := range entries {
 		// Only check entries that don't appear in the manifest.
-		if _, ok := manifest.Contents[entry.Name()]; !ok {
-			if entry.IsDir() {
-				// If the entry is a (untracked) directory, this is only
-				// a mismatch if the artifact is recursive.
-				if !art.DisableRecursion {
-					return status, manifest, nil
-				}
-			} else {
-				// If the entry is a (untracked) file, this is always
-				// a mismatch.
+		if _, ok := manifest.Contents[entry.Name()]; ok {
+			continue
+		}
+		if entry.IsDir() {
+			// If the entry is a (untracked) directory, this is only
+			// a mismatch if the artifact is recursive.
+			if !art.DisableRecursion {
 				return status, manifest, nil
 			}
+		} else {
+			// If the entry is a (untracked) file, this is always
+			// a mismatch.
+			return status, manifest, nil
 		}
 	}
 	status.ContentsMatch = true

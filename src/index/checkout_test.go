@@ -9,6 +9,8 @@ import (
 	"github.com/kevin-hanselman/dud/src/mocks"
 	"github.com/kevin-hanselman/dud/src/stage"
 	"github.com/kevin-hanselman/dud/src/strategy"
+
+	"github.com/stretchr/testify/mock"
 )
 
 func expectOutputsCheckedOut(
@@ -18,7 +20,8 @@ func expectOutputsCheckedOut(
 	strat strategy.CheckoutStrategy,
 ) {
 	for _, art := range stg.Outputs {
-		mockCache.On("Checkout", rootDir, *art, strat).Return(nil).Once()
+		// We have to use mock.Anything here because <nil> != (*pb.ProgressBar)(nil).
+		mockCache.On("Checkout", rootDir, *art, strat, mock.Anything).Return(nil).Once()
 	}
 }
 
@@ -125,7 +128,14 @@ func TestCheckout(t *testing.T) {
 
 		// The linked Artifact should not be checkedOut as a input.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Checkout", rootDir, linkedArtifactOrig, strat)
+		mockCache.AssertNotCalled(
+			t,
+			"Checkout",
+			rootDir,
+			linkedArtifactOrig,
+			strat,
+			mock.Anything,
+		)
 
 		mockCache.AssertExpectations(t)
 
@@ -324,7 +334,14 @@ func TestCheckout(t *testing.T) {
 
 		// The linked Artifact should not be checkedOut as a input.
 		linkedArtifactOrig.SkipCache = true
-		mockCache.AssertNotCalled(t, "Checkout", stgB.WorkingDir, linkedArtifactOrig, strat)
+		mockCache.AssertNotCalled(
+			t,
+			"Checkout",
+			stgB.WorkingDir,
+			linkedArtifactOrig,
+			strat,
+			mock.Anything,
+		)
 
 		mockCache.AssertExpectations(t)
 

@@ -42,8 +42,18 @@ var (
 
 // A Cache provides a means to store Artifacts.
 type Cache interface {
-	Commit(workDir string, art *artifact.Artifact, s strategy.CheckoutStrategy, l *agglog.AggLogger) error
-	Checkout(workDir string, art artifact.Artifact, s strategy.CheckoutStrategy) error
+	Commit(
+		workDir string,
+		art *artifact.Artifact,
+		s strategy.CheckoutStrategy,
+		l *agglog.AggLogger,
+	) error
+	Checkout(
+		workDir string,
+		art artifact.Artifact,
+		s strategy.CheckoutStrategy,
+		p *pb.ProgressBar,
+	) error
 	Status(workDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
 	Fetch(workDir, remoteSrc string, art artifact.Artifact) error
 	Push(workDir, remoteDst string, art artifact.Artifact) error

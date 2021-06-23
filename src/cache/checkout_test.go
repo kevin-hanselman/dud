@@ -219,7 +219,7 @@ func testFileCheckoutIntegration(in testInput, expectedOut testExpectedOutput, t
 		t.Fatal(err)
 	}
 
-	checkoutErr := cache.Checkout(dirs.WorkDir, art, in.CheckoutStrategy)
+	checkoutErr := cache.Checkout(dirs.WorkDir, art, in.CheckoutStrategy, nil)
 
 	// Strip any context from the error (e.g. "checkout hello.txt:").
 	checkoutErr = errors.Cause(checkoutErr)
@@ -244,11 +244,11 @@ func assertErrorMatches(t *testing.T, want, got error) {
 		}
 	case os.ErrExist:
 		if !os.IsExist(got) {
-			t.Fatalf("expected Exist error, got %#v", got)
+			t.Fatalf("expected Exist error, got %v", got)
 		}
 	case os.ErrNotExist:
 		if !os.IsNotExist(got) {
-			t.Fatalf("expected NotExist error, got %#v", got)
+			t.Fatalf("expected NotExist error, got %v", got)
 		}
 	default:
 		if !assert.IsType(t, want, got) {

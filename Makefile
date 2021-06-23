@@ -62,10 +62,10 @@ lint: $(GOBIN)/golint
 	golint ./...
 
 .PHONY: test%
-test-short: src/mocks fmt lint
+test-short: fmt lint
 	go test -short ./...
 
-test: src/mocks fmt lint
+test: fmt lint
 	go test -cover -race ./...
 
 .PHONY: bench
@@ -171,7 +171,7 @@ deep-lint:
 .PHONY: clean
 clean:
 	rm -rf hugo/content/docs/cli/dud*.md ./website
-	rm -f *.coverage *.bin depgraph.png goreleaser mockery $(GOBIN)/dud
+	rm -f *.coverage *.bin depgraph.png goreleaser $(GOBIN)/dud
 	go clean ./...
 
 .PHONY: clean-docker
@@ -191,16 +191,13 @@ loc:
 	tokei --sort lines --exclude src/mocks/ ./src/ ./integration/
 	tokei --sort lines --exclude src/mocks/ --exclude '*_test.go' ./src/
 
-mockery:
-	curl -L https://github.com/vektra/mockery/releases/download/v2.2.1/mockery_2.2.1_Linux_x86_64.tar.gz \
-		| tar -zxvf - mockery
-
 goreleaser:
 	curl -L https://github.com/goreleaser/goreleaser/releases/download/v0.159.0/goreleaser_Linux_x86_64.tar.gz \
 		| tar -zxvf - goreleaser
 
-src/mocks: mockery
-	./mockery --all --output src/mocks
+.PHONY: src/mocks
+src/mocks: $(GOBIN)/mockery
+	mockery --all --output src/mocks
 
 # The awk command removes all graph edge definitions that don't include dud
 depgraph.png:
@@ -226,3 +223,6 @@ $(GOBIN)/golint:
 
 $(GOBIN)/goimports:
 	go install golang.org/x/tools/cmd/goimports@latest
+
+$(GOBIN)/mockery:
+	go install github.com/vektra/mockery/v2@latest

@@ -152,7 +152,7 @@ func commitFileArtifact(
 				return err
 			}
 		}
-		return ch.Checkout(workspaceDir, *art, strat)
+		return ch.Checkout(workspaceDir, *art, strat, nil)
 	}
 	return nil
 }

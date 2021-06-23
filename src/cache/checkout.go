@@ -22,11 +22,14 @@ func (cache LocalCache) Checkout(
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
+	progress *pb.ProgressBar,
 ) (err error) {
 	if art.SkipCache {
 		return
 	}
-	progress := newProgress(art.Path)
+	if progress == nil {
+		progress = newProgress(art.Path)
+	}
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = checkoutDir(
@@ -117,7 +120,23 @@ func checkoutFile(
 		if status.ContentsMatch {
 			return nil
 		}
-		if err := os.Symlink(cachePath, workPath); err != nil {
+		// Make the symlink target relative to the parent directory of the
+		// workspace file. For cache locations defined defined relative to the
+		// project root (including the default location), this allows the
+		// project root directory to move without invalidating the links to the
+		// cache. TODO: For cache locations defined as absolute paths (e.g.
+		// /mnt/my_shared_dud_cache), this change has the opposite effect;
+		// moving the project may invalidate cache links. To completely
+		// eliminate the link invalidation, we'd need to know if the cache
+		// is a relative or absolute path and choose the linking strategy
+		// accordingly. For now, always using relative link targets gives the
+		// best user experience for the default cache location, so it is
+		// preferred to absolute links.
+		linkPath, err := filepath.Rel(filepath.Dir(workPath), cachePath)
+		if err != nil {
+			return err
+		}
+		if err := os.Symlink(linkPath, workPath); err != nil {
 			return err
 		}
 	}
@@ -161,7 +180,13 @@ func checkoutDir(
 	// updating the report. (When copying, checkoutFile handles updating the
 	// bytes transferred completely.)
 	if strat == strategy.LinkStrategy {
-		progress.AddTotal(int64(len(man.Contents)))
+		fileCount := 0
+		for _, art := range man.Contents {
+			if !art.IsDir {
+				fileCount++
+			}
+		}
+		progress.AddTotal(int64(fileCount))
 		progress.Start()
 	}
 

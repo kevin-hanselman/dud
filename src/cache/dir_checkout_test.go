@@ -36,8 +36,19 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy); err != nil {
+		progress := newProgress("test")
+
+		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy, progress); err != nil {
 			t.Fatal(err)
+		}
+
+		// Expect the progress bar to report 10 out of 10 files checked out.
+		// Directories aren't counted. See setupDirTest for the 10 files.
+		if progress.Total() != 10 {
+			t.Fatalf("progress.Total() = %v, want 10", progress.Total())
+		}
+		if progress.Current() != 10 {
+			t.Fatalf("progress.Current() = %v, want 10", progress.Current())
 		}
 
 		actualStatus, err := cache.Status(dirs.WorkDir, art)

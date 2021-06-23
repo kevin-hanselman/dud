@@ -1,0 +1,9 @@
+.
+[drwxr-xr-x user            4096]  ./.dud
+[-rw-r--r-- user               7]  ./.dud/.gitignore
+[drwxr-xr-x user            4096]  ./.dud/cache
+[-rw-r--r-- user              50]  ./.dud/config.yaml
+[-rw-r--r-- user              11]  ./.dud/index
+[-rw-r--r-- user             240]  ./.dud/rclone.conf
+[lrwxrwxrwx user              87]  ./foo.txt -> ../../.external_cache/53/4659321d2eea6b13aea4f4c94c3b4f624622295da31506722b47a8eb9d726c
+[-rw-r--r-- user             189]  ./stage.yaml
