@@ -30,9 +30,9 @@ var (
 	Version string
 
 	rootCmd = &cobra.Command{
-		Use: "dud",
-		Long: `Dud is a tool for storing, versioning, and reproducing large files alongside
-source code.`,
+		Use:  "dud",
+		Long: `Dud is a lightweight tool for versioning data alongside source code and
+building data pipelines.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if verbose {
 				logger.Debug = log.New(os.Stderr, "", 0)

@@ -87,8 +87,8 @@ func (ch LocalCache) PathForChecksum(checksum string) (string, error) {
 }
 
 type directoryManifest struct {
-	Path     string
-	Contents map[string]*artifact.Artifact
+	Path     string                        `json:"path,"`
+	Contents map[string]*artifact.Artifact `json:"contents,"`
 }
 
 // InvalidChecksumError is an error case where a valid checksum was expected

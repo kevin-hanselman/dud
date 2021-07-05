@@ -1,31 +1,72 @@
 package artifact
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/kevin-hanselman/dud/src/fsutil"
 )
-
-// TODO: Consider adding JSON directives to Artifact as well for serializing
-// directoryManifests.
 
 // An Artifact is a file or directory that is tracked by Dud.
 type Artifact struct {
 	// Checksum is the hex digest Artifact's hashed contents. It is used to
 	// locate the Artifact in a Cache.
-	Checksum string `yaml:",omitempty"`
+	Checksum string `yaml:",omitempty" json:"checksum,omitempty"`
 	// Path is the file path to the Artifact in the workspace. It is always
 	// relative to the project root directory.
-	Path string `yaml:",omitempty"`
+	Path string `yaml:",omitempty" json:"path,omitempty"`
 	// If IsDir is true then the Artifact is a directory.
-	IsDir bool `yaml:"is-dir,omitempty"`
+	IsDir bool `yaml:"is-dir,omitempty" json:"is-dir,omitempty"`
 	// If DisableRecursion is true then the Artifact does not recurse sub-directories
-	DisableRecursion bool `yaml:"disable-recursion,omitempty"`
+	DisableRecursion bool `yaml:"disable-recursion,omitempty" json:"disable-recursion,omitempty"`
 	// If SkipCache is true then the Artifact is not stored in the Cache. When
 	// the Artifact is committed, its checksum is updated, but the Artifact is
 	// not moved to the Cache. The checkout operation is a no-op.
-	SkipCache bool `yaml:"skip-cache,omitempty"`
+	SkipCache bool `yaml:"skip-cache,omitempty" json:"skip-cache,omitempty"`
+}
+
+type oldArtifact struct {
+	Checksum         string
+	Path             string
+	IsDir            bool
+	DisableRecursion bool
+	SkipCache        bool
+}
+
+// UnmarshalJSON enables backwards-compatibility with the original Artifact
+// struct, which did not have struct tags for custom JSON serialization.
+func (a *Artifact) UnmarshalJSON(b []byte) error {
+	// First, we try to unmarshal an Artifact using YAML in "strict" mode, which
+	// will error-out if any extra fields are found (e.g. the old "IsDir" field
+	// instead of "is-dir"). (JSON is valid YAML, so unmarshalling from YAML
+	// when the underlying encoding is JSON is perfectly safe.) If
+	// unmarshalling from YAML succeeds, the resulting Artifact is already
+	// using the latest schema and we can exit.
+	if err := yaml.UnmarshalStrict(b, a); err == nil {
+		return nil
+	}
+	// If unmarshalling from YAML failed, chances are the underlying data is
+	// using the old schema, so try to unmarshal it. If we still get an error,
+	// fail with that error; otherwise, copy the data from the old schema to
+	// the Artifact and exit.
+	// TODO: Technically, yaml.UnmarshalStrict and yaml.Unmarshal should both work
+	// here, but I get spurious "field X not found" errors. oldArtifact not
+	// being exported is not the issue. Need to investigate.
+	var old oldArtifact
+	if err := json.Unmarshal(b, &old); err != nil {
+		return err
+	}
+	*a = Artifact{
+		Checksum:         old.Checksum,
+		Path:             old.Path,
+		IsDir:            old.IsDir,
+		DisableRecursion: old.DisableRecursion,
+		SkipCache:        old.SkipCache,
+	}
+	return nil
 }
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.

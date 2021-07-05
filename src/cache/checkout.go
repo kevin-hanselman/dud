@@ -121,14 +121,14 @@ func checkoutFile(
 			return nil
 		}
 		// Make the symlink target relative to the parent directory of the
-		// workspace file. For cache locations defined defined relative to the
-		// project root (including the default location), this allows the
-		// project root directory to move without invalidating the links to the
-		// cache. TODO: For cache locations defined as absolute paths (e.g.
+		// workspace file. For cache locations defined relative to the project
+		// root (including the default location), this allows the project root
+		// directory to move without invalidating the links to the cache.
+		// TODO: For cache locations defined as absolute paths (e.g.
 		// /mnt/my_shared_dud_cache), this change has the opposite effect;
 		// moving the project may invalidate cache links. To completely
-		// eliminate the link invalidation, we'd need to know if the cache
-		// is a relative or absolute path and choose the linking strategy
+		// eliminate the link invalidation, we'd need to know if the cache is
+		// a relative or absolute path and choose the linking strategy
 		// accordingly. For now, always using relative link targets gives the
 		// best user experience for the default cache location, so it is
 		// preferred to absolute links.

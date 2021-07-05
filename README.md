@@ -8,8 +8,8 @@
 | [Getting Started](https://kevin-hanselman.github.io/dud/getting_started)
 | [Source Code](https://github.com/kevin-hanselman/dud)
 
-Dud is a tool for storing, versioning, and reproducing large files alongside
-source code.
+Dud is a lightweight tool for versioning data alongside source code and building
+data pipelines.
 
 With Dud, you can **commit, checkout, fetch, and push large files and
 directories** with a simple command line interface. Dud stores recipes (a.k.a.
@@ -25,7 +25,8 @@ Dud is heavily inspired by [DVC](https://dvc.org/). If DVC is [Django][1], Dud
 aims to be [Flask][1]. Dud is [much
 faster](https://kevin-hanselman.github.io/dud/benchmarks), it has a [smaller
 feature set](https://kevin-hanselman.github.io/dud/cli/dud), and it is
-distributed as a single executable.
+[distributed as a single
+executable](https://github.com/kevin-hanselman/dud/releases).
 
 [1]: https://hackr.io/blog/flask-vs-django
 
@@ -61,4 +62,16 @@ Dud should explain itself early and often.
 
 Dud should maintain its state in a human-readable (and ideally human-editable)
 form.
+
+
+## Contributing
+
+See
+[CONTRIBUTING.md](https://github.com/kevin-hanselman/dud/blob/main/CONTRIBUTING.md).
+
+
+## License
+
+BSD-3-Clause. See
+[LICENSE](https://github.com/kevin-hanselman/dud/blob/main/LICENSE).
 
