@@ -21,9 +21,13 @@ import (
 
 const (
 	indexPath = ".dud/index"
-
-	emptyIndexMessage = "index is empty"
 )
+
+type emptyIndexError struct{}
+
+func (e emptyIndexError) Error() string {
+	return "index is empty"
+}
 
 var (
 	// Version is the version of the app.

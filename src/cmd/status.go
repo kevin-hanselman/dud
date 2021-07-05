@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -61,7 +60,7 @@ given stage(s).`,
 		}
 
 		if len(idx) == 0 {
-			fatal(errors.New(emptyIndexMessage))
+			fatal(emptyIndexError{})
 		}
 
 		if len(paths) == 0 { // By default, check status of everything in the Index.

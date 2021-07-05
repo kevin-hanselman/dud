@@ -54,7 +54,7 @@ https://rclone.org/ for more information and installation instructions.`,
 		}
 
 		if len(idx) == 0 {
-			fatal(errors.New(emptyIndexMessage))
+			fatal(emptyIndexError{})
 		}
 
 		if len(paths) == 0 {

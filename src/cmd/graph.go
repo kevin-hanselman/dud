@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"errors"
-
 	"github.com/awalterschulze/gographviz"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/spf13/cobra"
@@ -45,7 +43,7 @@ information about Graphviz and for installation instructions.`,
 		}
 
 		if len(idx) == 0 {
-			fatal(errors.New(emptyIndexMessage))
+			fatal(emptyIndexError{})
 		}
 
 		if len(paths) == 0 { // By default, run on the entire Index

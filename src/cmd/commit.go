@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"os"
 
 	"github.com/kevin-hanselman/dud/src/cache"
@@ -59,7 +58,7 @@ recursively on all stages upstream of the given stage(s).`,
 		}
 
 		if len(paths) == 0 {
-			fatal(errors.New(emptyIndexMessage))
+			fatal(emptyIndexError{})
 		}
 
 		committed := make(map[string]bool)
