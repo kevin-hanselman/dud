@@ -59,13 +59,7 @@ func (a *Artifact) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &old); err != nil {
 		return err
 	}
-	*a = Artifact{
-		Checksum:         old.Checksum,
-		Path:             old.Path,
-		IsDir:            old.IsDir,
-		DisableRecursion: old.DisableRecursion,
-		SkipCache:        old.SkipCache,
-	}
+	*a = Artifact(old)
 	return nil
 }
 

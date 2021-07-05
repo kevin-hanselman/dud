@@ -30,7 +30,7 @@ var (
 	Version string
 
 	rootCmd = &cobra.Command{
-		Use:  "dud",
+		Use: "dud",
 		Long: `Dud is a lightweight tool for versioning data alongside source code and
 building data pipelines.`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
