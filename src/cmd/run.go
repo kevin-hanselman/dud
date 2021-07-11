@@ -30,9 +30,12 @@ If no stage files are passed in, run will act on all stages in the index. By
 default, run will act recursively on all stages upstream of the given stage,
 and thus run will execute a stage's command if any upstream stages are
 out-of-date.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+	Run: func(cmd *cobra.Command, paths []string) {
+		rootDir, err := cdToProjectRoot(paths...)
 		if err != nil {
+			fatal(err)
+		}
+		if err := readConfig(rootDir); err != nil {
 			fatal(err)
 		}
 

@@ -31,9 +31,12 @@ You can pipe the output of this command to 'dot' from the graphviz package to
 generate images of the stage graph. Visit https://graphviz.org for more
 information about Graphviz and for installation instructions.`,
 	Example: "dud graph | dot -Tpng -o dud.png",
-	Run: func(cmd *cobra.Command, args []string) {
-		_, paths, err := cdToProjectRootAndReadConfig(args)
+	Run: func(cmd *cobra.Command, paths []string) {
+		rootDir, err := cdToProjectRoot(paths...)
 		if err != nil {
+			fatal(err)
+		}
+		if err := readConfig(rootDir); err != nil {
 			fatal(err)
 		}
 

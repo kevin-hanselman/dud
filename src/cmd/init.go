@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -15,13 +14,18 @@ func init() {
 		Long:  `Init initializes a Dud project in the current directory.`,
 		Args:  cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
-			cacheDir := ".dud/cache"
-			if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+			if err := os.MkdirAll(".dud/cache", 0o755); err != nil {
 				fatal(err)
 			}
 
-			dudConf := fmt.Sprintf(`# Dud config file
-cache: %s
+			dudConf := `# Dud project-level config file
+
+# This config file overrides any user configuration from
+# "$XDG_CONFIG_HOME/dud/config.yaml" or "~/.config/dud/config.yaml".
+
+# This is the default cache location. Uncomment here or add to your user-level
+# config to override.
+# cache: .dud/cache
 
 # To enable push and fetch, set 'remote' to a valid rclone remote path. For
 # example, if you have a remote called "s3" in your .dud/rclone.conf, and you
@@ -31,9 +35,8 @@ cache: %s
 #
 # For more info, see the rclone docs:
 # https://rclone.org/docs/#syntax-of-remote-paths
-`,
-				cacheDir,
-			)
+`
+
 			if err := ioutil.WriteFile(".dud/config.yaml", []byte(dudConf), 0o644); err != nil {
 				fatal(err)
 			}

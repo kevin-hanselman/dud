@@ -12,6 +12,7 @@ import (
 
 	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
@@ -154,31 +155,59 @@ func stopDebugging() error {
 	return nil
 }
 
-// This function also converts any paths passed in to be relative to the
+// This function also modifies any paths passed in to be relative to the
 // project root.
-// TODO: This function does a lot. Find a better abstraction (or group of
-// abstractions).
-func cdToProjectRootAndReadConfig(paths []string) (
-	rootDir string,
-	relPaths []string,
-	err error,
-) {
+func cdToProjectRoot(paths ...string) (rootDir string, err error) {
 	rootDir, err = getProjectRootDir()
 	if err != nil {
 		return
 	}
-	relPaths = make([]string, len(paths))
-	for i, path := range paths {
-		relPaths[i], err = pathAbsThenRel(rootDir, path)
+	for i := range paths {
+		paths[i], err = pathAbsThenRel(rootDir, paths[i])
 		if err != nil {
 			return
 		}
 	}
-	if err = os.Chdir(rootDir); err != nil {
+	err = os.Chdir(rootDir)
+	return
+}
+
+func readUserConfig() (path string, err error) {
+	userConfigDir := os.Getenv("XDG_CONFIG_HOME")
+	if userConfigDir == "" {
+		userConfigDir, err = homedir.Expand("~/.config")
+		if err != nil {
+			return
+		}
+	}
+	dir := filepath.Join(userConfigDir, "dud")
+	if err = os.MkdirAll(dir, 0o755); err != nil {
 		return
 	}
-	viper.SetConfigFile(filepath.Join(rootDir, ".dud", "config.yaml"))
-	err = viper.ReadInConfig()
+	path = filepath.Join(dir, "config.yaml")
+	viper.SetConfigFile(path)
+	err = viper.MergeInConfig()
+	return
+}
+
+func readProjectConfig(rootDir string) (path string, err error) {
+	path = filepath.Join(rootDir, ".dud", "config.yaml")
+	viper.SetConfigFile(path)
+	err = viper.MergeInConfig()
+	return
+}
+
+func readConfig(rootDir string) (err error) {
+	viper.SetDefault("cache", ".dud/cache")
+
+	if _, err := readUserConfig(); err != nil {
+		isNotExist := os.IsNotExist(err)
+		_, isViperNotFound := err.(viper.ConfigFileNotFoundError)
+		if !(isViperNotFound || isNotExist) {
+			return err
+		}
+	}
+	_, err = readProjectConfig(rootDir)
 	return
 }
 

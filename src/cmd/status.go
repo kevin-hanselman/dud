@@ -43,9 +43,12 @@ For each stage file passed in, status will print the current state of the
 stage. If no stage files are passed in, status will act on all stages in the
 index. By default, status will act recursively on all stages upstream of the
 given stage(s).`,
-	Run: func(cmd *cobra.Command, args []string) {
-		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+	Run: func(cmd *cobra.Command, paths []string) {
+		rootDir, err := cdToProjectRoot(paths...)
 		if err != nil {
+			fatal(err)
+		}
+		if err := readConfig(rootDir); err != nil {
 			fatal(err)
 		}
 
@@ -83,6 +86,7 @@ given stage(s).`,
 			if err := writeStageStatus(writer, path, stageStatus); err != nil {
 				fatal(err)
 			}
+			fmt.Fprintln(writer)
 		}
 		writer.Flush()
 	},

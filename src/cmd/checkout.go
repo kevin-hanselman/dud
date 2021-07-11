@@ -39,14 +39,17 @@ but copies of the cached artifacts can be checked out using --copy. If no
 stage files are passed in, checkout will act on all stages in the index. By
 default, checkout will act recursively on all stages upstream of the given
 stage(s).`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, paths []string) {
 		strat := strategy.LinkStrategy
 		if useCopyStrategy {
 			strat = strategy.CopyStrategy
 		}
 
-		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+		rootDir, err := cdToProjectRoot(paths...)
 		if err != nil {
+			fatal(err)
+		}
+		if err := readConfig(rootDir); err != nil {
 			fatal(err)
 		}
 

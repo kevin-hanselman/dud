@@ -30,14 +30,17 @@ For each stage file passed in, commit saves all output artifacts in the cache
 and records their checksums in the stage file. If no stage files are passed
 in, commit will act on all stages in the index. By default, commit will act
 recursively on all stages upstream of the given stage(s).`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, paths []string) {
 		strat := strategy.LinkStrategy
 		if useCopyStrategy {
 			strat = strategy.CopyStrategy
 		}
 
-		rootDir, paths, err := cdToProjectRootAndReadConfig(args)
+		rootDir, err := cdToProjectRoot(paths...)
 		if err != nil {
+			fatal(err)
+		}
+		if err := readConfig(rootDir); err != nil {
 			fatal(err)
 		}
 

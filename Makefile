@@ -163,6 +163,7 @@ integration-test: $(GOBIN)/dud
 deep-lint:
 	docker run \
 		--rm \
+		--pull always \
 		-v $(base_dir):/app \
 		-w /app \
 		golangci/golangci-lint:latest \
