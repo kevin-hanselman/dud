@@ -258,8 +258,9 @@ func checkoutWorker(
 			if !ok {
 				return nil
 			}
+			var err error
 			if childArt.IsDir {
-				if err := checkoutDir(
+				err = checkoutDir(
 					ctx,
 					ch,
 					workPath,
@@ -267,13 +268,12 @@ func checkoutWorker(
 					strat,
 					activeSharedWorkers,
 					progress,
-				); err != nil {
-					return err
-				}
+				)
 			} else {
-				if err := checkoutFile(ch, workPath, *childArt, strat, progress); err != nil {
-					return err
-				}
+				err = checkoutFile(ch, workPath, *childArt, strat, progress)
+			}
+			if err != nil {
+				return err
 			}
 		case <-ctx.Done():
 			return ctx.Err()
