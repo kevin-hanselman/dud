@@ -1,7 +1,7 @@
 package agglog
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 )
 
@@ -15,8 +15,8 @@ type AggLogger struct {
 // NewNullLogger returns an AggLogger that discards all logging requests.
 func NewNullLogger() *AggLogger {
 	return &AggLogger{
-		Error: log.New(ioutil.Discard, "", 0),
-		Info:  log.New(ioutil.Discard, "", 0),
-		Debug: log.New(ioutil.Discard, "", 0),
+		Error: log.New(io.Discard, "", 0),
+		Info:  log.New(io.Discard, "", 0),
+		Debug: log.New(io.Discard, "", 0),
 	}
 }

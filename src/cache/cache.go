@@ -3,7 +3,7 @@ package cache
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -125,7 +125,7 @@ func newProgress(prefix string) (progress *pb.ProgressBar) {
 		progress.SetMaxWidth(120).Set(pb.TimeRound, time.Millisecond)
 		progress.Set("prefix", fmt.Sprintf("%-20s", prefix))
 	} else {
-		progress.SetRefreshRate(time.Hour).SetWriter(ioutil.Discard)
+		progress.SetRefreshRate(time.Hour).SetWriter(io.Discard)
 	}
 	return
 }

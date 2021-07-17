@@ -22,6 +22,9 @@ trap 'rm -rf ~/.config/dud' EXIT
 dud init
 assert_cache_dir_equals '.dud/cache'
 
+dud config path | grep -q "^$(pwd)/.dud/config.yaml$"
+dud config path --user | grep -q "^$HOME/.config/dud/config.yaml$"
+
 dud config set --user cache 'user_cache'
 assert_cache_dir_equals 'user_cache'
 

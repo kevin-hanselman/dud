@@ -3,7 +3,6 @@ package cache
 import (
 	"encoding/json"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -162,7 +161,7 @@ func dirArtifactStatus(
 
 	// Second, get a directory listing and check for untracked files;
 	// quit early if any exist.
-	entries, err := ioutil.ReadDir(workPath)
+	entries, err := os.ReadDir(workPath)
 	if err != nil {
 		return status, manifest, err
 	}
