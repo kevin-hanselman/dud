@@ -14,15 +14,15 @@ import (
 
 // Status reports the status of an Artifact in the Cache.
 func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
-	outputStatus artifact.ArtifactWithStatus,
+	status artifact.Status,
 	err error,
 ) {
-	outputStatus.Artifact = art
 	if art.IsDir {
-		outputStatus.Status, _, err = dirArtifactStatus(ch, workspaceDir, art)
+		status, _, err = dirArtifactStatus(ch, workspaceDir, art)
 	} else {
-		outputStatus.Status, err = fileArtifactStatus(ch, workspaceDir, art)
+		status, err = fileArtifactStatus(ch, workspaceDir, art)
 	}
+	status.Artifact = art
 	err = errors.Wrapf(err, "status %s", art.Path)
 	return
 }
@@ -148,20 +148,20 @@ func dirArtifactStatus(
 		return status, manifest, err
 	}
 
-	// First, ensure all artifacts in the directoryManifest are up-to-date;
-	// quit early if any are not.
+	// First, ensure all artifacts in the directoryManifest are up-to-date
 	for _, art := range manifest.Contents {
 		artStatus, err := ch.Status(workPath, *art)
 		if err != nil {
 			return status, manifest, err
 		}
+		// status.ChildrenStatus[path] = &artStatus
+		// status.ContentsMatch = status.ContentsMatch && artStatus.ContentsMatch
 		if !artStatus.ContentsMatch {
 			return status, manifest, nil
 		}
 	}
 
-	// Second, get a directory listing and check for untracked files;
-	// quit early if any exist.
+	// Second, get a directory listing and check for untracked files
 	entries, err := os.ReadDir(workPath)
 	if err != nil {
 		return status, manifest, err

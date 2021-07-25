@@ -97,11 +97,9 @@ func TestFetchIntegration(t *testing.T) {
 
 	t.Run("fetch file artifact happy path", func(t *testing.T) {
 		defer resetMocks()
-		artStatus := artifact.ArtifactWithStatus{
-			Status: artifact.Status{
-				HasChecksum:         true,
-				WorkspaceFileStatus: fsutil.StatusRegularFile,
-			},
+		artStatus := artifact.Status{
+			HasChecksum:         true,
+			WorkspaceFileStatus: fsutil.StatusRegularFile,
 		}
 
 		dirs, art, err := testutil.CreateArtifactTestCase(artStatus)
@@ -142,9 +140,7 @@ func TestFetchIntegration(t *testing.T) {
 
 	t.Run("fetch file artifact noop if already in cache", func(t *testing.T) {
 		defer resetMocks()
-		artStatus := artifact.ArtifactWithStatus{
-			Status: artifact.Status{HasChecksum: true, ChecksumInCache: true},
-		}
+		artStatus := artifact.Status{HasChecksum: true, ChecksumInCache: true}
 
 		dirs, art, err := testutil.CreateArtifactTestCase(artStatus)
 		defer os.RemoveAll(dirs.CacheDir)
@@ -165,9 +161,7 @@ func TestFetchIntegration(t *testing.T) {
 
 	t.Run("fetch file artifact returns error if no checksum", func(t *testing.T) {
 		defer resetMocks()
-		artStatus := artifact.ArtifactWithStatus{
-			Status: artifact.Status{HasChecksum: false},
-		}
+		artStatus := artifact.Status{HasChecksum: false}
 
 		dirs, art, err := testutil.CreateArtifactTestCase(artStatus)
 		defer os.RemoveAll(dirs.CacheDir)

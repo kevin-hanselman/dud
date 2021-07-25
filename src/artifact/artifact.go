@@ -65,9 +65,8 @@ func (a *Artifact) UnmarshalJSON(b []byte) error {
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.
 type Status struct {
+	Artifact
 	// WorkspaceFileStatus represents the status of Artifact's file in the workspace.
-	// TODO: We need some way to identify a "bad" workspace file status.
-	// Replace and/or augment this with a boolean?
 	WorkspaceFileStatus fsutil.FileStatus
 	// HasChecksum is true if the Artifact has a valid Checksum field, false otherwise.
 	HasChecksum bool
@@ -83,13 +82,7 @@ type Status struct {
 	ChildrenStatus map[string]*Status
 }
 
-// ArtifactWithStatus is an Artifact with a matched Status.
-type ArtifactWithStatus struct {
-	Artifact
-	Status
-}
-
-func (stat ArtifactWithStatus) String() string {
+func (stat Status) String() string {
 	isDir := stat.WorkspaceFileStatus == fsutil.StatusDirectory
 	isAbsent := stat.WorkspaceFileStatus == fsutil.StatusAbsent
 	if (stat.IsDir != isDir) && !isAbsent {

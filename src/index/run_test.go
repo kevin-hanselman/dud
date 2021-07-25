@@ -28,18 +28,22 @@ func assertCorrectCommand(stg stage.Stage, commands map[string]*exec.Cmd, t *tes
 }
 
 func TestRun(t *testing.T) {
-	upToDate := artifact.Status{
-		WorkspaceFileStatus: fsutil.StatusLink,
-		HasChecksum:         true,
-		ChecksumInCache:     true,
-		ContentsMatch:       true,
+	upToDate := func() artifact.Status {
+		return artifact.Status{
+			WorkspaceFileStatus: fsutil.StatusLink,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
 	}
 
-	outOfDate := artifact.Status{
-		WorkspaceFileStatus: fsutil.StatusRegularFile,
-		HasChecksum:         true,
-		ChecksumInCache:     false,
-		ContentsMatch:       false,
+	outOfDate := func() artifact.Status {
+		return artifact.Status{
+			WorkspaceFileStatus: fsutil.StatusRegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     false,
+			ContentsMatch:       false,
+		}
 	}
 
 	rootDir := "project/root"
@@ -80,7 +84,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -115,7 +119,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -188,7 +192,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -235,8 +239,8 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
-		expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -284,7 +288,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate())
 		// Don't expect downstream Stage status to be checked, as the upstream being
 		// out-of-date will force the run.
 
@@ -336,8 +340,8 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
-		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -395,8 +399,8 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&inA, &mockCache, rootDir, outOfDate)
-		expectStageStatusCalled(&inB, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&inA, &mockCache, rootDir, outOfDate())
+		expectStageStatusCalled(&inB, &mockCache, rootDir, upToDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -467,7 +471,7 @@ func TestRun(t *testing.T) {
 		// Stage D is the only Stage that could possibly be ran successfully.
 		// We mock it to prevent a panic, but we don't enforce that it must be
 		// called (due to random order).
-		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -493,14 +497,12 @@ func TestRun(t *testing.T) {
 
 	t.Run("run when any orphan input is out-of-date", func(t *testing.T) {
 		defer resetRunCommandMock()
-		bish := artifact.ArtifactWithStatus{
-			Artifact: artifact.Artifact{Path: "bish.bin"},
-			Status:   upToDate,
-		}
-		bash := artifact.ArtifactWithStatus{
-			Artifact: artifact.Artifact{Path: "bash.bin"},
-			Status:   outOfDate,
-		}
+		bish := upToDate()
+		bish.Artifact = artifact.Artifact{Path: "bish.bin"}
+
+		bash := outOfDate()
+		bash.Artifact = artifact.Artifact{Path: "bash.bin"}
+
 		stg := stage.Stage{
 			Command: "echo 'generating bosh.bin'",
 			Inputs: map[string]*artifact.Artifact{
@@ -566,7 +568,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate)
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -616,7 +618,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)

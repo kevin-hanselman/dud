@@ -19,11 +19,9 @@ func expectStageStatusCalled(
 ) stage.Status {
 	stageStatus := stage.NewStatus()
 	for artPath, art := range stg.Outputs {
-		stageStatus.ArtifactStatus[artPath] = artifact.ArtifactWithStatus{
-			Artifact: *art,
-			Status:   artStatus,
-		}
-		mockCache.On("Status", rootDir, *art).Return(stageStatus.ArtifactStatus[artPath], nil).Once()
+		artStatus.Artifact = *art
+		stageStatus.ArtifactStatus[artPath] = artStatus
+		mockCache.On("Status", rootDir, *art).Return(artStatus, nil).Once()
 	}
 	return stageStatus
 }
@@ -312,10 +310,9 @@ func TestStatus(t *testing.T) {
 
 		expectedStageStatus := expectStageStatusCalled(&stg, &mockCache, rootDir, upToDate)
 
-		orphanArtStatus := artifact.ArtifactWithStatus{
-			Artifact: orphanArt,
-			Status:   upToDate,
-		}
+		orphanArtStatus := upToDate
+		orphanArtStatus.Artifact = orphanArt
+
 		expectedStageStatus.ArtifactStatus["bish.bin"] = orphanArtStatus
 		expectedStatus := Status{"foo.yaml": expectedStageStatus}
 

@@ -54,7 +54,7 @@ type Cache interface {
 		s strategy.CheckoutStrategy,
 		p *pb.ProgressBar,
 	) error
-	Status(workDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
+	Status(workDir string, art artifact.Artifact) (artifact.Status, error)
 	Fetch(workDir, remoteSrc string, art artifact.Artifact) error
 	Push(workDir, remoteDst string, art artifact.Artifact) error
 }

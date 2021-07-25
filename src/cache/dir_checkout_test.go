@@ -57,13 +57,14 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 		}
 
 		expectedStatus := artifact.Status{
+			Artifact:            art,
 			WorkspaceFileStatus: fsutil.StatusDirectory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
 			ContentsMatch:       true,
 		}
 
-		if diff := cmp.Diff(expectedStatus, actualStatus.Status); diff != "" {
+		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
 		}
 	})

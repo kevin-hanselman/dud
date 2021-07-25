@@ -41,7 +41,7 @@ func TestCreateArtifactTestCaseIntegration(t *testing.T) {
 	}
 }
 
-func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t *testing.T) {
+func testCreateArtifactTestCaseIntegration(status artifact.Status, t *testing.T) {
 	dirs, art, err := CreateArtifactTestCase(status)
 	defer os.RemoveAll(dirs.WorkDir)
 	defer os.RemoveAll(dirs.CacheDir)
@@ -64,12 +64,12 @@ func testCreateArtifactTestCaseIntegration(status artifact.ArtifactWithStatus, t
 		)
 	}
 
-	// verify output Artifact carries over important fields from ArtifactWithStatus
+	// verify output Artifact carries over important fields from Status
 	if status.IsDir != art.IsDir {
-		t.Fatalf("Output Artifact.IsDir (%v) != ArtWithStatus.IsDir (%v)", art.IsDir, status.IsDir)
+		t.Fatalf("Output Artifact.IsDir (%v) != Status.IsDir (%v)", art.IsDir, status.IsDir)
 	}
 	if status.SkipCache != art.SkipCache {
-		t.Fatalf("Output Artifact.SkipCache (%v) != ArtWithStatus.SkipCache (%v)", art.SkipCache, status.SkipCache)
+		t.Fatalf("Output Artifact.SkipCache (%v) != Status.SkipCache (%v)", art.SkipCache, status.SkipCache)
 	}
 
 	// verify workPath existences matches status.WorkspaceFileStatus

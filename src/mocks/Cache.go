@@ -75,14 +75,14 @@ func (_m *Cache) Push(workDir string, remoteDst string, art artifact.Artifact) e
 }
 
 // Status provides a mock function with given fields: workDir, art
-func (_m *Cache) Status(workDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error) {
+func (_m *Cache) Status(workDir string, art artifact.Artifact) (artifact.Status, error) {
 	ret := _m.Called(workDir, art)
 
-	var r0 artifact.ArtifactWithStatus
-	if rf, ok := ret.Get(0).(func(string, artifact.Artifact) artifact.ArtifactWithStatus); ok {
+	var r0 artifact.Status
+	if rf, ok := ret.Get(0).(func(string, artifact.Artifact) artifact.Status); ok {
 		r0 = rf(workDir, art)
 	} else {
-		r0 = ret.Get(0).(artifact.ArtifactWithStatus)
+		r0 = ret.Get(0).(artifact.Status)
 	}
 
 	var r1 error

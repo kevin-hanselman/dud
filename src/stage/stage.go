@@ -47,13 +47,13 @@ type Status struct {
 	// ChecksumMatches is true if the checksum of the Stage's definition
 	// matches its Checksum field.
 	ChecksumMatches bool
-	ArtifactStatus  map[string]artifact.ArtifactWithStatus
+	ArtifactStatus  map[string]artifact.Status
 }
 
 // NewStatus initializes a new Status object.
 func NewStatus() Status {
 	s := Status{}
-	s.ArtifactStatus = make(map[string]artifact.ArtifactWithStatus)
+	s.ArtifactStatus = make(map[string]artifact.Status)
 	return s
 }
 
