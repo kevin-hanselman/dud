@@ -60,7 +60,7 @@ func TestFromFile(t *testing.T) {
 		}
 	})
 
-	t.Run("fail if artifact in both deps and outputs", func(t *testing.T) {
+	t.Run("fail if artifact in both inputs and outputs", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
 			Inputs: map[string]*artifact.Artifact{
@@ -84,7 +84,7 @@ func TestFromFile(t *testing.T) {
 		}
 	})
 
-	t.Run("fail if output dir artifact would contain a dep", func(t *testing.T) {
+	t.Run("fail if output dir artifact would contain a input", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
 			Inputs: map[string]*artifact.Artifact{
@@ -108,7 +108,7 @@ func TestFromFile(t *testing.T) {
 		}
 	})
 
-	t.Run("fail if dep dir artifact would contain a dir output", func(t *testing.T) {
+	t.Run("fail if input dir artifact would contain a dir output", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
 			Inputs: map[string]*artifact.Artifact{
@@ -157,7 +157,7 @@ func TestFromFile(t *testing.T) {
 		}
 	})
 
-	t.Run("no deps and no outputs causes error", func(t *testing.T) {
+	t.Run("no inputs and no outputs causes error", func(t *testing.T) {
 		defer resetFromYamlFileMock()
 		stageFile := Stage{
 			WorkingDir: "workDir",

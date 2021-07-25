@@ -78,6 +78,9 @@ type Status struct {
 	// are identical. For links, true means that the workspace link points to
 	// the correct cache file.
 	ContentsMatch bool
+	// ChildrenStatus holds the status of any child artifacts, mapped to their
+	// respective file paths.
+	ChildrenStatus map[string]*Status
 }
 
 // ArtifactWithStatus is an Artifact with a matched Status.
@@ -104,7 +107,7 @@ func (stat ArtifactWithStatus) String() string {
 			}
 			return "missing from cache and workspace"
 		}
-		return "unknown artifact"
+		return "missing and not committed"
 
 	case fsutil.StatusRegularFile, fsutil.StatusDirectory:
 		var out strings.Builder
@@ -119,7 +122,7 @@ func (stat ArtifactWithStatus) String() string {
 				out.WriteString("missing from cache")
 			}
 		} else {
-			out.WriteString("uncommitted")
+			out.WriteString("not committed")
 		}
 		if stat.SkipCache {
 			out.WriteString(" (not cached)")

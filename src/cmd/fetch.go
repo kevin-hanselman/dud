@@ -16,7 +16,7 @@ func init() {
 		"single-stage",
 		"s",
 		false,
-		"don't recursively operate on dependencies",
+		"don't operate recursively over Stage inputs",
 	)
 }
 

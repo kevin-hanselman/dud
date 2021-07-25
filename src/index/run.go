@@ -39,11 +39,9 @@ func (idx Index) Run(
 	}
 
 	hasCommand := stg.Command != ""
-	hasDeps := len(stg.Inputs) > 0
-	hasChecksum := stg.Checksum != ""
 	checksumUpToDate := false
 
-	if hasChecksum {
+	if stg.Checksum != "" {
 		realChecksum, err := stg.CalculateChecksum()
 		if err != nil {
 			return err
@@ -52,7 +50,7 @@ func (idx Index) Run(
 	}
 
 	// Run if we have a command and no inputs.
-	doRun := hasCommand && !hasDeps
+	doRun := hasCommand && (len(stg.Inputs) == 0)
 
 	// Run if our checksum is stale.
 	doRun = doRun || !checksumUpToDate

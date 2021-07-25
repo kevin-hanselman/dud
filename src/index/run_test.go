@@ -137,7 +137,7 @@ func TestRun(t *testing.T) {
 		}
 	})
 
-	t.Run("stage with command and no deps always runs (outputs up-to-date)", func(t *testing.T) {
+	t.Run("stage with command and no inputs always runs (outputs up-to-date)", func(t *testing.T) {
 		defer resetRunCommandMock()
 		stgA := stage.Stage{
 			Command:    "echo 'Running Stage A'",
@@ -173,7 +173,7 @@ func TestRun(t *testing.T) {
 		}
 	})
 
-	t.Run("stage with command and no deps always runs (outputs out-of-date)", func(t *testing.T) {
+	t.Run("stage with command and no inputs always runs (outputs out-of-date)", func(t *testing.T) {
 		defer resetRunCommandMock()
 		stgA := stage.Stage{
 			Command:    "echo 'Running Stage A'",
@@ -362,20 +362,20 @@ func TestRun(t *testing.T) {
 		}
 	})
 
-	t.Run("ensure all deps are checked", func(t *testing.T) {
+	t.Run("ensure all inputs are checked", func(t *testing.T) {
 		defer resetRunCommandMock()
-		depA := stage.Stage{
+		inA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"bish.bin": {Path: "bish.bin"},
 			},
 		}
-		updateChecksum(&depA, t)
-		depB := stage.Stage{
+		updateChecksum(&inA, t)
+		inB := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"bash.bin": {Path: "bash.bin"},
 			},
 		}
-		updateChecksum(&depB, t)
+		updateChecksum(&inB, t)
 		downstream := stage.Stage{
 			Command: "echo 'generating bosh.bin'",
 			Inputs: map[string]*artifact.Artifact{
@@ -388,15 +388,15 @@ func TestRun(t *testing.T) {
 		}
 		updateChecksum(&downstream, t)
 		idx := Index{
-			"bish.yaml": &depA,
-			"bash.yaml": &depB,
+			"bish.yaml": &inA,
+			"bash.yaml": &inB,
 			"bosh.yaml": &downstream,
 		}
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&depA, &mockCache, rootDir, outOfDate)
-		expectStageStatusCalled(&depB, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&inA, &mockCache, rootDir, outOfDate)
+		expectStageStatusCalled(&inB, &mockCache, rootDir, upToDate)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -491,7 +491,7 @@ func TestRun(t *testing.T) {
 		}
 	})
 
-	t.Run("run when any orphan dep is out-of-date", func(t *testing.T) {
+	t.Run("run when any orphan input is out-of-date", func(t *testing.T) {
 		defer resetRunCommandMock()
 		bish := artifact.ArtifactWithStatus{
 			Artifact: artifact.Artifact{Path: "bish.bin"},

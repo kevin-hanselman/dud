@@ -133,12 +133,13 @@ func dirArtifactStatus(
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 
+	// status.ChildrenStatus = make(map[string]*artifact.Status)
+
 	if !(status.HasChecksum && status.ChecksumInCache) {
 		return status, manifest, nil
 	}
 
 	if status.WorkspaceFileStatus != fsutil.StatusDirectory {
-		// TODO: Should this be an error?
 		return status, manifest, nil
 	}
 

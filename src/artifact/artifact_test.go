@@ -132,7 +132,7 @@ func TestArtifactStatusString(t *testing.T) {
 			},
 		}
 
-		want := "unknown artifact"
+		want := "missing and not committed"
 
 		got := aws.String()
 		if got != want {
