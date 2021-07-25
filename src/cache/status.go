@@ -27,10 +27,11 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 	return
 }
 
-// quickStatus populates all artifact.Status fields except for ContentsMatch.
-// However, this function will set ContentsMatch if the workspace file is
-// a link and the other status booleans are true; checking to see if a link
-// points to the cache is, as this function suggests, quick.
+// quickStatus populates all artifact.Status fields except for ContentsMatch
+// and ChildrenStatus. However, this function will set ContentsMatch if the
+// Artifact is a file, the workspace file is a link, and the other status
+// booleans are true. Checking to see if a link points to the cache is, as this
+// function suggests, quick.
 var quickStatus = func(
 	ch LocalCache,
 	workspaceDir string,
@@ -133,8 +134,6 @@ func dirArtifactStatus(
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 
-	// status.ChildrenStatus = make(map[string]*artifact.Status)
-
 	if !(status.HasChecksum && status.ChecksumInCache) {
 		return status, manifest, nil
 	}
@@ -148,42 +147,46 @@ func dirArtifactStatus(
 		return status, manifest, err
 	}
 
-	// First, ensure all artifacts in the directoryManifest are up-to-date
-	for _, art := range manifest.Contents {
-		artStatus, err := ch.Status(workPath, *art)
+	// Any child Artifact that's out-of-date or not committed will flip this
+	// value.
+	status.ContentsMatch = true
+	status.ChildrenStatus = make(map[string]*artifact.Status)
+
+	// First, ensure all artifacts in the directoryManifest are up-to-date.
+	for path, art := range manifest.Contents {
+		childStatus, err := ch.Status(workPath, *art)
 		if err != nil {
 			return status, manifest, err
 		}
-		// status.ChildrenStatus[path] = &artStatus
-		// status.ContentsMatch = status.ContentsMatch && artStatus.ContentsMatch
-		if !artStatus.ContentsMatch {
-			return status, manifest, nil
-		}
+		status.ChildrenStatus[path] = &childStatus
+		status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
 	}
 
-	// Second, get a directory listing and check for untracked files
+	// Second, get a directory listing and check for untracked files.
 	entries, err := os.ReadDir(workPath)
 	if err != nil {
 		return status, manifest, err
 	}
 	for _, entry := range entries {
-		// Only check entries that don't appear in the manifest.
-		if _, ok := manifest.Contents[entry.Name()]; ok {
+		newArt := artifact.Artifact{
+			Path:  entry.Name(),
+			IsDir: entry.IsDir(),
+		}
+		// We've already checked all entries in the manifest.
+		if _, ok := manifest.Contents[newArt.Path]; ok {
 			continue
 		}
-		if entry.IsDir() {
-			// If the entry is a (untracked) directory, this is only
-			// a mismatch if the artifact is recursive.
-			if !art.DisableRecursion {
-				return status, manifest, nil
-			}
-		} else {
-			// If the entry is a (untracked) file, this is always
-			// a mismatch.
-			return status, manifest, nil
+		// Ignore sub-directories if recursion is disabled.
+		if newArt.IsDir && art.DisableRecursion {
+			continue
 		}
+		childStatus, err := ch.Status(workPath, newArt)
+		if err != nil {
+			return status, manifest, err
+		}
+		status.ChildrenStatus[newArt.Path] = &childStatus
+		status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
 	}
-	status.ContentsMatch = true
 	return status, manifest, nil
 }
 

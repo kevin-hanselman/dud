@@ -20,7 +20,8 @@ type Artifact struct {
 	Path string `yaml:",omitempty" json:"path,omitempty"`
 	// If IsDir is true then the Artifact is a directory.
 	IsDir bool `yaml:"is-dir,omitempty" json:"is-dir,omitempty"`
-	// If DisableRecursion is true then the Artifact does not recurse sub-directories
+	// If DisableRecursion is true then the Artifact does not recurse
+	// sub-directories.
 	DisableRecursion bool `yaml:"disable-recursion,omitempty" json:"disable-recursion,omitempty"`
 	// If SkipCache is true then the Artifact is not stored in the Cache. When
 	// the Artifact is committed, its checksum is updated, but the Artifact is
