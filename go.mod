@@ -20,7 +20,7 @@ require (
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/zeebo/blake3 v0.1.1
+	github.com/zeebo/blake3 v0.1.2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
 	golang.org/x/text v0.3.6 // indirect
