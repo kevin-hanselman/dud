@@ -3,6 +3,7 @@ package artifact
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -70,6 +71,7 @@ type Status struct {
 	// WorkspaceFileStatus represents the status of Artifact's file in the workspace.
 	WorkspaceFileStatus fsutil.FileStatus
 	// HasChecksum is true if the Artifact has a valid Checksum field, false otherwise.
+	// TODO: Might be able to get rid of this if we have the Artifact in question.
 	HasChecksum bool
 	// ChecksumInCache is true if a cache entry exists for the given checksum, false otherwise.
 	ChecksumInCache bool
@@ -81,6 +83,30 @@ type Status struct {
 	// ChildrenStatus holds the status of any child artifacts, mapped to their
 	// respective file paths.
 	ChildrenStatus map[string]*Status
+}
+
+func (stat Status) childStatusCounts(out map[string]int) {
+	for _, childStatus := range stat.ChildrenStatus {
+		if childStatus.IsDir {
+			childStatus.childStatusCounts(out)
+		} else {
+			out[childStatus.String()]++
+		}
+	}
+}
+
+func sortByValue(counts map[string]int) []string {
+	keys := make([]string, len(counts))
+	i := 0
+	for key := range counts {
+		keys[i] = key
+		i++
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		// Sort into descending order.
+		return counts[keys[i]] > counts[keys[j]]
+	})
+	return keys
 }
 
 func (stat Status) String() string {
@@ -103,7 +129,7 @@ func (stat Status) String() string {
 		}
 		return "missing and not committed"
 
-	case fsutil.StatusRegularFile, fsutil.StatusDirectory:
+	case fsutil.StatusRegularFile:
 		var out strings.Builder
 		if stat.HasChecksum {
 			if stat.ChecksumInCache || stat.SkipCache {
@@ -138,5 +164,20 @@ func (stat Status) String() string {
 	case fsutil.StatusOther:
 		return "invalid file type"
 	}
-	panic("exited switch unexpectedly")
+
+	if stat.IsDir {
+		// len(nil map) returns 0
+		if len(stat.ChildrenStatus) == 0 {
+			return "empty directory"
+		}
+		counts := make(map[string]int)
+		stat.childStatusCounts(counts)
+		countStrings := make([]string, len(counts))
+		for i, status := range sortByValue(counts) {
+			countStrings[i] = fmt.Sprintf("x%d %s", counts[status], status)
+		}
+		return strings.Join(countStrings, ", ")
+	}
+
+	panic("unhandled case in artifact.Status.String()")
 }

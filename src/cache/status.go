@@ -134,6 +134,7 @@ func dirArtifactStatus(
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 
+	// TODO: Don't exit early here. We want to get to the second loop.
 	if !(status.HasChecksum && status.ChecksumInCache) {
 		return status, manifest, nil
 	}

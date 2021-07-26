@@ -92,9 +92,69 @@ func TestArtifactStatusString(t *testing.T) {
 		}
 	})
 
+	t.Run("up-to-date recursive directory", func(t *testing.T) {
+		upToDate := Status{
+			WorkspaceFileStatus: fsutil.StatusRegularFile,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
+		status := Status{
+			Artifact:            Artifact{IsDir: true},
+			WorkspaceFileStatus: fsutil.StatusDirectory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+			ChildrenStatus: map[string]*Status{
+				"a": &upToDate,
+				"b": &upToDate,
+				"c": {
+					Artifact:            Artifact{IsDir: true},
+					WorkspaceFileStatus: fsutil.StatusDirectory,
+					HasChecksum:         true,
+					ChecksumInCache:     true,
+					ContentsMatch:       false,
+					ChildrenStatus: map[string]*Status{
+						"d": &upToDate,
+						"e": {
+							WorkspaceFileStatus: fsutil.StatusRegularFile,
+							HasChecksum:         false,
+							ChecksumInCache:     false,
+							ContentsMatch:       false,
+						},
+					},
+				},
+			},
+		}
+
+		want := "x3 up-to-date, x1 not committed"
+
+		got := status.String()
+		if got != want {
+			t.Fatalf("Status.String() got %#v, want %#v", got, want)
+		}
+	})
+
+	t.Run("empty directory", func(t *testing.T) {
+		status := Status{
+			Artifact:            Artifact{IsDir: true},
+			WorkspaceFileStatus: fsutil.StatusDirectory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+		}
+
+		want := "empty directory"
+
+		got := status.String()
+		if got != want {
+			t.Fatalf("Status.String() got %#v, want %#v", got, want)
+		}
+	})
+
 	t.Run("directory but IsDir false", func(t *testing.T) {
 		status := Status{
-			Artifact:            Artifact{SkipCache: false, IsDir: false},
+			Artifact:            Artifact{IsDir: false},
 			WorkspaceFileStatus: fsutil.StatusDirectory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
