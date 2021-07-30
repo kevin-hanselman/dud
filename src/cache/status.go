@@ -27,6 +27,33 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
 	return
 }
 
+func checksumStatus(ch LocalCache, art artifact.Artifact) (
+	status artifact.Status,
+	cachePath string,
+	cacheFileInfo fs.FileInfo,
+	err error,
+) {
+	cachePath, err = ch.PathForChecksum(art.Checksum)
+	absCachePath := filepath.Join(ch.dir, cachePath)
+
+	if _, ok := err.(InvalidChecksumError); ok {
+		err = nil
+		status.HasChecksum = false
+	} else if err != nil {
+		return
+	} else {
+		status.HasChecksum = true
+		cacheFileInfo, err = os.Stat(absCachePath)
+		if err == nil {
+			status.ChecksumInCache = true
+		} else if os.IsNotExist(err) {
+			err = nil
+			status.ChecksumInCache = false
+		}
+	}
+	return
+}
+
 // quickStatus populates all artifact.Status fields except for ContentsMatch
 // and ChildrenStatus. However, this function will set ContentsMatch if the
 // Artifact is a file, the workspace file is a link, and the other status
@@ -41,25 +68,12 @@ var quickStatus = func(
 	// to the cache.
 	var cacheFileInfo, workFileInfo fs.FileInfo
 
-	workPath = filepath.Join(workspaceDir, art.Path)
-	cachePath, err = ch.PathForChecksum(art.Checksum)
-	absCachePath := filepath.Join(ch.dir, cachePath)
-
-	if _, ok := err.(InvalidChecksumError); ok {
-		status.HasChecksum = false
-	} else if err != nil {
+	status, cachePath, cacheFileInfo, err = checksumStatus(ch, art)
+	if err != nil {
 		return
-	} else {
-		status.HasChecksum = true
-		cacheFileInfo, err = os.Stat(absCachePath)
-		if err == nil {
-			status.ChecksumInCache = true
-		} else if os.IsNotExist(err) {
-			status.ChecksumInCache = false
-		} else {
-			return status, cachePath, workPath, err
-		}
 	}
+
+	workPath = filepath.Join(workspaceDir, art.Path)
 	status.WorkspaceFileStatus, err = fsutil.FileStatusFromPath(workPath)
 	if err != nil {
 		return
@@ -192,11 +206,12 @@ func dirArtifactStatus(
 }
 
 func readDirManifest(path string) (man directoryManifest, err error) {
-	manifestFile, err := os.Open(path)
+	var f *os.File
+	f, err = os.Open(path)
 	if err != nil {
 		return
 	}
-	defer manifestFile.Close()
-	err = json.NewDecoder(manifestFile).Decode(&man)
+	defer f.Close()
+	err = json.NewDecoder(f).Decode(&man)
 	return
 }

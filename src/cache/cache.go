@@ -55,7 +55,9 @@ type Cache interface {
 		p *pb.ProgressBar,
 	) error
 	Status(workDir string, art artifact.Artifact) (artifact.Status, error)
-	Fetch(workDir, remoteSrc string, art artifact.Artifact) error
+	Fetch(remoteSrc string, arts ...artifact.Artifact) error
+	// TODO: Refactor Push to take multiple Artifacts (like Fetch) to reduce
+	// the total number of underlying rclone calls.
 	Push(workDir, remoteDst string, art artifact.Artifact) error
 }
 

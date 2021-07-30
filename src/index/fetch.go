@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kevin-hanselman/dud/src/agglog"
+	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/pkg/errors"
 )
@@ -53,10 +54,15 @@ func (idx Index) Fetch(
 		}
 	}
 	logger.Info.Printf("fetching stage %s\n", stagePath)
+	// Call Fetch on all Outputs at once to minimize the number of rclone calls.
+	arts := make([]artifact.Artifact, len(stg.Outputs))
+	i := 0
 	for _, art := range stg.Outputs {
-		if err := ch.Fetch(rootDir, remote, *art); err != nil {
-			return err
-		}
+		arts[i] = *art
+		i++
+	}
+	if err := ch.Fetch(remote, arts...); err != nil {
+		return err
 	}
 	fetched[stagePath] = true
 	delete(inProgress, stagePath)
