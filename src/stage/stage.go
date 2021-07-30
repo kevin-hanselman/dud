@@ -181,10 +181,7 @@ func (stg Stage) Validate() error {
 		if filepath.IsAbs(artPath) {
 			return fmt.Errorf("artifact %s is an absolute path", artPath)
 		}
-		parentArt, ok, err := FindDirArtifactOwnerForPath(artPath, allArtifacts)
-		if err != nil {
-			return err
-		}
+		parentArt, ok := FindDirArtifactOwnerForPath(artPath, allArtifacts)
 		if ok {
 			return fmt.Errorf(
 				"artifact %s conflicts with artifact %s",
@@ -245,12 +242,7 @@ func (stg Stage) CreateCommand() *exec.Cmd {
 func FindDirArtifactOwnerForPath(
 	relPath string,
 	artifacts map[string]*artifact.Artifact,
-) (
-	*artifact.Artifact,
-	bool,
-	error,
-) {
-	var owner *artifact.Artifact
+) (*artifact.Artifact, bool) {
 	// Search for an Artifact whose Path is any directory in the input's
 	// lineage. For example: given "bish/bash/bosh/file.txt", look for "bish",
 	// then "bish/bash", then "bish/bash/bosh".
@@ -264,8 +256,8 @@ func FindDirArtifactOwnerForPath(
 		// in question is only the owner if it is recursive, or if we've
 		// reached the immediate parent directory of the input.
 		if ok && (!owner.DisableRecursion || dir == fullDir) {
-			return owner, true, nil
+			return owner, true
 		}
 	}
-	return owner, false, nil
+	return nil, false
 }

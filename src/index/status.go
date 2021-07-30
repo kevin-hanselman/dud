@@ -46,10 +46,8 @@ func (idx Index) Status(
 	}
 
 	for artPath, art := range stg.Inputs {
-		ownerPath, _, err := idx.findOwner(artPath)
-		if err != nil {
-			return err
-		}
+		var err error
+		ownerPath, _ := idx.findOwner(artPath)
 		if ownerPath == "" {
 			stageStatus.ArtifactStatus[artPath], err = ch.Status(rootDir, *art)
 			if err != nil {

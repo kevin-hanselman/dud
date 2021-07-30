@@ -34,10 +34,7 @@ func (idx Index) Push(
 	}
 
 	for artPath := range stg.Inputs {
-		ownerPath, _, err := idx.findOwner(artPath)
-		if err != nil {
-			return err
-		}
+		ownerPath, _ := idx.findOwner(artPath)
 		if ownerPath == "" {
 			continue
 		} else if recursive {

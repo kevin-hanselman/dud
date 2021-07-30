@@ -56,10 +56,7 @@ func (idx Index) Run(
 	doRun = doRun || !checksumUpToDate
 
 	for artPath, art := range stg.Inputs {
-		ownerPath, _, err := idx.findOwner(artPath)
-		if err != nil {
-			return err
-		}
+		ownerPath, _ := idx.findOwner(artPath)
 		if ownerPath == "" {
 			artStatus, err := ch.Status(rootDir, *art)
 			if err != nil {

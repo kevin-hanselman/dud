@@ -37,10 +37,7 @@ func (idx Index) Commit(
 	}
 
 	for artPath, art := range stg.Inputs {
-		ownerPath, upstreamArt, err := idx.findOwner(artPath)
-		if err != nil {
-			return err
-		}
+		ownerPath, upstreamArt := idx.findOwner(artPath)
 		if ownerPath == "" {
 			// Always skip the cache for inputs. This is also enforced in
 			// stage.FromFile, but most tests obviously don't use FromFile to
