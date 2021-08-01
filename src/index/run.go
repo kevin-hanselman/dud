@@ -58,7 +58,7 @@ func (idx Index) Run(
 	for artPath, art := range stg.Inputs {
 		ownerPath, _ := idx.findOwner(artPath)
 		if ownerPath == "" {
-			artStatus, err := ch.Status(rootDir, *art)
+			artStatus, err := ch.Status(rootDir, *art, true)
 			if err != nil {
 				return err
 			}
@@ -72,7 +72,7 @@ func (idx Index) Run(
 	}
 	if !doRun {
 		for _, art := range stg.Outputs {
-			artStatus, err := ch.Status(rootDir, *art)
+			artStatus, err := ch.Status(rootDir, *art, true)
 			if err != nil {
 				return err
 			}

@@ -217,7 +217,7 @@ func commitDirArtifact(
 	canRenameFile bool,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
-	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art)
+	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art, true)
 	if err != nil {
 		return err
 	}

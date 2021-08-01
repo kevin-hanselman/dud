@@ -51,7 +51,7 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 			t.Fatalf("progress.Current() = %v, want 10", progress.Current())
 		}
 
-		actualStatus, err := cache.Status(dirs.WorkDir, art)
+		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
 		if err != nil {
 			t.Fatal(err)
 		}

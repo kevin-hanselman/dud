@@ -54,7 +54,7 @@ type Cache interface {
 		s strategy.CheckoutStrategy,
 		p *pb.ProgressBar,
 	) error
-	Status(workDir string, art artifact.Artifact) (artifact.Status, error)
+	Status(workDir string, art artifact.Artifact, shortCircuit bool) (artifact.Status, error)
 	Fetch(remoteSrc string, arts ...artifact.Artifact) error
 	// TODO: Refactor Push to take multiple Artifacts (like Fetch) to reduce
 	// the total number of underlying rclone calls.

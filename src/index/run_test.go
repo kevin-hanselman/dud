@@ -84,7 +84,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -119,7 +119,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate())
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -192,7 +192,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate())
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -239,8 +239,8 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
-		expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate())
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate(), true)
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -288,7 +288,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate())
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate(), true)
 		// Don't expect downstream Stage status to be checked, as the upstream being
 		// out-of-date will force the run.
 
@@ -340,8 +340,8 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
-		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate())
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate(), true)
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -399,8 +399,8 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&inA, &mockCache, rootDir, outOfDate())
-		expectStageStatusCalled(&inB, &mockCache, rootDir, upToDate())
+		expectStageStatusCalled(&inA, &mockCache, rootDir, outOfDate(), true)
+		expectStageStatusCalled(&inB, &mockCache, rootDir, upToDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -471,7 +471,7 @@ func TestRun(t *testing.T) {
 		// Stage D is the only Stage that could possibly be ran successfully.
 		// We mock it to prevent a panic, but we don't enforce that it must be
 		// called (due to random order).
-		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate())
+		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -519,8 +519,8 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		mockCache.On("Status", rootDir, bish.Artifact).Return(bish, nil).Once()
-		mockCache.On("Status", rootDir, bash.Artifact).Return(bash, nil).Once()
+		mockCache.On("Status", rootDir, bish.Artifact, true).Return(bish, nil).Once()
+		mockCache.On("Status", rootDir, bash.Artifact, true).Return(bash, nil).Once()
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -568,7 +568,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate())
+		expectStageStatusCalled(&stgB, &mockCache, rootDir, outOfDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -618,7 +618,7 @@ func TestRun(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate())
+		expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)

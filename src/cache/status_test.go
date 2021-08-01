@@ -35,7 +35,7 @@ func testStatusIntegration(statusWant artifact.Status, t *testing.T) {
 		t.Fatal(err)
 	}
 
-	statusGot, err := cache.Status(dirs.WorkDir, art)
+	statusGot, err := cache.Status(dirs.WorkDir, art, false)
 	if err != nil {
 		t.Fatal(err)
 	}

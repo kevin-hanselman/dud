@@ -13,12 +13,12 @@ import (
 )
 
 // Status reports the status of an Artifact in the Cache.
-func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact) (
+func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact, shortCircuit bool) (
 	status artifact.Status,
 	err error,
 ) {
 	if art.IsDir {
-		status, _, err = dirArtifactStatus(ch, workspaceDir, art)
+		status, _, err = dirArtifactStatus(ch, workspaceDir, art, shortCircuit)
 	} else {
 		status, err = fileArtifactStatus(ch, workspaceDir, art)
 	}
@@ -140,6 +140,7 @@ func dirArtifactStatus(
 	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
+	shortCircuit bool,
 ) (artifact.Status, directoryManifest, error) {
 	var manifest directoryManifest
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
@@ -148,18 +149,12 @@ func dirArtifactStatus(
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 
-	// TODO: Don't exit early here. We want to get to the second loop.
-	if !(status.HasChecksum && status.ChecksumInCache) {
+	if !(status.HasChecksum && status.ChecksumInCache) && shortCircuit {
 		return status, manifest, nil
 	}
 
 	if status.WorkspaceFileStatus != fsutil.StatusDirectory {
 		return status, manifest, nil
-	}
-
-	manifest, err = readDirManifest(cachePath)
-	if err != nil {
-		return status, manifest, err
 	}
 
 	// Any child Artifact that's out-of-date or not committed will flip this
@@ -168,13 +163,23 @@ func dirArtifactStatus(
 	status.ChildrenStatus = make(map[string]*artifact.Status)
 
 	// First, ensure all artifacts in the directoryManifest are up-to-date.
-	for path, art := range manifest.Contents {
-		childStatus, err := ch.Status(workPath, *art)
+	if status.ChecksumInCache {
+		manifest, err = readDirManifest(cachePath)
 		if err != nil {
 			return status, manifest, err
 		}
-		status.ChildrenStatus[path] = &childStatus
-		status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
+
+		for path, art := range manifest.Contents {
+			childStatus, err := ch.Status(workPath, *art, shortCircuit)
+			if err != nil {
+				return status, manifest, err
+			}
+			status.ChildrenStatus[path] = &childStatus
+			status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
+			if shortCircuit && !status.ContentsMatch {
+				return status, manifest, nil
+			}
+		}
 	}
 
 	// Second, get a directory listing and check for untracked files.
@@ -183,11 +188,9 @@ func dirArtifactStatus(
 		return status, manifest, err
 	}
 	for _, entry := range entries {
-		newArt := artifact.Artifact{
-			Path:  entry.Name(),
-			IsDir: entry.IsDir(),
-		}
+		newArt := artifact.Artifact{Path: entry.Name(), IsDir: entry.IsDir()}
 		// We've already checked all entries in the manifest.
+		// (While assigning to a nil map panics, accessing a nil map is safe.)
 		if _, ok := manifest.Contents[newArt.Path]; ok {
 			continue
 		}
@@ -195,12 +198,18 @@ func dirArtifactStatus(
 		if newArt.IsDir && art.DisableRecursion {
 			continue
 		}
-		childStatus, err := ch.Status(workPath, newArt)
+		// After the two exceptions above, the presence of any untracked
+		// files/directories means this Artifact is out-of-date.
+		// Therefore we can exit early if needed.
+		status.ContentsMatch = false
+		if shortCircuit {
+			return status, manifest, nil
+		}
+		childStatus, err := ch.Status(workPath, newArt, shortCircuit)
 		if err != nil {
 			return status, manifest, err
 		}
 		status.ChildrenStatus[newArt.Path] = &childStatus
-		status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
 	}
 	return status, manifest, nil
 }

@@ -187,7 +187,7 @@ func testCommitIntegration(in testInput, expectedOut testExpectedOutput, t *test
 
 	assertErrorMatches(t, expectedOut.Error, commitErr)
 
-	statusGot, err := cache.Status(dirs.WorkDir, art)
+	statusGot, err := cache.Status(dirs.WorkDir, art, false)
 	if err != nil {
 		t.Fatal(err)
 	}

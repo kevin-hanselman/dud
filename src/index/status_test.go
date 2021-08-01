@@ -16,12 +16,13 @@ func expectStageStatusCalled(
 	mockCache *mocks.Cache,
 	rootDir string,
 	artStatus artifact.Status,
+	shortCircuit bool,
 ) stage.Status {
 	stageStatus := stage.NewStatus()
 	for artPath, art := range stg.Outputs {
 		artStatus.Artifact = *art
 		stageStatus.ArtifactStatus[artPath] = artStatus
-		mockCache.On("Status", rootDir, *art).Return(artStatus, nil).Once()
+		mockCache.On("Status", rootDir, *art, shortCircuit).Return(artStatus, nil).Once()
 	}
 	return stageStatus
 }
@@ -47,7 +48,7 @@ func TestStatus(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectedStageStatus := expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectedStageStatus := expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate, false)
 		expectedStageStatus.HasChecksum = true
 		expectedStatus := Status{"foo.yaml": expectedStageStatus}
 
@@ -81,7 +82,7 @@ func TestStatus(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectedStageStatus := expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate)
+		expectedStageStatus := expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate, false)
 		expectedStageStatus.HasChecksum = true
 		expectedStageStatus.ChecksumMatches = true
 		expectedStatus := Status{"foo.yaml": expectedStageStatus}
@@ -118,7 +119,7 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 
 		expectedStatus := Status{
-			"foo.yaml": expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate),
+			"foo.yaml": expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate, false),
 		}
 
 		outputStatus := make(Status)
@@ -152,8 +153,8 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 
 		expectedStatus := Status{
-			"foo.yaml": expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate),
-			"bar.yaml": expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate),
+			"foo.yaml": expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate, false),
+			"bar.yaml": expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate, false),
 		}
 
 		idx := Index{
@@ -208,9 +209,9 @@ func TestStatus(t *testing.T) {
 		mockCache := mocks.Cache{}
 
 		expectedStatus := Status{
-			"a.yaml": expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate),
-			"b.yaml": expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate),
-			"c.yaml": expectStageStatusCalled(&stgC, &mockCache, rootDir, upToDate),
+			"a.yaml": expectStageStatusCalled(&stgA, &mockCache, rootDir, upToDate, false),
+			"b.yaml": expectStageStatusCalled(&stgB, &mockCache, rootDir, upToDate, false),
+			"c.yaml": expectStageStatusCalled(&stgC, &mockCache, rootDir, upToDate, false),
 		}
 
 		outputStatus := make(Status)
@@ -270,7 +271,7 @@ func TestStatus(t *testing.T) {
 		// Stage D is the only Stage that could possibly be committed
 		// successfully. We mock it to prevent a panic, but we don't
 		// enforce that it must be called (due to random order).
-		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate)
+		expectStageStatusCalled(&stgD, &mockCache, rootDir, upToDate, false)
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)
@@ -308,7 +309,7 @@ func TestStatus(t *testing.T) {
 
 		mockCache := mocks.Cache{}
 
-		expectedStageStatus := expectStageStatusCalled(&stg, &mockCache, rootDir, upToDate)
+		expectedStageStatus := expectStageStatusCalled(&stg, &mockCache, rootDir, upToDate, false)
 
 		orphanArtStatus := upToDate
 		orphanArtStatus.Artifact = orphanArt
@@ -316,7 +317,7 @@ func TestStatus(t *testing.T) {
 		expectedStageStatus.ArtifactStatus["bish.bin"] = orphanArtStatus
 		expectedStatus := Status{"foo.yaml": expectedStageStatus}
 
-		mockCache.On("Status", rootDir, orphanArt).Return(orphanArtStatus, nil).Once()
+		mockCache.On("Status", rootDir, orphanArt, false).Return(orphanArtStatus, nil).Once()
 
 		outputStatus := make(Status)
 		inProgress := make(map[string]bool)

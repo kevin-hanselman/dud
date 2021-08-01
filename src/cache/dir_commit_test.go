@@ -77,7 +77,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		actualStatus, err := cache.Status(dirs.WorkDir, art)
+		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -108,7 +108,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		actualStatus, err := cache.Status(dirs.WorkDir, art)
+		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -140,7 +140,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		actualStatus, err := cache.Status(dirs.WorkDir, art)
+		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
 		if err != nil {
 			t.Fatal(err)
 		}

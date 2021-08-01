@@ -141,7 +141,7 @@ func TestArtifactStatusString(t *testing.T) {
 			WorkspaceFileStatus: fsutil.StatusDirectory,
 			HasChecksum:         true,
 			ChecksumInCache:     true,
-			ContentsMatch:       true,
+			ContentsMatch:       false,
 		}
 
 		want := "empty directory"

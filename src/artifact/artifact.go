@@ -179,5 +179,5 @@ func (stat Status) String() string {
 		return strings.Join(countStrings, ", ")
 	}
 
-	panic("unhandled case in artifact.Status.String()")
+	panic(fmt.Sprintf("unhandled case in artifact.Status.String(): %#v", stat))
 }

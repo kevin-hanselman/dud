@@ -49,7 +49,7 @@ func (idx Index) Status(
 		var err error
 		ownerPath, _ := idx.findOwner(artPath)
 		if ownerPath == "" {
-			stageStatus.ArtifactStatus[artPath], err = ch.Status(rootDir, *art)
+			stageStatus.ArtifactStatus[artPath], err = ch.Status(rootDir, *art, false)
 			if err != nil {
 				return err
 			}
@@ -62,7 +62,7 @@ func (idx Index) Status(
 
 	for artPath, art := range stg.Outputs {
 		var err error
-		stageStatus.ArtifactStatus[artPath], err = ch.Status(rootDir, *art)
+		stageStatus.ArtifactStatus[artPath], err = ch.Status(rootDir, *art, false)
 		if err != nil {
 			return errors.Wrapf(err, "status: %s", art.Path)
 		}
