@@ -12,7 +12,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Status reports the status of an Artifact in the Cache.
+// Status reports the status of an Artifact in the Cache. If shortCircuit is
+// true, Status will exit as soon as the overall state of the Artifact is known
+// -- saving time, but potentially leaving artifact.Status.ChildrenStatus
+// incomplete. If shortCircuit is false, Status will fully populate
+// artifact.Status.ChildrenStatus.
 func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact, shortCircuit bool) (
 	status artifact.Status,
 	err error,
@@ -27,6 +31,8 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact, shortCir
 	return
 }
 
+// checksumStatus populates the HasChecksum and ChecksumInCache fields of
+// artifact.Status and returns any relevant cache file information.
 func checksumStatus(ch LocalCache, art artifact.Artifact) (
 	status artifact.Status,
 	cachePath string,
