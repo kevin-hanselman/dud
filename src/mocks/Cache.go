@@ -46,13 +46,20 @@ func (_m *Cache) Commit(workDir string, art *artifact.Artifact, s strategy.Check
 	return r0
 }
 
-// Fetch provides a mock function with given fields: workDir, remoteSrc, art
-func (_m *Cache) Fetch(workDir string, remoteSrc string, art artifact.Artifact) error {
-	ret := _m.Called(workDir, remoteSrc, art)
+// Fetch provides a mock function with given fields: remoteSrc, arts
+func (_m *Cache) Fetch(remoteSrc string, arts ...artifact.Artifact) error {
+	_va := make([]interface{}, len(arts))
+	for _i := range arts {
+		_va[_i] = arts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, remoteSrc)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, artifact.Artifact) error); ok {
-		r0 = rf(workDir, remoteSrc, art)
+	if rf, ok := ret.Get(0).(func(string, ...artifact.Artifact) error); ok {
+		r0 = rf(remoteSrc, arts...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -74,20 +81,20 @@ func (_m *Cache) Push(workDir string, remoteDst string, art artifact.Artifact) e
 	return r0
 }
 
-// Status provides a mock function with given fields: workDir, art
-func (_m *Cache) Status(workDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error) {
-	ret := _m.Called(workDir, art)
+// Status provides a mock function with given fields: workDir, art, shortCircuit
+func (_m *Cache) Status(workDir string, art artifact.Artifact, shortCircuit bool) (artifact.Status, error) {
+	ret := _m.Called(workDir, art, shortCircuit)
 
-	var r0 artifact.ArtifactWithStatus
-	if rf, ok := ret.Get(0).(func(string, artifact.Artifact) artifact.ArtifactWithStatus); ok {
-		r0 = rf(workDir, art)
+	var r0 artifact.Status
+	if rf, ok := ret.Get(0).(func(string, artifact.Artifact, bool) artifact.Status); ok {
+		r0 = rf(workDir, art, shortCircuit)
 	} else {
-		r0 = ret.Get(0).(artifact.ArtifactWithStatus)
+		r0 = ret.Get(0).(artifact.Status)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, artifact.Artifact) error); ok {
-		r1 = rf(workDir, art)
+	if rf, ok := ret.Get(1).(func(string, artifact.Artifact, bool) error); ok {
+		r1 = rf(workDir, art, shortCircuit)
 	} else {
 		r1 = ret.Error(1)
 	}

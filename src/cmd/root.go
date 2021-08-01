@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -120,7 +120,7 @@ func Main() {
 	logger = &agglog.AggLogger{
 		Error: log.New(os.Stderr, "Error: ", 0),
 		Info:  log.New(os.Stdout, "", 0),
-		Debug: log.New(ioutil.Discard, "", 0),
+		Debug: log.New(io.Discard, "", 0),
 	}
 	if err := rootCmd.Execute(); err != nil {
 		fatal(err)

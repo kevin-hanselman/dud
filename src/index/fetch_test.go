@@ -17,7 +17,7 @@ func expectOutputsFetched(
 	remote string,
 ) {
 	for _, art := range stg.Outputs {
-		mockCache.On("Fetch", rootDir, remote, *art).Return(nil).Once()
+		mockCache.On("Fetch", remote, *art).Return(nil).Once()
 	}
 }
 

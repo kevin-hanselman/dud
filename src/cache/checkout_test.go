@@ -16,7 +16,7 @@ import (
 )
 
 type testInput struct {
-	Status           artifact.ArtifactWithStatus
+	Status           artifact.Status
 	CheckoutStrategy strategy.CheckoutStrategy
 }
 
@@ -56,12 +56,10 @@ func TestFileCheckoutIntegration(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		for _, strat := range allStrategies {
 			in := testInput{
-				Status: artifact.ArtifactWithStatus{
-					Status: artifact.Status{
-						WorkspaceFileStatus: fsutil.StatusAbsent,
-						HasChecksum:         true,
-						ChecksumInCache:     true,
-					},
+				Status: artifact.Status{
+					WorkspaceFileStatus: fsutil.StatusAbsent,
+					HasChecksum:         true,
+					ChecksumInCache:     true,
 				},
 				CheckoutStrategy: strat,
 			}
@@ -93,11 +91,9 @@ func TestFileCheckoutIntegration(t *testing.T) {
 			for _, fileStatus := range allFileStatuses {
 				for _, strat := range allStrategies {
 					in := testInput{
-						Status: artifact.ArtifactWithStatus{
-							Status: artifact.Status{
-								WorkspaceFileStatus: fileStatus,
-								HasChecksum:         hasChecksum,
-							},
+						Status: artifact.Status{
+							WorkspaceFileStatus: fileStatus,
+							HasChecksum:         hasChecksum,
 						},
 						CheckoutStrategy: strat,
 					}
@@ -127,19 +123,16 @@ func TestFileCheckoutIntegration(t *testing.T) {
 			for _, fileStatus := range allFileStatuses {
 				for _, strat := range allStrategies {
 					status.WorkspaceFileStatus = fileStatus
-					artStatus := artifact.ArtifactWithStatus{
-						Artifact: artifact.Artifact{SkipCache: true},
-						Status:   status,
-					}
+					status.Artifact = artifact.Artifact{SkipCache: true}
 					in := testInput{
-						Status:           artStatus,
+						Status:           status,
 						CheckoutStrategy: strat,
 					}
 					out := testExpectedOutput{
 						Status: status,
 						Error:  nil,
 					}
-					testName := fmt.Sprintf("%s %s", artStatus, strat)
+					testName := fmt.Sprintf("%s %s", status, strat)
 					t.Run(testName, func(t *testing.T) {
 						testFileCheckoutIntegration(in, out, t)
 					})
@@ -156,9 +149,8 @@ func TestFileCheckoutIntegration(t *testing.T) {
 					HasChecksum:         true,
 					ChecksumInCache:     true,
 				}
-				artStatus := artifact.ArtifactWithStatus{Status: status}
 				in := testInput{
-					Status:           artStatus,
+					Status:           status,
 					CheckoutStrategy: strat,
 				}
 				out := testExpectedOutput{
@@ -166,7 +158,7 @@ func TestFileCheckoutIntegration(t *testing.T) {
 					Error:  os.ErrExist,
 				}
 
-				testName := fmt.Sprintf("%s %s", artStatus, strat)
+				testName := fmt.Sprintf("%s %s", status, strat)
 				t.Run(testName, func(t *testing.T) {
 					testFileCheckoutIntegration(in, out, t)
 				})
@@ -182,9 +174,8 @@ func TestFileCheckoutIntegration(t *testing.T) {
 				ChecksumInCache:     true,
 				ContentsMatch:       true,
 			}
-			artStatus := artifact.ArtifactWithStatus{Status: status}
 			in := testInput{
-				Status:           artStatus,
+				Status:           status,
 				CheckoutStrategy: strat,
 			}
 			out := testExpectedOutput{
@@ -199,7 +190,7 @@ func TestFileCheckoutIntegration(t *testing.T) {
 				panic("unknown strategy")
 			}
 
-			testName := fmt.Sprintf("%s %s", artStatus, strat)
+			testName := fmt.Sprintf("%s %s", status, strat)
 			t.Run(testName, func(t *testing.T) {
 				testFileCheckoutIntegration(in, out, t)
 			})
@@ -226,12 +217,14 @@ func testFileCheckoutIntegration(in testInput, expectedOut testExpectedOutput, t
 
 	assertErrorMatches(t, expectedOut.Error, checkoutErr)
 
-	statusGot, err := cache.Status(dirs.WorkDir, art)
+	statusGot, err := cache.Status(dirs.WorkDir, art, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if diff := cmp.Diff(expectedOut.Status, statusGot.Status); diff != "" {
+	expectedOut.Status.Artifact = art
+
+	if diff := cmp.Diff(expectedOut.Status, statusGot); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
 }

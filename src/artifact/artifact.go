@@ -3,6 +3,7 @@ package artifact
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -20,7 +21,8 @@ type Artifact struct {
 	Path string `yaml:",omitempty" json:"path,omitempty"`
 	// If IsDir is true then the Artifact is a directory.
 	IsDir bool `yaml:"is-dir,omitempty" json:"is-dir,omitempty"`
-	// If DisableRecursion is true then the Artifact does not recurse sub-directories
+	// If DisableRecursion is true then the Artifact does not recurse
+	// sub-directories.
 	DisableRecursion bool `yaml:"disable-recursion,omitempty" json:"disable-recursion,omitempty"`
 	// If SkipCache is true then the Artifact is not stored in the Cache. When
 	// the Artifact is committed, its checksum is updated, but the Artifact is
@@ -65,11 +67,11 @@ func (a *Artifact) UnmarshalJSON(b []byte) error {
 
 // Status captures an Artifact's status as it pertains to a Cache and a workspace.
 type Status struct {
+	Artifact
 	// WorkspaceFileStatus represents the status of Artifact's file in the workspace.
-	// TODO: We need some way to identify a "bad" workspace file status.
-	// Replace and/or augment this with a boolean?
 	WorkspaceFileStatus fsutil.FileStatus
 	// HasChecksum is true if the Artifact has a valid Checksum field, false otherwise.
+	// TODO: Might be able to get rid of this if we have the Artifact in question.
 	HasChecksum bool
 	// ChecksumInCache is true if a cache entry exists for the given checksum, false otherwise.
 	ChecksumInCache bool
@@ -78,15 +80,36 @@ type Status struct {
 	// are identical. For links, true means that the workspace link points to
 	// the correct cache file.
 	ContentsMatch bool
+	// ChildrenStatus holds the status of any child artifacts, mapped to their
+	// respective file paths.
+	ChildrenStatus map[string]*Status
 }
 
-// ArtifactWithStatus is an Artifact with a matched Status.
-type ArtifactWithStatus struct {
-	Artifact
-	Status
+func (stat Status) childStatusCounts(out map[string]int) {
+	for _, childStatus := range stat.ChildrenStatus {
+		if childStatus.IsDir {
+			childStatus.childStatusCounts(out)
+		} else {
+			out[childStatus.String()]++
+		}
+	}
 }
 
-func (stat ArtifactWithStatus) String() string {
+func sortByValue(counts map[string]int) []string {
+	keys := make([]string, len(counts))
+	i := 0
+	for key := range counts {
+		keys[i] = key
+		i++
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		// Sort into descending order.
+		return counts[keys[i]] > counts[keys[j]]
+	})
+	return keys
+}
+
+func (stat Status) String() string {
 	isDir := stat.WorkspaceFileStatus == fsutil.StatusDirectory
 	isAbsent := stat.WorkspaceFileStatus == fsutil.StatusAbsent
 	if (stat.IsDir != isDir) && !isAbsent {
@@ -104,9 +127,9 @@ func (stat ArtifactWithStatus) String() string {
 			}
 			return "missing from cache and workspace"
 		}
-		return "unknown artifact"
+		return "missing and not committed"
 
-	case fsutil.StatusRegularFile, fsutil.StatusDirectory:
+	case fsutil.StatusRegularFile:
 		var out strings.Builder
 		if stat.HasChecksum {
 			if stat.ChecksumInCache || stat.SkipCache {
@@ -119,7 +142,7 @@ func (stat ArtifactWithStatus) String() string {
 				out.WriteString("missing from cache")
 			}
 		} else {
-			out.WriteString("uncommitted")
+			out.WriteString("not committed")
 		}
 		if stat.SkipCache {
 			out.WriteString(" (not cached)")
@@ -141,5 +164,20 @@ func (stat ArtifactWithStatus) String() string {
 	case fsutil.StatusOther:
 		return "invalid file type"
 	}
-	panic("exited switch unexpectedly")
+
+	if stat.IsDir {
+		// len(nil map) returns 0
+		if len(stat.ChildrenStatus) == 0 {
+			return "empty directory"
+		}
+		counts := make(map[string]int)
+		stat.childStatusCounts(counts)
+		countStrings := make([]string, len(counts))
+		for i, status := range sortByValue(counts) {
+			countStrings[i] = fmt.Sprintf("x%d %s", counts[status], status)
+		}
+		return strings.Join(countStrings, ", ")
+	}
+
+	panic(fmt.Sprintf("unhandled case in artifact.Status.String(): %#v", stat))
 }

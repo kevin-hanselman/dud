@@ -21,7 +21,7 @@ func TestStatusIntegration(t *testing.T) {
 	}
 }
 
-func testStatusIntegration(statusWant artifact.ArtifactWithStatus, t *testing.T) {
+func testStatusIntegration(statusWant artifact.Status, t *testing.T) {
 	dirs, art, err := testutil.CreateArtifactTestCase(statusWant)
 	defer os.RemoveAll(dirs.CacheDir)
 	defer os.RemoveAll(dirs.WorkDir)
@@ -35,7 +35,7 @@ func testStatusIntegration(statusWant artifact.ArtifactWithStatus, t *testing.T)
 		t.Fatal(err)
 	}
 
-	statusGot, err := cache.Status(dirs.WorkDir, art)
+	statusGot, err := cache.Status(dirs.WorkDir, art, false)
 	if err != nil {
 		t.Fatal(err)
 	}

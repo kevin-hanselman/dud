@@ -21,10 +21,8 @@ func (idx *Index) AddStage(stg stage.Stage, path string) error {
 		return fmt.Errorf("stage %s already in index", path)
 	}
 	for artPath := range stg.Outputs {
-		ownerPath, _, err := idx.findOwner(artPath)
-		if err != nil {
-			return err
-		} else if ownerPath != "" {
+		ownerPath, _ := idx.findOwner(artPath)
+		if ownerPath != "" {
 			return fmt.Errorf(
 				"%s: artifact %s already owned by %s",
 				path,
@@ -87,18 +85,15 @@ func FromFile(path string) (Index, error) {
 	return idx, nil
 }
 
-func (idx Index) findOwner(artPath string) (string, *artifact.Artifact, error) {
+func (idx Index) findOwner(artPath string) (string, *artifact.Artifact) {
 	for stagePath, stg := range idx {
 		if art, ok := stg.Outputs[artPath]; ok {
-			return stagePath, art, nil
+			return stagePath, art
 		}
-		art, ok, err := stage.FindDirArtifactOwnerForPath(artPath, stg.Outputs)
-		if err != nil {
-			return "", art, err
-		}
+		art, ok := stage.FindDirArtifactOwnerForPath(artPath, stg.Outputs)
 		if ok {
-			return stagePath, art, nil
+			return stagePath, art
 		}
 	}
-	return "", nil, nil
+	return "", nil
 }

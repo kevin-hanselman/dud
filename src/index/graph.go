@@ -71,10 +71,7 @@ func (idx Index) Graph(
 		return errors.Wrapf(err, "graph %s", stagePath)
 	}
 	for artPath := range stg.Inputs {
-		ownerPath, _, err := idx.findOwner(artPath)
-		if err != nil {
-			return err
-		}
+		ownerPath, _ := idx.findOwner(artPath)
 		hasOwner := ownerPath != ""
 		// If we're drawing the full graph, always draw an edge to the input
 		// Artifact. Otherwise, draw an edge to the owner Stage if one exists.

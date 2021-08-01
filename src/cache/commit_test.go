@@ -25,10 +25,8 @@ func TestFileCommitIntegration(t *testing.T) {
 	happyPath := func(t *testing.T) {
 		for _, strat := range allStrategies {
 			in := testInput{
-				Status: artifact.ArtifactWithStatus{
-					Status: artifact.Status{
-						WorkspaceFileStatus: fsutil.StatusRegularFile,
-					},
+				Status: artifact.Status{
+					WorkspaceFileStatus: fsutil.StatusRegularFile,
 				},
 				CheckoutStrategy: strat,
 			}
@@ -65,7 +63,7 @@ func TestFileCommitIntegration(t *testing.T) {
 				ContentsMatch:       true,
 			}
 			in := testInput{
-				Status:           artifact.ArtifactWithStatus{Status: status},
+				Status:           status,
 				CheckoutStrategy: strat,
 			}
 			// If we started out up-to-date, we don't change workspace state,
@@ -85,10 +83,8 @@ func TestFileCommitIntegration(t *testing.T) {
 	t.Run("missing from workspace", func(t *testing.T) {
 		for _, strat := range allStrategies {
 			in := testInput{
-				Status: artifact.ArtifactWithStatus{
-					Status: artifact.Status{
-						WorkspaceFileStatus: fsutil.StatusAbsent,
-					},
+				Status: artifact.Status{
+					WorkspaceFileStatus: fsutil.StatusAbsent,
 				},
 				CheckoutStrategy: strat,
 			}
@@ -113,10 +109,8 @@ func TestFileCommitIntegration(t *testing.T) {
 		for _, fileStatus := range fileStatuses {
 			for _, strat := range allStrategies {
 				in := testInput{
-					Status: artifact.ArtifactWithStatus{
-						Status: artifact.Status{
-							WorkspaceFileStatus: fileStatus,
-						},
+					Status: artifact.Status{
+						WorkspaceFileStatus: fileStatus,
 					},
 					CheckoutStrategy: strat,
 				}
@@ -137,11 +131,9 @@ func TestFileCommitIntegration(t *testing.T) {
 	t.Run("skip cache", func(t *testing.T) {
 		for _, strat := range allStrategies {
 			in := testInput{
-				Status: artifact.ArtifactWithStatus{
-					Artifact: artifact.Artifact{SkipCache: true},
-					Status: artifact.Status{
-						WorkspaceFileStatus: fsutil.StatusRegularFile,
-					},
+				Status: artifact.Status{
+					Artifact:            artifact.Artifact{SkipCache: true},
+					WorkspaceFileStatus: fsutil.StatusRegularFile,
 				},
 				CheckoutStrategy: strat,
 			}
@@ -195,12 +187,14 @@ func testCommitIntegration(in testInput, expectedOut testExpectedOutput, t *test
 
 	assertErrorMatches(t, expectedOut.Error, commitErr)
 
-	statusGot, err := cache.Status(dirs.WorkDir, art)
+	statusGot, err := cache.Status(dirs.WorkDir, art, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if diff := cmp.Diff(expectedOut.Status, statusGot.Status); diff != "" {
+	expectedOut.Status.Artifact = art
+
+	if diff := cmp.Diff(expectedOut.Status, statusGot); diff != "" {
 		t.Fatalf("Status() -want +got:\n%s", diff)
 	}
 

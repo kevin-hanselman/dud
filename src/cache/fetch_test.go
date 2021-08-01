@@ -97,11 +97,9 @@ func TestFetchIntegration(t *testing.T) {
 
 	t.Run("fetch file artifact happy path", func(t *testing.T) {
 		defer resetMocks()
-		artStatus := artifact.ArtifactWithStatus{
-			Status: artifact.Status{
-				HasChecksum:         true,
-				WorkspaceFileStatus: fsutil.StatusRegularFile,
-			},
+		artStatus := artifact.Status{
+			HasChecksum:         true,
+			WorkspaceFileStatus: fsutil.StatusRegularFile,
 		}
 
 		dirs, art, err := testutil.CreateArtifactTestCase(artStatus)
@@ -133,7 +131,7 @@ func TestFetchIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Fetch(dirs.WorkDir, fakeRemote, art); err != nil {
+		if err := ch.Fetch(fakeRemote, art); err != nil {
 			t.Fatal(err)
 		}
 
@@ -142,9 +140,7 @@ func TestFetchIntegration(t *testing.T) {
 
 	t.Run("fetch file artifact noop if already in cache", func(t *testing.T) {
 		defer resetMocks()
-		artStatus := artifact.ArtifactWithStatus{
-			Status: artifact.Status{HasChecksum: true, ChecksumInCache: true},
-		}
+		artStatus := artifact.Status{HasChecksum: true, ChecksumInCache: true}
 
 		dirs, art, err := testutil.CreateArtifactTestCase(artStatus)
 		defer os.RemoveAll(dirs.CacheDir)
@@ -158,16 +154,14 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := ch.Fetch(dirs.WorkDir, "/dev/null", art); err != nil {
+		if err := ch.Fetch("/dev/null", art); err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("fetch file artifact returns error if no checksum", func(t *testing.T) {
 		defer resetMocks()
-		artStatus := artifact.ArtifactWithStatus{
-			Status: artifact.Status{HasChecksum: false},
-		}
+		artStatus := artifact.Status{HasChecksum: false}
 
 		dirs, art, err := testutil.CreateArtifactTestCase(artStatus)
 		defer os.RemoveAll(dirs.CacheDir)
@@ -181,7 +175,7 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		fetchErr := ch.Fetch(dirs.WorkDir, "/dev/null", art)
+		fetchErr := ch.Fetch("/dev/null", art)
 		if fetchErr == nil {
 			t.Fatal("expected Fetch to return error")
 		}
@@ -227,7 +221,7 @@ func TestFetchIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Fetch(dirs.WorkDir, fakeRemote, art); err != nil {
+		if err := ch.Fetch(fakeRemote, art); err != nil {
 			t.Fatal(err)
 		}
 

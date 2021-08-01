@@ -39,11 +39,9 @@ func (idx Index) Run(
 	}
 
 	hasCommand := stg.Command != ""
-	hasDeps := len(stg.Inputs) > 0
-	hasChecksum := stg.Checksum != ""
 	checksumUpToDate := false
 
-	if hasChecksum {
+	if stg.Checksum != "" {
 		realChecksum, err := stg.CalculateChecksum()
 		if err != nil {
 			return err
@@ -52,18 +50,15 @@ func (idx Index) Run(
 	}
 
 	// Run if we have a command and no inputs.
-	doRun := hasCommand && !hasDeps
+	doRun := hasCommand && (len(stg.Inputs) == 0)
 
 	// Run if our checksum is stale.
 	doRun = doRun || !checksumUpToDate
 
 	for artPath, art := range stg.Inputs {
-		ownerPath, _, err := idx.findOwner(artPath)
-		if err != nil {
-			return err
-		}
+		ownerPath, _ := idx.findOwner(artPath)
 		if ownerPath == "" {
-			artStatus, err := ch.Status(rootDir, *art)
+			artStatus, err := ch.Status(rootDir, *art, true)
 			if err != nil {
 				return err
 			}
@@ -77,7 +72,7 @@ func (idx Index) Run(
 	}
 	if !doRun {
 		for _, art := range stg.Outputs {
-			artStatus, err := ch.Status(rootDir, *art)
+			artStatus, err := ch.Status(rootDir, *art, true)
 			if err != nil {
 				return err
 			}

@@ -8,59 +8,60 @@ import (
 )
 
 // Fetch downloads an Artifact from a remote location to the local cache.
-func (ch LocalCache) Fetch(workspaceDir, remoteSrc string, art artifact.Artifact) error {
-	fetchFiles := make(map[string]struct{})
-	if err := gatherFilesToFetch(ch, workspaceDir, art, remoteSrc, fetchFiles); err != nil {
-		return errors.Wrapf(err, "fetch %s", art.Path)
-	}
-	if len(fetchFiles) > 0 {
-		return errors.Wrapf(remoteCopy(remoteSrc, ch.dir, fetchFiles), "fetch %s", art.Path)
-	}
-	return nil
-}
-
-func gatherFilesToFetch(
-	ch LocalCache,
-	workspaceDir string,
-	art artifact.Artifact,
+func (ch LocalCache) Fetch(
 	remoteSrc string,
-	filesToFetch map[string]struct{},
+	artifacts ...artifact.Artifact,
 ) error {
-	if art.SkipCache {
-		return nil
-	}
-	status, cachePath, _, err := quickStatus(ch, workspaceDir, art)
-	if err != nil {
-		return err
-	}
-	if !status.HasChecksum {
-		return InvalidChecksumError{art.Checksum}
-	}
-	if status.ChecksumInCache {
-		return nil
-	}
-	if art.IsDir {
-		if err := remoteCopy(remoteSrc, ch.dir, map[string]struct{}{cachePath: {}}); err != nil {
-			return err
+	toFetch := make(map[string]struct{})
+	dirArtifacts := make(map[string]artifact.Artifact)
+	for _, art := range artifacts {
+		if art.SkipCache {
+			continue
 		}
+		status, cachePath, _, err := checksumStatus(ch, art)
+		if err != nil {
+			return errors.Wrapf(err, "fetch %s", art.Path)
+		}
+		if !status.HasChecksum {
+			return errors.Wrapf(
+				InvalidChecksumError{art.Checksum},
+				"fetch %s",
+				art.Path,
+			)
+		}
+		// Fetch an artifact if it's missing from the cache.
+		if !status.ChecksumInCache {
+			toFetch[cachePath] = struct{}{}
+		}
+		if art.IsDir {
+			dirArtifacts[cachePath] = art
+		}
+	}
+
+	// This length check could/should be handled in remoteCopy, but the tests
+	// currently expect remoteCopy not to be called if there's nothing to
+	// fetch.
+	if len(toFetch) > 0 {
+		if err := remoteCopy(remoteSrc, ch.dir, toFetch); err != nil {
+			return errors.Wrap(err, "fetch")
+		}
+	}
+
+	children := []artifact.Artifact{}
+	// Collect all children of directory artifacts and recursively call Fetch
+	// on all of them.
+	for cachePath, dirArt := range dirArtifacts {
 		man, err := readDirManifest(filepath.Join(ch.dir, cachePath))
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "fetch %s", dirArt.Path)
 		}
-		childWorkspaceDir := filepath.Join(workspaceDir, art.Path)
-		for _, childArt := range man.Contents {
-			if err := gatherFilesToFetch(
-				ch,
-				childWorkspaceDir,
-				*childArt,
-				remoteSrc,
-				filesToFetch,
-			); err != nil {
-				return err
-			}
+		for _, art := range man.Contents {
+			children = append(children, *art)
 		}
-	} else {
-		filesToFetch[cachePath] = struct{}{}
 	}
-	return nil
+	if len(children) == 0 {
+		return nil
+	}
+	// Don't wrap any error here because we're recursing.
+	return ch.Fetch(remoteSrc, children...)
 }

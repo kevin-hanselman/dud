@@ -20,6 +20,49 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		t.Skip()
 	}
 
+	makeExpectedStatus := func(art artifact.Artifact) artifact.Status {
+		upToDate := func(art artifact.Artifact) *artifact.Status {
+			return &artifact.Status{
+				WorkspaceFileStatus: fsutil.StatusLink,
+				Artifact:            art,
+				HasChecksum:         true,
+				ChecksumInCache:     true,
+				ContentsMatch:       true,
+			}
+		}
+
+		art.Checksum = ""
+
+		return artifact.Status{
+			Artifact:            art,
+			WorkspaceFileStatus: fsutil.StatusDirectory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+			ChildrenStatus: map[string]*artifact.Status{
+				"1.txt": upToDate(artifact.Artifact{Path: "1.txt"}),
+				"2.txt": upToDate(artifact.Artifact{Path: "2.txt"}),
+				"3.txt": upToDate(artifact.Artifact{Path: "3.txt"}),
+				"4.txt": upToDate(artifact.Artifact{Path: "4.txt"}),
+				"5.txt": upToDate(artifact.Artifact{Path: "5.txt"}),
+				"bar": {
+					Artifact:            artifact.Artifact{Path: "bar", IsDir: true},
+					WorkspaceFileStatus: fsutil.StatusDirectory,
+					HasChecksum:         true,
+					ChecksumInCache:     true,
+					ContentsMatch:       true,
+					ChildrenStatus: map[string]*artifact.Status{
+						"4.txt": upToDate(artifact.Artifact{Path: "4.txt"}),
+						"5.txt": upToDate(artifact.Artifact{Path: "5.txt"}),
+						"6.txt": upToDate(artifact.Artifact{Path: "6.txt"}),
+						"7.txt": upToDate(artifact.Artifact{Path: "7.txt"}),
+						"8.txt": upToDate(artifact.Artifact{Path: "8.txt"}),
+					},
+				},
+			},
+		}
+	}
+
 	logger := agglog.NewNullLogger()
 
 	maxSharedWorkers = 1
@@ -34,19 +77,16 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		actualStatus, err := cache.Status(dirs.WorkDir, art)
+		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		expectedStatus := artifact.Status{
-			WorkspaceFileStatus: fsutil.StatusDirectory,
-			HasChecksum:         true,
-			ChecksumInCache:     true,
-			ContentsMatch:       true,
-		}
+		expectedStatus := makeExpectedStatus(art)
 
-		if diff := cmp.Diff(expectedStatus, actualStatus.Status); diff != "" {
+		assertThenRemoveChecksums(t, &actualStatus)
+
+		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
 		}
 	})
@@ -68,19 +108,17 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		actualStatus, err := cache.Status(dirs.WorkDir, art)
+		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		expectedStatus := artifact.Status{
-			WorkspaceFileStatus: fsutil.StatusDirectory,
-			HasChecksum:         true,
-			ChecksumInCache:     true,
-			ContentsMatch:       true,
-		}
+		expectedStatus := makeExpectedStatus(art)
+		delete(expectedStatus.ChildrenStatus, "bar")
 
-		if diff := cmp.Diff(expectedStatus, actualStatus.Status); diff != "" {
+		assertThenRemoveChecksums(t, &actualStatus)
+
+		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
 		}
 	})
@@ -102,22 +140,33 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		actualStatus, err := cache.Status(dirs.WorkDir, art)
+		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		expectedStatus := artifact.Status{
-			WorkspaceFileStatus: fsutil.StatusDirectory,
-			HasChecksum:         true,
-			ChecksumInCache:     true,
-			ContentsMatch:       true,
-		}
+		expectedStatus := makeExpectedStatus(art)
+		delete(expectedStatus.ChildrenStatus, "1.txt")
 
-		if diff := cmp.Diff(expectedStatus, actualStatus.Status); diff != "" {
+		assertThenRemoveChecksums(t, &actualStatus)
+
+		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
 		}
 	})
+}
+
+func assertThenRemoveChecksums(t *testing.T, statusGot *artifact.Status) {
+	if statusGot.Checksum == "" {
+		t.Fatalf("expected checksum for artifact %s", statusGot.Path)
+	}
+	statusGot.Checksum = ""
+	if statusGot.ChildrenStatus == nil {
+		return
+	}
+	for _, childStatus := range statusGot.ChildrenStatus {
+		assertThenRemoveChecksums(t, childStatus)
+	}
 }
 
 func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, LocalCache) {

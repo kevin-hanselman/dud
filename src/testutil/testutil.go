@@ -70,8 +70,7 @@ func CreateTempDirs() (dirs TempDirs, err error) {
 
 // AllFileTestCases returns a slice of all valid artifact.Status structs.
 // (See status.txt in the project root)
-func AllFileTestCases() (out []artifact.ArtifactWithStatus) {
-	allArtifactStatuses := []artifact.Status{}
+func AllFileTestCases() (out []artifact.Status) {
 	allWorkspaceStatuses := []fsutil.FileStatus{
 		fsutil.StatusAbsent,
 		fsutil.StatusRegularFile,
@@ -79,8 +78,8 @@ func AllFileTestCases() (out []artifact.ArtifactWithStatus) {
 	}
 	for _, workspaceStatus := range allWorkspaceStatuses {
 		if workspaceStatus != fsutil.StatusAbsent {
-			allArtifactStatuses = append(
-				allArtifactStatuses,
+			out = append(
+				out,
 				artifact.Status{
 					WorkspaceFileStatus: workspaceStatus,
 					HasChecksum:         true,
@@ -89,8 +88,8 @@ func AllFileTestCases() (out []artifact.ArtifactWithStatus) {
 				},
 			)
 		}
-		allArtifactStatuses = append(
-			allArtifactStatuses,
+		out = append(
+			out,
 			artifact.Status{
 				WorkspaceFileStatus: workspaceStatus,
 				HasChecksum:         true,
@@ -108,30 +107,30 @@ func AllFileTestCases() (out []artifact.ArtifactWithStatus) {
 			},
 		)
 	}
-	// Promote Status structs to ArtifactWithStatus.
-	for _, artStatus := range allArtifactStatuses {
-		artWithStatus := artifact.ArtifactWithStatus{
-			Artifact: artifact.Artifact{SkipCache: false},
-			Status:   artStatus,
-		}
-		out = append(out, artWithStatus)
+
+	// Add Artifacts.
+	for i := range out {
+		out[i].Artifact = artifact.Artifact{SkipCache: false}
 	}
 
-	artWithStatus := artifact.ArtifactWithStatus{
-		Artifact: artifact.Artifact{SkipCache: true},
-		Status:   artifact.Status{WorkspaceFileStatus: fsutil.StatusRegularFile},
+	// Add Artifacts that skip the cache.
+	skipCache := artifact.Status{
+		Artifact:            artifact.Artifact{SkipCache: true},
+		WorkspaceFileStatus: fsutil.StatusRegularFile,
 	}
-	out = append(out, artWithStatus)
-	artWithStatus.HasChecksum = true
-	out = append(out, artWithStatus)
-	artWithStatus.ContentsMatch = true
-	out = append(out, artWithStatus)
+	out = append(out, skipCache)
+
+	skipCache.HasChecksum = true
+	out = append(out, skipCache)
+
+	skipCache.ContentsMatch = true
+	out = append(out, skipCache)
 	return
 }
 
 // CreateArtifactTestCase sets up an integration test environment with a single
 // artifact that complies with the provided artifact.Status.
-func CreateArtifactTestCase(status artifact.ArtifactWithStatus) (dirs TempDirs, art artifact.Artifact, err error) {
+func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact.Artifact, err error) {
 	dirs, err = CreateTempDirs()
 	if err != nil {
 		return

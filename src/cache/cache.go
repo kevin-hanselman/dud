@@ -3,7 +3,7 @@ package cache
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -54,8 +54,10 @@ type Cache interface {
 		s strategy.CheckoutStrategy,
 		p *pb.ProgressBar,
 	) error
-	Status(workDir string, art artifact.Artifact) (artifact.ArtifactWithStatus, error)
-	Fetch(workDir, remoteSrc string, art artifact.Artifact) error
+	Status(workDir string, art artifact.Artifact, shortCircuit bool) (artifact.Status, error)
+	Fetch(remoteSrc string, arts ...artifact.Artifact) error
+	// TODO: Refactor Push to take multiple Artifacts (like Fetch) to reduce
+	// the total number of underlying rclone calls.
 	Push(workDir, remoteDst string, art artifact.Artifact) error
 }
 
@@ -125,7 +127,7 @@ func newProgress(prefix string) (progress *pb.ProgressBar) {
 		progress.SetMaxWidth(120).Set(pb.TimeRound, time.Millisecond)
 		progress.Set("prefix", fmt.Sprintf("%-20s", prefix))
 	} else {
-		progress.SetRefreshRate(time.Hour).SetWriter(ioutil.Discard)
+		progress.SetRefreshRate(time.Hour).SetWriter(io.Discard)
 	}
 	return
 }

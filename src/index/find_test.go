@@ -20,10 +20,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, foundArt, err := idx.findOwner("bar.bin")
-		if err != nil {
-			t.Fatal(err)
-		}
+		owner, foundArt := idx.findOwner("bar.bin")
 
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %#v, want foo.yaml", owner)
@@ -44,10 +41,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, _, err := idx.findOwner("other.bin")
-		if err != nil {
-			t.Fatal(err)
-		}
+		owner, _ := idx.findOwner("other.bin")
 
 		if owner != "" {
 			t.Fatalf("got owner = %#v, want empty string", owner)
@@ -64,10 +58,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, foundArt, err := idx.findOwner("foo/bar.bin")
-		if err != nil {
-			t.Fatal(err)
-		}
+		owner, foundArt := idx.findOwner("foo/bar.bin")
 
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %#v, want foo.yaml", owner)
@@ -89,10 +80,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, foundArt, err := idx.findOwner("foo/bar.bin")
-		if err != nil {
-			t.Fatal(err)
-		}
+		owner, foundArt := idx.findOwner("foo/bar.bin")
 
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %#v, want foo.yaml", owner)
@@ -112,10 +100,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, _, err := idx.findOwner("foo/bar/test.bin")
-		if err != nil {
-			t.Fatal(err)
-		}
+		owner, _ := idx.findOwner("foo/bar/test.bin")
 
 		if owner != "" {
 			t.Fatalf("got owner = %#v, want empty string", owner)
@@ -132,10 +117,7 @@ func TestFindOwner(t *testing.T) {
 			},
 		}
 
-		owner, foundArt, err := idx.findOwner("foo/bar/test.bin")
-		if err != nil {
-			t.Fatal(err)
-		}
+		owner, foundArt := idx.findOwner("foo/bar/test.bin")
 
 		if owner != "foo.yaml" {
 			t.Fatalf("got owner = %#v, want foo.yaml", owner)

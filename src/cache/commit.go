@@ -217,7 +217,7 @@ func commitDirArtifact(
 	canRenameFile bool,
 ) error {
 	// TODO: don't bother checking if regular files are up-to-date?
-	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art)
+	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art, true)
 	if err != nil {
 		return err
 	}
@@ -227,19 +227,19 @@ func commitDirArtifact(
 
 	baseDir := filepath.Join(workspaceDir, art.Path)
 
-	infos, err := readDir(baseDir, art.DisableRecursion)
+	entries, err := readDir(baseDir, art.DisableRecursion)
 	if err != nil {
 		return err
 	}
 
 	// Start a goroutine to feed files/sub-directories to workers.
 	errGroup, groupCtx := errgroup.WithContext(ctx)
-	inputFiles := make(chan os.FileInfo)
+	inputFiles := make(chan os.DirEntry)
 	errGroup.Go(func() error {
 		defer close(inputFiles)
-		for _, info := range infos {
+		for _, entry := range entries {
 			select {
-			case inputFiles <- info:
+			case inputFiles <- entry:
 			case <-groupCtx.Done():
 				return groupCtx.Err()
 			}
@@ -258,12 +258,12 @@ func commitDirArtifact(
 		Contents: make(map[string]*artifact.Artifact),
 	}
 	errGroup.Go(func() error {
-		// There should be exactly len(infos) Artifacts returned in the
+		// There should be exactly len(entries) Artifacts returned in the
 		// childArtifacts channel. This fact is critical for enabling the
 		// dynamic worker scheduling below, because that logic needs to know
 		// when to stop waiting for available worker tokens (via the
 		// manifestReady channel).
-		for i := 0; i < len(infos); i++ {
+		for i := 0; i < len(entries); i++ {
 			select {
 			case childArt := <-childArtifacts:
 				newManifest.Contents[childArt.Path] = childArt
@@ -279,7 +279,7 @@ func commitDirArtifact(
 	// space in either of the "active worker" channels. We quit when either
 	// we've either scheduled as many workers as files/sub-dirs, the manifest
 	// builder says the manifest is ready, or the group was cancelled.
-	for i := 0; i < len(infos); i++ {
+	for i := 0; i < len(entries); i++ {
 		select {
 		case <-groupCtx.Done():
 			break
@@ -344,24 +344,27 @@ func commitWorker(
 	baseDir string,
 	dirMan directoryManifest,
 	strat strategy.CheckoutStrategy,
-	inputFiles <-chan os.FileInfo,
+	inputFiles <-chan os.DirEntry,
 	outputArtifacts chan<- *artifact.Artifact,
 	activeSharedWorkers chan struct{},
 	progress *pb.ProgressBar,
 	canRenameFile bool,
 ) error {
-	for info := range inputFiles {
-		path := info.Name()
+	for entry := range inputFiles {
+		path := entry.Name()
 		// See if we can recover a sub-artifact from an existing dirManifest.
 		// This enables skipping up-to-date artifacts.
-		var childArt *artifact.Artifact
+		var (
+			childArt *artifact.Artifact
+			err      error
+		)
 		childArt, ok := dirMan.Contents[path]
 		if !ok {
 			childArt = &artifact.Artifact{Path: path}
 		}
-		if info.IsDir() {
+		if entry.IsDir() {
 			childArt.IsDir = true
-			if err := commitDirArtifact(
+			err = commitDirArtifact(
 				ctx,
 				ch,
 				baseDir,
@@ -370,20 +373,19 @@ func commitWorker(
 				activeSharedWorkers,
 				progress,
 				canRenameFile,
-			); err != nil {
-				return err
-			}
+			)
 		} else {
-			if err := commitFileArtifact(
+			err = commitFileArtifact(
 				ch,
 				baseDir,
 				childArt,
 				strat,
 				progress,
 				canRenameFile,
-			); err != nil {
-				return err
-			}
+			)
+		}
+		if err != nil {
+			return err
 		}
 		select {
 		case outputArtifacts <- childArt:
@@ -394,25 +396,25 @@ func commitWorker(
 	return nil
 }
 
-func readDir(path string, excludeDirs bool) (out []os.FileInfo, err error) {
+func readDir(path string, excludeDirs bool) (out []os.DirEntry, err error) {
 	dir, err := os.Open(path)
 	if err != nil {
 		return
 	}
 	defer dir.Close()
-	out, err = dir.Readdir(0)
+	out, err = dir.ReadDir(0)
 	if err != nil {
 		return
 	}
 
 	if excludeDirs {
 		allOut := out
-		out = make([]os.FileInfo, 0, len(allOut))
-		for _, info := range allOut {
-			if info.IsDir() {
+		out = make([]os.DirEntry, 0, len(allOut))
+		for _, entry := range allOut {
+			if entry.IsDir() {
 				continue
 			}
-			out = append(out, info)
+			out = append(out, entry)
 		}
 	}
 	return
