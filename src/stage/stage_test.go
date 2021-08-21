@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/pkg/errors"
 )
 
 func TestFromFile(t *testing.T) {
@@ -15,6 +16,11 @@ func TestFromFile(t *testing.T) {
 		panic("Mock not implemented")
 	}
 	resetFromYamlFileMock := func() { fromYamlFile = fromYamlFileOrig }
+
+	fromFileErr := func(path string) error {
+		_, err := FromFile(path)
+		return errors.Cause(err)
+	}
 
 	t.Run("skipCache is always true for inputs", func(t *testing.T) {
 		defer resetFromYamlFileMock()
@@ -78,7 +84,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, err := FromFile("stage.yaml")
+		err := fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -102,7 +108,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, err := FromFile("stage.yaml")
+		err := fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -126,7 +132,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, err := FromFile("stage.yaml")
+		err := fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -151,7 +157,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, err := FromFile("stage.yaml")
+		err := fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -172,7 +178,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, err := FromFile("stage.yaml")
+		err := fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -233,7 +239,7 @@ func TestFromFile(t *testing.T) {
 				}
 				return os.ErrNotExist
 			}
-			_, err := FromFile("stage.yaml")
+			err := fromFileErr("stage.yaml")
 			if err == nil {
 				t.Fatal("expected FromFile to return error")
 			}
@@ -309,7 +315,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, err := FromFile("stage.yaml")
+		err := fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -336,7 +342,7 @@ func TestFromFile(t *testing.T) {
 			return os.ErrNotExist
 		}
 
-		_, err := FromFile("stage.yaml")
+		err := fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}
@@ -354,7 +360,53 @@ func TestFromFile(t *testing.T) {
 			},
 		}
 
-		_, err = FromFile("stage.yaml")
+		err = fromFileErr("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("stage files cannot reference themselves", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stageFile := Stage{
+			Outputs: map[string]*artifact.Artifact{
+				"stage.yaml": {},
+			},
+		}
+
+		fromYamlFile = func(path string, output *Stage) error {
+			if path == "stage.yaml" {
+				*output = stageFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		expectedError := "stage references itself in outputs"
+
+		err := fromFileErr("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
+		}
+
+		stageFile = Stage{
+			Command: "echo hello world",
+			Inputs: map[string]*artifact.Artifact{
+				"stage.yaml": {},
+			},
+		}
+
+		expectedError = "stage references itself in inputs"
+
+		err = fromFileErr("stage.yaml")
 		if err == nil {
 			t.Fatal("expected FromFile to return error")
 		}

@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -71,12 +69,7 @@ recursively on all stages upstream of the given stage(s).`,
 			if err != nil {
 				fatal(err)
 			}
-			stageFile, err := os.Create(path)
-			if err != nil {
-				fatal(err)
-			}
-			defer stageFile.Close()
-			if err := idx[path].Serialize(stageFile); err != nil {
+			if err := idx[path].ToFile(path); err != nil {
 				fatal(err)
 			}
 		}

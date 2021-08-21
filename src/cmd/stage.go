@@ -114,7 +114,7 @@ needed.`,
 			}
 			stg.Inputs[art.Path] = art
 		}
-		if err := stg.Validate(); err != nil {
+		if err := stg.Validate(""); err != nil {
 			fatal(err)
 		}
 		if err := stg.Serialize(os.Stdout); err != nil {

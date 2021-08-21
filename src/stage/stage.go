@@ -140,12 +140,14 @@ func FromFile(stagePath string) (stg Stage, err error) {
 		stg.Outputs[art.Path] = art
 	}
 
-	return stg, stg.Validate()
+	return stg, errors.Wrapf(stg.Validate(stagePath), "load stage %s", stagePath)
 }
 
 // Validate returns an error describing a problem with the given Stage.
 // If there are no problems with the Stage definition this method returns nil.
-func (stg Stage) Validate() error {
+// If stagePath is non-empty, Artifacts matching stagePath will cause an error;
+// stage cannot track or reference themselves.
+func (stg Stage) Validate(stagePath string) error {
 	if strings.Contains(stg.WorkingDir, "..") {
 		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
 	}
@@ -164,6 +166,9 @@ func (stg Stage) Validate() error {
 	// TODO: Only consolidate Artifacts with IsDir = true?
 	allArtifacts := make(map[string]*artifact.Artifact, len(stg.Inputs)+len(stg.Outputs))
 	for artPath, art := range stg.Outputs {
+		if artPath == stagePath {
+			return errors.New("stage references itself in outputs")
+		}
 		if _, ok := stg.Inputs[artPath]; ok {
 			return fmt.Errorf(
 				"artifact %s is both an input and an output",
@@ -173,6 +178,9 @@ func (stg Stage) Validate() error {
 		allArtifacts[artPath] = art
 	}
 	for artPath, art := range stg.Inputs {
+		if artPath == stagePath {
+			return errors.New("stage references itself in inputs")
+		}
 		allArtifacts[artPath] = art
 	}
 
@@ -202,6 +210,20 @@ func (stg *Stage) Serialize(writer io.Writer) error {
 	return yaml.NewEncoder(writer).Encode(stg.toFileFormat())
 }
 
+// ToFile writes a Stage to the given file path.
+func (stg *Stage) ToFile(path string) error {
+	errPrefix := "writing stage " + path
+	stageFile, err := os.Create(path)
+	if err != nil {
+		return errors.Wrap(err, errPrefix)
+	}
+	defer stageFile.Close()
+	if err := stg.Serialize(stageFile); err != nil {
+		return errors.Wrap(err, errPrefix)
+	}
+	return nil
+}
+
 // CalculateChecksum returns the checksum of the Stage as it would be set in
 // the Checksum field.
 func (stg Stage) CalculateChecksum() (string, error) {
@@ -221,9 +243,9 @@ func (stg Stage) CalculateChecksum() (string, error) {
 		newArt.Checksum = ""
 		cleanStage.Outputs[art.Path] = &newArt
 	}
-	// TODO: Using encoding/gob gives sporadic checksum differences with this
-	// method. Using encoding/json seems to alleviate the issue. We need to
-	// understand this better.
+	// We can't use encoding/gob here because maps aren't serialized in
+	// a deterministically. encoding/json sorts maps by theirs keys
+	// beforehand, so it is a deterministic encoding.
 	buf := new(bytes.Buffer)
 	if err := json.NewEncoder(buf).Encode(cleanStage); err != nil {
 		return "", err

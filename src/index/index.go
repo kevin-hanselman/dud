@@ -39,15 +39,16 @@ func (idx *Index) AddStage(stg stage.Stage, path string) error {
 // To prevent the Index from going stale, Stages themselves aren't written to
 // the Index file; the Index only tracks their paths.
 // TODO no tests
-func (idx Index) ToFile(path string) error {
-	file, err := os.Create(path)
+func (idx Index) ToFile(indexPath string) error {
+	errPrefix := fmt.Sprintf("writing index to %s", indexPath)
+	file, err := os.Create(indexPath)
 	if err != nil {
-		return err
+		return errors.Wrap(err, errPrefix)
 	}
 	defer file.Close()
-	for path := range idx {
-		if _, err := fmt.Fprintln(file, path); err != nil {
-			return err
+	for stagePath := range idx {
+		if _, err := fmt.Fprintln(file, stagePath); err != nil {
+			return errors.Wrapf(err, "%s: write %s", errPrefix, stagePath)
 		}
 	}
 	return nil
