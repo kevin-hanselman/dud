@@ -311,10 +311,54 @@ func TestFromFile(t *testing.T) {
 
 		_, err := FromFile("stage.yaml")
 		if err == nil {
-			t.Fatal("expcted FromFile to return error")
+			t.Fatal("expected FromFile to return error")
 		}
 
 		expectedError := "artifact .. is outside of the project root"
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("disallow no outputs and no command", func(t *testing.T) {
+		defer resetFromYamlFileMock()
+		stageFile := Stage{
+			Inputs: map[string]*artifact.Artifact{
+				"foo": {},
+			},
+		}
+
+		fromYamlFile = func(path string, output *Stage) error {
+			if path == "stage.yaml" {
+				*output = stageFile
+				return nil
+			}
+			return os.ErrNotExist
+		}
+
+		_, err := FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+
+		expectedError := "declared no outputs and no command"
+		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
+			t.Fatalf("error -want +got:\n%s", diff)
+		}
+
+		// Assert that stage.Command has spaces trimmed.
+		stageFile = Stage{
+			Command: "  ",
+			Inputs: map[string]*artifact.Artifact{
+				"foo": {},
+			},
+		}
+
+		_, err = FromFile("stage.yaml")
+		if err == nil {
+			t.Fatal("expected FromFile to return error")
+		}
+
 		if diff := cmp.Diff(expectedError, err.Error()); diff != "" {
 			t.Fatalf("error -want +got:\n%s", diff)
 		}

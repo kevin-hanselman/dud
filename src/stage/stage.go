@@ -90,7 +90,7 @@ func (stg Stage) toFileFormat() (out Stage) {
 var fromYamlFile = func(path string, stg *Stage) error {
 	file, err := os.Open(path)
 	if err != nil {
-		return errors.Wrap(err, path)
+		return err
 	}
 	defer file.Close()
 	decoder := yaml.NewDecoder(file)
@@ -109,7 +109,7 @@ func FromFile(stagePath string) (stg Stage, err error) {
 		return
 	}
 	stg.Checksum = tempStage.Checksum
-	stg.Command = tempStage.Command
+	stg.Command = strings.TrimSpace(tempStage.Command)
 	stg.Inputs = make(map[string]*artifact.Artifact, len(stg.Inputs))
 	stg.Outputs = make(map[string]*artifact.Artifact, len(stg.Outputs))
 
@@ -155,6 +155,10 @@ func (stg Stage) Validate() error {
 	if len(stg.Inputs)+len(stg.Outputs) == 0 {
 		return errors.New("declared no inputs and no outputs")
 	}
+	if len(stg.Outputs)+len(stg.Command) == 0 {
+		return errors.New("declared no outputs and no command")
+	}
+
 	// First, check for direct overlap between Outputs and Inputs.
 	// Consolidate all Artifacts into a single map to facilitate the next step.
 	// TODO: Only consolidate Artifacts with IsDir = true?

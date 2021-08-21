@@ -64,6 +64,7 @@ func mkdirsThen(src, dst string, f func(src, dst string) error) error {
 }
 
 // Mock remoteCopy with a version that creates hard links between directories
+// TODO: Consider asserting the number of calls to remoteCopy.
 func mockRemoteCopy(src, dst string, fileSet map[string]struct{}) error {
 	for file := range fileSet {
 		if err := mkdirsThen(

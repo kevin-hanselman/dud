@@ -182,6 +182,7 @@ clean-docker:
 .PHONY: mod-update
 mod-update:
 	go get -u -t ./...
+	go mod tidy -v
 
 .PHONY: tidy
 tidy:
