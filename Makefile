@@ -1,7 +1,6 @@
 docker_image = dud-dev
 base_dir = $(shell pwd)
-GOPATH ?= ~/go
-GOBIN ?= $(GOPATH)/bin
+GOBIN ?= $(shell go env GOPATH)/bin
 
 dud: test
 	go build -o dud \

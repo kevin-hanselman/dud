@@ -47,13 +47,13 @@ Now we have a stage file, but we need to register it with Dud. We do that with `
 
     $ dud status
     cifar.yaml                stage definition not checksummed
-      cifar-10-python.tar.gz  uncommitted
+      cifar-10-python.tar.gz  not committed
 
 `dud status` gives us an overview of the Dud project. Here we can see our new stage, `cifar.yaml`, and the file it tracks, `cifar-10-python.tar.gz`. Dud tells us that the tarball is "uncommitted." This means Dud isn't storing this version of the file yet. Let's fix that by committing the stage:
 
     $ dud commit
     committing stage cifar.yaml
-      cifar-10-python.tar.gz  162.60 MiB / 162.60 MiB  100%  ?/s  66ms total
+      cifar-10-python.tar.gz  162.60 MiB / 162.60 MiB  100%  ?/s  74ms total
 
 `dud commit` goes through all of our stages (in this case, just `cifar.yaml`) and copies their files/directories to the Dud cache. The cache is a directory that holds all versions of all files and directories owned by Dud. By default, the cache lives at `.dud/cache/`, but it's location is configurable (see `.dud/config.yaml`).
 
@@ -61,7 +61,7 @@ To get a better sense of what `dud commit` did, let's look at the directory stru
 
     $ tree -an
     .
-    ├── cifar-10-python.tar.gz -> /home/user/cifar/.dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+    ├── cifar-10-python.tar.gz -> .dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
     ├── cifar.yaml
     └── .dud
         ├── cache
@@ -86,7 +86,7 @@ Dud makes it very difficult to accidentally modify committed files. When Dud com
 The tarball isn't the only thing that's changed. Let's look at our stage file:
 
     $ cat cifar.yaml
-    checksum: 3b42e4b6137f065c6d923eda42421dafc72a46e48bae431ca82484342754cfeb
+    checksum: 801b84d7215b34f14d04db1750edf0ede4686b606b8028bdda63f681bf62d324
     working-dir: .
     outputs:
       cifar-10-python.tar.gz:
@@ -103,7 +103,7 @@ Dud recorded the tarball's checksum in the stage file. (It also checksummed the 
     checking out stage cifar.yaml
 
     $ readlink -v cifar-10-python.tar.gz
-    /home/user/cifar/.dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+    .dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
 
 `dud checkout` goes through all of our stages, finds their checksummed files in the cache, and makes the appropriate links in our workspace.
 
@@ -148,10 +148,11 @@ Let's add the stage and check our status:
     Added extract_cifar.yaml to the index.
 
     $ dud status
+    extract_cifar.yaml     stage definition not checksummed
+      cifar-10-batches-py  empty directory
+
     cifar.yaml                stage definition up-to-date
       cifar-10-python.tar.gz  up-to-date (link)
-    extract_cifar.yaml        stage definition not checksummed
-      cifar-10-batches-py     uncommitted
 
 This looks as expected. Our tarball is committed, but we haven't extracted it yet. We do that using `dud run`:
 
@@ -182,7 +183,7 @@ Congrats on [defusing the bomb](https://xkcd.com/1168/)! Now that we know our pi
     committing stage cifar.yaml
       cifar-10-python.tar.gz up-to-date; skipping commit
     committing stage extract_cifar.yaml
-      cifar-10-batches-py   177.59 MiB / 177.59 MiB  100%  ?/s  38ms total
+      cifar-10-batches-py   177.59 MiB / 177.59 MiB  100%  ?/s  36ms total
 
 Notice that Dud detected that the tarball from `cifar.yaml` hasn't changed, so it knew not to waste time committing it again.
 
@@ -191,10 +192,13 @@ Let's take another look at our project status for good measure:
     $ dud status
     cifar.yaml                stage definition up-to-date
       cifar-10-python.tar.gz  up-to-date (link)
-    extract_cifar.yaml        stage definition up-to-date
-      cifar-10-batches-py     up-to-date
 
-Looks good! I bet you can guess what happens if we try re-running our pipeline:
+    extract_cifar.yaml     stage definition up-to-date
+      cifar-10-batches-py  x8 up-to-date (link)
+
+Looks good! Note that because `cifar-10-batches-py` is a directory, `dud status` reports the status of the contained files. Here, Dud is telling us that the `cifar-10-batches-py` directory has eight files, and they are all up-to-date and linked to the Dud cache.
+
+Because everything is up-to-date, I bet you can guess what happens if we try re-running our pipeline:
 
     $ dud run
     nothing to do for stage cifar.yaml
@@ -218,7 +222,7 @@ Now that we have the humble beginnings of our data pipeline working, it's a good
 
 Dud uses [rclone](https://rclone.org) to synchronize the local Dud cache (`.dud/cache`) with a remote location. Rclone supports an impressive number of storage systems/providers, but for this demo we'll use a "fake" remote cache -- another local directory on our computer. However, the following steps apply to any "real" remote. (If you're following along and haven't installed rclone yet, now's the time. Check the [rclone website](https://rclone.org) for instructions.)
 
-Recall that when we ran `dud init`, Dud told us that it created two config files: `.dud/config.yaml` and `.dud/rclone.conf`. Let's peek these files now, starting with `.dud/rclone.conf`:
+Recall that when we ran `dud init`, Dud told us that it created two config files: `.dud/config.yaml` and `.dud/rclone.conf`. Let's peek at these files now, starting with `.dud/rclone.conf`:
 
     $ cat .dud/rclone.conf
     # rclone config file
@@ -242,8 +246,14 @@ This config file will tell rclone that we have a remote location called `fake_re
 To tell Dud about our new "remote", we'll edit Dud's configuration file, `.dud/config.yaml`. Before we do that, let's examine the file:
 
     $ cat .dud/config.yaml
-    # Dud config file
-    cache: .dud/cache
+    # Dud project-level config file
+
+    # This config file overrides any user configuration from
+    # "$XDG_CONFIG_HOME/dud/config.yaml" or "~/.config/dud/config.yaml".
+
+    # This is the default cache location. Uncomment here or add to your user-level
+    # config to override.
+    # cache: .dud/cache
 
     # To enable push and fetch, set 'remote' to a valid rclone remote path. For
     # example, if you have a remote called "s3" in your .dud/rclone.conf, and you
@@ -263,20 +273,26 @@ We're now ready to push our data to the remote cache! We do this with one simple
 
     $ dud push
     pushing stage cifar.yaml
-    Transferred:   	         0 / 0 Bytes, -, 0 Bytes/s, ETA -
-    Checks:                 1 / 1, 100%
-    Elapsed time:         0.0s
+    Transferred:   	  162.600M / 162.600 MBytes, 100%, 413.264 MBytes/s, ETA 0s
+    Transferred:            1 / 1, 100%
+    Elapsed time:         0.4s
     pushing stage extract_cifar.yaml
-    Transferred:   	         0 / 0 Bytes, -, 0 Bytes/s, ETA -
-    Checks:                 9 / 9, 100%
-    Elapsed time:         0.0s
+    Transferred:   	  169.291M / 177.589 MBytes, 95%, 338.500 MBytes/s, ETA 0s
+    Transferred:            7 / 9, 78%
+    Elapsed time:         0.5s
+    Transferring:
+     * 89/0ad63a9049dd580060f…3d11ee3a1c672a29cb7c7e: 90% /29.598M, 0/s, -
+     * 1b/9d2071e94ff60e14194…ae8dc1a2887c657bf881c5: 82% /29.598M, 0/s, -
+    Transferred:   	  177.589M / 177.589 MBytes, 100%, 346.505 MBytes/s, ETA 0s
+    Transferred:            9 / 9, 100%
+    Elapsed time:         0.5s
 
 `dud push` goes through all of our stages, looks up their committed artifacts (by checksum), and instructs rclone to copy them to the remote cache. We can confirm our artifacts were copied to `/tmp/dud/cache` using rclone as well, which provides the `check` command to compare two directories (or indeed remotes):
 
     $ rclone check .dud/cache /tmp/dud/cache
-    2021/06/15 05:05:03 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
-    2021/06/15 05:05:04 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
-    2021/06/15 05:05:04 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
+    2021/08/24 02:17:13 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
+    2021/08/24 02:17:14 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
+    2021/08/24 02:17:14 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
 
 Sure enough, rclone reports that `.dud/cache` and `/tmp/dud/cache` are identical. If it were "real", our collaborators with access to `fake_remote` could now access all of the data we've committed so far! Let's pretend we are one of those collaborators, and we need to fetch the data files from the remote cache. We can do that with the aptly-named `fetch` command:
 
@@ -284,21 +300,21 @@ Sure enough, rclone reports that `.dud/cache` and `/tmp/dud/cache` are identical
 
     $ dud fetch
     fetching stage cifar.yaml
-    Transferred:   	  162.600M / 162.600 MBytes, 100%, 423.356 MBytes/s, ETA 0s
+    Transferred:   	  162.600M / 162.600 MBytes, 100%, 498.612 MBytes/s, ETA 0s
     Transferred:            1 / 1, 100%
     Elapsed time:         0.3s
     fetching stage extract_cifar.yaml
-    Transferred:   	    1.396k / 1.396 kBytes, 100%, 4.175 MBytes/s, ETA 0s
+    Transferred:   	       974 / 974 Bytes, 100%, 5.056 MBytes/s, ETA 0s
     Transferred:            1 / 1, 100%
     Elapsed time:         0.0s
-    Transferred:   	  177.588M / 177.588 MBytes, 100%, 682.163 MBytes/s, ETA 0s
+    Transferred:   	  177.588M / 177.588 MBytes, 100%, 730.200 MBytes/s, ETA 0s
     Transferred:            8 / 8, 100%
     Elapsed time:         0.2s
 
     $ rclone check .dud/cache /tmp/dud/cache
-    2021/06/15 05:05:06 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
-    2021/06/15 05:05:08 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
-    2021/06/15 05:05:08 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
+    2021/08/24 02:17:17 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
+    2021/08/24 02:17:19 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
+    2021/08/24 02:17:19 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
 
 `dud fetch` is the inverse of `dud push`; it looks up artifacts the same way `push` does (from stage files), but it copies _from_ the remote cache _to_ the local cache.
 
@@ -380,8 +396,8 @@ Let's tell Git to track everything else:
 With everything in order, let's commit our code:
 
     $ git commit -m 'initial commit'
-    [main (root-commit) 526a9fb] initial commit
-     7 files changed, 25 insertions(+)
+    [main (root-commit) 007fbe5] initial commit
+     7 files changed, 24 insertions(+)
      create mode 100644 .dud/.gitignore
      create mode 100644 .dud/config.yaml
      create mode 100644 .dud/index
