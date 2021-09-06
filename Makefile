@@ -50,6 +50,9 @@ docker-image:
 		-f ./integration/Dockerfile \
 		.
 
+docker-pull:
+	docker pull archlinux
+
 .PHONY: fmt
 fmt: $(GOBIN)/gofumpt $(GOBIN)/goimports
 	goimports -w -l .

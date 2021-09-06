@@ -3,7 +3,41 @@
 Please review and abide by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 
-## TLDR
+## Design Goals
+
+When contributing to Dud, please keep in mind the following goals of the
+project:
+
+Dud should be simple, fast, and transparent.
+
+### Simple
+
+Dud should do one thing well and be a good UNIX citizen.
+
+Dud should never get in your way (unless you're about to do something stupid).
+
+Dud should be less magical, not more.
+
+### Fast
+
+Dud should prioritize speed while maintaining sensible assurances of data
+integrity.
+
+Dud should isolate time-intensive operations to keep the majority of the UX
+as fast as possible.
+
+Dud should scale to datasets in the hundreds of gigabytes and/or hundreds of
+thousands of files.
+
+### Transparent
+
+Dud should explain itself early and often.
+
+Dud should maintain its state in a human-readable (and ideally human-editable)
+form.
+
+
+## Testing TLDR
 
 `make docker-integration-test` should complete without error. Read
 the Makefile (or just try running it!) to see what goes into that command.
