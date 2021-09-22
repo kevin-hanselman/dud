@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/awalterschulze/gographviz"
-	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/spf13/cobra"
 )
 
@@ -32,15 +31,7 @@ generate images of the stage graph. Visit https://graphviz.org for more
 information about Graphviz and for installation instructions.`,
 	Example: "dud graph | dot -Tpng -o dud.png",
 	Run: func(cmd *cobra.Command, paths []string) {
-		rootDir, err := cdToProjectRoot(paths...)
-		if err != nil {
-			fatal(err)
-		}
-		if err := readConfig(rootDir); err != nil {
-			fatal(err)
-		}
-
-		idx, err := index.FromFile(indexPath)
+		_, _, idx, err := prepare(paths...)
 		if err != nil {
 			fatal(err)
 		}

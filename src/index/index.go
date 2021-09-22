@@ -41,6 +41,8 @@ func (idx *Index) AddStage(stg stage.Stage, path string) error {
 // TODO no tests
 func (idx Index) ToFile(indexPath string) error {
 	errPrefix := fmt.Sprintf("writing index to %s", indexPath)
+	// TODO: If we stop relying on the project-wide lock file, this should be
+	// flocked.
 	file, err := os.Create(indexPath)
 	if err != nil {
 		return errors.Wrap(err, errPrefix)

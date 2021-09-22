@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"errors"
-
-	"github.com/kevin-hanselman/dud/src/cache"
-	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -33,27 +29,14 @@ act recursively on all stages upstream of the given stage(s).
 This command requires rclone to be installed on your machine. Visit
 https://rclone.org/ for more information and installation instructions.`,
 	Run: func(cmd *cobra.Command, paths []string) {
-		rootDir, err := cdToProjectRoot(paths...)
-		if err != nil {
-			fatal(err)
-		}
-		if err := readConfig(rootDir); err != nil {
-			fatal(err)
-		}
-
-		ch, err := cache.NewLocalCache(viper.GetString("cache"))
+		rootDir, ch, idx, err := prepare(paths...)
 		if err != nil {
 			fatal(err)
 		}
 
 		remote := viper.GetString("remote")
 		if remote == "" {
-			fatal(errors.New(noRemote))
-		}
-
-		idx, err := index.FromFile(indexPath)
-		if err != nil {
-			fatal(err)
+			fatal(noRemoteError{})
 		}
 
 		if len(idx) == 0 {

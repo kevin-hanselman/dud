@@ -6,11 +6,9 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/stage"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func init() {
@@ -44,20 +42,7 @@ stage. If no stage files are passed in, status will act on all stages in the
 index. By default, status will act recursively on all stages upstream of the
 given stage(s).`,
 	Run: func(cmd *cobra.Command, paths []string) {
-		rootDir, err := cdToProjectRoot(paths...)
-		if err != nil {
-			fatal(err)
-		}
-		if err := readConfig(rootDir); err != nil {
-			fatal(err)
-		}
-
-		ch, err := cache.NewLocalCache(viper.GetString("cache"))
-		if err != nil {
-			fatal(err)
-		}
-
-		idx, err := index.FromFile(indexPath)
+		rootDir, ch, idx, err := prepare(paths...)
 		if err != nil {
 			fatal(err)
 		}

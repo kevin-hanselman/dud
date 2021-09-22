@@ -1,7 +1,6 @@
 package testutil
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -56,11 +55,11 @@ type TempDirs struct {
 
 // CreateTempDirs creates a Dud cache and workspace in the OS temp FS.
 func CreateTempDirs() (dirs TempDirs, err error) {
-	dirs.CacheDir, err = ioutil.TempDir("", "dud_cache")
+	dirs.CacheDir, err = os.MkdirTemp("", "dud_cache")
 	if err != nil {
 		return
 	}
-	dirs.WorkDir, err = ioutil.TempDir("", "dud_wspace")
+	dirs.WorkDir, err = os.MkdirTemp("", "dud_wspace")
 	if err != nil {
 		os.RemoveAll(dirs.CacheDir)
 		return
@@ -156,7 +155,7 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 		if err = os.Mkdir(fileCacheDir, 0o755); err != nil {
 			return
 		}
-		if err = ioutil.WriteFile(fileCachePath, fileContents, 0o444); err != nil {
+		if err = os.WriteFile(fileCachePath, fileContents, 0o444); err != nil {
 			return
 		}
 	}
@@ -172,7 +171,7 @@ func CreateArtifactTestCase(status artifact.Status) (dirs TempDirs, art artifact
 		if !status.ContentsMatch {
 			fileContents = []byte("Not the same as in the cache")
 		}
-		if err = ioutil.WriteFile(fileWorkspacePath, fileContents, 0o644); err != nil {
+		if err = os.WriteFile(fileWorkspacePath, fileContents, 0o644); err != nil {
 			return
 		}
 	case fsutil.StatusLink:

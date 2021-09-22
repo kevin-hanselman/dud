@@ -8,12 +8,14 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 
 	"github.com/google/go-cmp/cmp"
+	"go.uber.org/goleak"
 )
 
 func TestDirectoryStatusIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
+	defer goleak.VerifyNone(t)
 
 	notCommitted := func(art artifact.Artifact) *artifact.Status {
 		return &artifact.Status{

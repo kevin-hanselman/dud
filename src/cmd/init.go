@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -37,15 +36,15 @@ func init() {
 # https://rclone.org/docs/#syntax-of-remote-paths
 `
 
-			if err := ioutil.WriteFile(".dud/config.yaml", []byte(dudConf), 0o644); err != nil {
+			if err := os.WriteFile(".dud/config.yaml", []byte(dudConf), 0o644); err != nil {
 				fatal(err)
 			}
 
-			if err := ioutil.WriteFile(indexPath, []byte{}, 0o644); err != nil {
+			if err := os.WriteFile(indexPath, []byte{}, 0o644); err != nil {
 				fatal(err)
 			}
 
-			if err := ioutil.WriteFile(".dud/.gitignore", []byte("/cache/"), 0o644); err != nil {
+			if err := os.WriteFile(".dud/.gitignore", []byte("/cache/\n/lock\n"), 0o644); err != nil {
 				fatal(err)
 			}
 
@@ -55,7 +54,7 @@ func init() {
 # path.
 # See: https://rclone.org/docs/#syntax-of-remote-paths
 `
-			if err := ioutil.WriteFile(".dud/rclone.conf", []byte(rcloneConf), 0o644); err != nil {
+			if err := os.WriteFile(".dud/rclone.conf", []byte(rcloneConf), 0o644); err != nil {
 				fatal(err)
 			}
 

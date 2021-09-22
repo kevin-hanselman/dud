@@ -33,6 +33,9 @@ func init() {
 				if err != nil {
 					fatal(err)
 				}
+				if err := lockProject(rootDir); err != nil {
+					fatal(err)
+				}
 				if err := readConfig(rootDir); err != nil {
 					fatal(err)
 				}
@@ -51,21 +54,16 @@ func init() {
 				return fmt.Errorf("expected two arguments, got %d", len(args))
 			}
 
-			isValid := false
 			for _, field := range validFields {
 				if args[0] == field {
-					isValid = true
-					break
+					return nil
 				}
 			}
 
-			if !isValid {
-				return fmt.Errorf(
-					"invalid argument; expected one of [%s]",
-					strings.Join(validFields, ", "),
-				)
-			}
-			return nil
+			return fmt.Errorf(
+				"invalid argument; expected one of [%s]",
+				strings.Join(validFields, ", "),
+			)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			var err error
@@ -76,6 +74,9 @@ func init() {
 				var rootDir string
 				rootDir, err = cdToProjectRoot()
 				if err != nil {
+					fatal(err)
+				}
+				if err := lockProject(rootDir); err != nil {
 					fatal(err)
 				}
 				_, err = readProjectConfig(rootDir)

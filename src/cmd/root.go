@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -10,18 +9,21 @@ import (
 	"runtime/trace"
 	"strings"
 
+	"github.com/felixge/fgprof"
 	"github.com/kevin-hanselman/dud/src/agglog"
+	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/mitchellh/go-homedir"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
-
-	"github.com/felixge/fgprof"
 )
 
 const (
 	indexPath = ".dud/index"
+	lockPath  = ".dud/lock"
 )
 
 type emptyIndexError struct{}
@@ -47,6 +49,8 @@ building data pipelines.`,
 			}
 			if doProfile {
 				logger.Info.Println("enabled profiling")
+				// TODO: If we stop relying on the project-wide lock file, this
+				// should be flocked.
 				debugOutput, err := os.Create("dud.pprof")
 				if err != nil {
 					fatal(err)
@@ -55,6 +59,8 @@ building data pipelines.`,
 				fgprof.Start(debugOutput, fgprof.FormatPprof)
 			} else if doTrace {
 				logger.Info.Println("enabled tracing")
+				// TODO: If we stop relying on the project-wide lock file, this
+				// should be flocked.
 				debugOutput, err := os.Create("dud.trace")
 				if err != nil {
 					fatal(err)
@@ -70,9 +76,9 @@ building data pipelines.`,
 	// This is the Logger for the entire application.
 	logger *agglog.AggLogger
 
-	doProfile, doTrace, verbose bool
-	debugOutput                 *os.File
-	stopProfiling               func() error
+	doProfile, doTrace, verbose, projectLocked bool
+	debugOutput                                *os.File
+	stopProfiling                              func() error
 )
 
 func init() {
@@ -125,6 +131,9 @@ func Main() {
 	if err := rootCmd.Execute(); err != nil {
 		fatal(err)
 	}
+	if err := unlockProject(); err != nil {
+		fatal(err)
+	}
 	if err := stopDebugging(); err != nil {
 		logger.Error.Fatal(err)
 	}
@@ -132,9 +141,11 @@ func Main() {
 
 // fatal ensures we gracefully stop profiling or tracing before exiting.
 func fatal(err error) {
-	debugErr := stopDebugging()
-	if debugErr != nil {
-		logger.Error.Println(debugErr)
+	if err := unlockProject(); err != nil {
+		logger.Error.Println(err)
+	}
+	if err := stopDebugging(); err != nil {
+		logger.Error.Println(err)
 	}
 	logger.Error.Fatal(err)
 }
@@ -197,6 +208,8 @@ func readProjectConfig(rootDir string) (path string, err error) {
 	return
 }
 
+// Read the project and user config files and merge them. Project config files
+// take precedence over user config files.
 func readConfig(rootDir string) (err error) {
 	viper.SetDefault("cache", ".dud/cache")
 
@@ -243,4 +256,65 @@ func pathAbsThenRel(base, target string) (string, error) {
 		return "", err
 	}
 	return filepath.Rel(base, target)
+}
+
+// Prevent concurrent invocations to Dud in the current project using a simple
+// lock file. This isn't a comprehensive solution for concurrent user errors,
+// but it should prevent the most common problems.
+func lockProject(rootDir string) (err error) {
+	// If we're already in the project root, we technically can use lockPath
+	// directly, but this approach explicitly requires we know the project
+	// root.
+	lockFile, err := os.OpenFile(
+		filepath.Join(rootDir, lockPath),
+		// O_EXCL is key. If the file already exists, someone else has already
+		// claimed the file.
+		os.O_CREATE|os.O_RDWR|os.O_EXCL,
+		0o600,
+	)
+	if err == nil {
+		lockFile.Close()
+	} else if os.IsExist(err) {
+		err = fmt.Errorf("project lock file '%s' exists", lockPath)
+		logger.Error.Println(`Another invocation of Dud may be running, or Dud may have exited
+unexpectedly and orphaned the lock file. If you are certain Dud is not already
+running and your project is healthy, you may remove the lock file and try
+running Dud again.`)
+	}
+	projectLocked = true
+	return err
+}
+
+func unlockProject() error {
+	if projectLocked {
+		// If os.Remove succeeds, we're unlocked. If it fails, we should be calling
+		// fatal(), and we don't want try unlocking again.
+		projectLocked = false
+		return os.Remove(lockPath)
+	}
+	return nil
+}
+
+// Do a bunch of bookkeeping to prepare for usual execution of Dud operations.
+func prepare(paths ...string) (rootDir string, ch cache.LocalCache, idx index.Index, err error) {
+	rootDir, err = cdToProjectRoot(paths...)
+	if err != nil {
+		return
+	}
+
+	if err = lockProject(rootDir); err != nil {
+		return
+	}
+
+	if err = readConfig(rootDir); err != nil {
+		return
+	}
+
+	ch, err = cache.NewLocalCache(viper.GetString("cache"))
+	if err != nil {
+		return
+	}
+
+	idx, err = index.FromFile(indexPath)
+	return
 }

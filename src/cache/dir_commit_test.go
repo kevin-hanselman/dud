@@ -2,7 +2,6 @@ package cache
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,12 +12,15 @@ import (
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
+	"go.uber.org/goleak"
 )
 
 func TestDirectoryCommitIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
+
+	defer goleak.VerifyNone(t)
 
 	makeExpectedStatus := func(art artifact.Artifact) artifact.Status {
 		upToDate := func(art artifact.Artifact) *artifact.Status {
@@ -187,7 +189,7 @@ func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, LocalCach
 	for i := 1; i <= 5; i++ {
 		s := fmt.Sprint(i)
 		path := filepath.Join(dirs.WorkDir, "foo", fmt.Sprintf("%s.txt", s))
-		if err := ioutil.WriteFile(path, []byte(s), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(s), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -196,7 +198,7 @@ func setupDirTest(t *testing.T) (testutil.TempDirs, artifact.Artifact, LocalCach
 	for i := 4; i <= 8; i++ {
 		s := fmt.Sprint(i)
 		path := filepath.Join(dirs.WorkDir, "foo", "bar", fmt.Sprintf("%s.txt", s))
-		if err := ioutil.WriteFile(path, []byte(s), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(s), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}

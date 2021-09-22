@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"github.com/kevin-hanselman/dud/src/cache"
-	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func init() {
@@ -34,20 +31,7 @@ recursively on all stages upstream of the given stage(s).`,
 			strat = strategy.CopyStrategy
 		}
 
-		rootDir, err := cdToProjectRoot(paths...)
-		if err != nil {
-			fatal(err)
-		}
-		if err := readConfig(rootDir); err != nil {
-			fatal(err)
-		}
-
-		ch, err := cache.NewLocalCache(viper.GetString("cache"))
-		if err != nil {
-			fatal(err)
-		}
-
-		idx, err := index.FromFile(indexPath)
+		rootDir, ch, idx, err := prepare(paths...)
 		if err != nil {
 			fatal(err)
 		}

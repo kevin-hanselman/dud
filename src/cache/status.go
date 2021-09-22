@@ -195,8 +195,9 @@ func dirArtifactStatus(
 	}
 	for _, entry := range entries {
 		newArt := artifact.Artifact{Path: entry.Name(), IsDir: entry.IsDir()}
-		// We've already checked all entries in the manifest.
-		// (While assigning to a nil map panics, accessing a nil map is safe.)
+		// Ignore all entries in the manifest; we've already checked them
+		// above. (While assigning to a nil map panics, accessing a nil map is
+		// safe.)
 		if _, ok := manifest.Contents[newArt.Path]; ok {
 			continue
 		}

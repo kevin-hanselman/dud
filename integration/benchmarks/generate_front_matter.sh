@@ -23,4 +23,10 @@ cat << EOF
 Dud version: $(dud version | xargs)
 
 $(dvc version | head -n1 | xargs)
+
+DVC non-default configuration:
+
 EOF
+
+# Add spaces to each line to treat the output as a Markdown code block.
+dvc config --list --global | awk '{ print "    " $0 }'

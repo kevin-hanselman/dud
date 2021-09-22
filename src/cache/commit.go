@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -63,12 +62,12 @@ func (ch LocalCache) Commit(
 
 var canRenameFileBetweenDirs = func(srcDir, dstDir string) (bool, error) {
 	// Touch a file in each directory.
-	srcFile, err := ioutil.TempFile(srcDir, "")
+	srcFile, err := os.CreateTemp(srcDir, "")
 	if err != nil {
 		return false, err
 	}
 	srcFile.Close()
-	dstFile, err := ioutil.TempFile(dstDir, "")
+	dstFile, err := os.CreateTemp(dstDir, "")
 	if err != nil {
 		return false, err
 	}
@@ -166,7 +165,7 @@ func (ch LocalCache) commitBytes(reader io.Reader, moveFile string) (string, err
 	// If there's no file we can move, we need to copy the bytes from reader to
 	// the cache.
 	if moveFile == "" {
-		tempFile, err := ioutil.TempFile(ch.dir, "")
+		tempFile, err := os.CreateTemp(ch.dir, "")
 		if err != nil {
 			return "", err
 		}
@@ -188,6 +187,13 @@ func (ch LocalCache) commitBytes(reader io.Reader, moveFile string) (string, err
 	if err = os.MkdirAll(dstDir, 0o755); err != nil {
 		return "", err
 	}
+	// This rename may race others, but luckily we don't care who wins the
+	// race. Everyone in the race is trying to put the same exact file in the
+	// cache (because of content-addressed storage), so the outcome is the same
+	// no matter who wins the race. At the OS level rename is atomic, so
+	// there's no risk of corrupting the destination file with multiple
+	// concurrent syscalls. (This is at least true for UNIX, but that's all we
+	// support. See also: https://github.com/golang/go/issues/8914)
 	if err = os.Rename(moveFile, cachePath); err != nil {
 		return "", err
 	}

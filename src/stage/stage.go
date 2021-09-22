@@ -145,7 +145,7 @@ func FromFile(stagePath string) (stg Stage, err error) {
 
 // Validate returns an error describing a problem with the given Stage.
 // If there are no problems with the Stage definition this method returns nil.
-// If stagePath is non-empty, Artifacts matching stagePath will cause an error;
+// If stagePath is not empty, Artifacts matching stagePath will cause an error;
 // stage cannot track or reference themselves.
 func (stg Stage) Validate(stagePath string) error {
 	if strings.Contains(stg.WorkingDir, "..") {
@@ -213,6 +213,8 @@ func (stg *Stage) Serialize(writer io.Writer) error {
 // ToFile writes a Stage to the given file path.
 func (stg *Stage) ToFile(path string) error {
 	errPrefix := "writing stage " + path
+	// TODO: If we stop relying on the project-wide lock file, this should be
+	// flocked.
 	stageFile, err := os.Create(path)
 	if err != nil {
 		return errors.Wrap(err, errPrefix)

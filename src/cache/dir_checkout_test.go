@@ -10,12 +10,15 @@ import (
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
+	"go.uber.org/goleak"
 )
 
 func TestDirectoryCheckoutIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
+
+	defer goleak.VerifyNone(t)
 
 	logger := agglog.NewNullLogger()
 
