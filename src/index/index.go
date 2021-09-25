@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
@@ -48,7 +49,15 @@ func (idx Index) ToFile(indexPath string) error {
 		return errors.Wrap(err, errPrefix)
 	}
 	defer file.Close()
+
+	// Sort the stage paths index file is written deterministically.
+	paths := []string{}
 	for stagePath := range idx {
+		paths = append(paths, stagePath)
+	}
+	sort.Strings(paths)
+
+	for _, stagePath := range paths {
 		if _, err := fmt.Fprintln(file, stagePath); err != nil {
 			return errors.Wrapf(err, "%s: write %s", errPrefix, stagePath)
 		}
