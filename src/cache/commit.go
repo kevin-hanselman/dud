@@ -222,18 +222,20 @@ func commitDirArtifact(
 	progress *pb.ProgressBar,
 	canRenameFile bool,
 ) error {
-	// TODO: don't bother checking if regular files are up-to-date?
-	status, oldManifest, err := dirArtifactStatus(ch, workspaceDir, *art, true)
+	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, *art)
 	if err != nil {
 		return err
 	}
-	if status.ContentsMatch {
-		return nil
+
+	var oldManifest directoryManifest
+	if status.ChecksumInCache {
+		oldManifest, err = readDirManifest(filepath.Join(ch.dir, cachePath))
+		if err != nil {
+			return err
+		}
 	}
 
-	baseDir := filepath.Join(workspaceDir, art.Path)
-
-	entries, err := readDir(baseDir, art.DisableRecursion)
+	entries, err := readDir(workPath, art.DisableRecursion)
 	if err != nil {
 		return err
 	}
@@ -298,7 +300,7 @@ func commitDirArtifact(
 					groupCtx,
 					ch,
 					*art,
-					baseDir,
+					workPath,
 					oldManifest,
 					strat,
 					inputFiles,
@@ -315,7 +317,7 @@ func commitDirArtifact(
 					groupCtx,
 					ch,
 					*art,
-					baseDir,
+					workPath,
 					oldManifest,
 					strat,
 					inputFiles,
@@ -347,7 +349,7 @@ func commitWorker(
 	ctx context.Context,
 	ch LocalCache,
 	art artifact.Artifact,
-	baseDir string,
+	workPath string,
 	dirMan directoryManifest,
 	strat strategy.CheckoutStrategy,
 	inputFiles <-chan os.DirEntry,
@@ -358,22 +360,24 @@ func commitWorker(
 ) error {
 	for entry := range inputFiles {
 		path := entry.Name()
-		// See if we can recover a sub-artifact from an existing dirManifest.
-		// This enables skipping up-to-date artifacts.
 		var (
 			childArt *artifact.Artifact
 			err      error
 		)
+		// See if we can recover a child artifact from an existing directory
+		// manifest. This enables skipping up-to-date artifacts.
 		childArt, ok := dirMan.Contents[path]
 		if !ok {
-			childArt = &artifact.Artifact{Path: path}
+			childArt = &artifact.Artifact{
+				Path:  path,
+				IsDir: entry.IsDir(),
+			}
 		}
-		if entry.IsDir() {
-			childArt.IsDir = true
+		if childArt.IsDir {
 			err = commitDirArtifact(
 				ctx,
 				ch,
-				baseDir,
+				workPath,
 				childArt,
 				strat,
 				activeSharedWorkers,
@@ -383,7 +387,7 @@ func commitWorker(
 		} else {
 			err = commitFileArtifact(
 				ch,
-				baseDir,
+				workPath,
 				childArt,
 				strat,
 				progress,

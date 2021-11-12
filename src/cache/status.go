@@ -22,7 +22,7 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact, shortCir
 	err error,
 ) {
 	if art.IsDir {
-		status, _, err = dirArtifactStatus(ch, workspaceDir, art, shortCircuit)
+		status, err = dirArtifactStatus(ch, workspaceDir, art, shortCircuit)
 	} else {
 		status, err = fileArtifactStatus(ch, workspaceDir, art)
 	}
@@ -147,20 +147,19 @@ func dirArtifactStatus(
 	workspaceDir string,
 	art artifact.Artifact,
 	shortCircuit bool,
-) (artifact.Status, directoryManifest, error) {
-	var manifest directoryManifest
+) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
-		return status, manifest, err
+		return status, err
 	}
 	cachePath = filepath.Join(ch.dir, cachePath)
 
 	if !(status.HasChecksum && status.ChecksumInCache) && shortCircuit {
-		return status, manifest, nil
+		return status, nil
 	}
 
 	if status.WorkspaceFileStatus != fsutil.StatusDirectory {
-		return status, manifest, nil
+		return status, nil
 	}
 
 	// Any child Artifact that's out-of-date or not committed will flip this
@@ -168,22 +167,23 @@ func dirArtifactStatus(
 	status.ContentsMatch = true
 	status.ChildrenStatus = make(map[string]*artifact.Status)
 
+	var manifest directoryManifest
 	// First, ensure all artifacts in the directoryManifest are up-to-date.
 	if status.ChecksumInCache {
 		manifest, err = readDirManifest(cachePath)
 		if err != nil {
-			return status, manifest, err
+			return status, err
 		}
 
 		for path, art := range manifest.Contents {
 			childStatus, err := ch.Status(workPath, *art, shortCircuit)
 			if err != nil {
-				return status, manifest, err
+				return status, err
 			}
 			status.ChildrenStatus[path] = &childStatus
 			status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
 			if shortCircuit && !status.ContentsMatch {
-				return status, manifest, nil
+				return status, nil
 			}
 		}
 	}
@@ -191,7 +191,7 @@ func dirArtifactStatus(
 	// Second, get a directory listing and check for untracked files.
 	entries, err := os.ReadDir(workPath)
 	if err != nil {
-		return status, manifest, err
+		return status, err
 	}
 	for _, entry := range entries {
 		newArt := artifact.Artifact{Path: entry.Name(), IsDir: entry.IsDir()}
@@ -210,15 +210,15 @@ func dirArtifactStatus(
 		// Therefore we can exit early if needed.
 		status.ContentsMatch = false
 		if shortCircuit {
-			return status, manifest, nil
+			return status, nil
 		}
 		childStatus, err := ch.Status(workPath, newArt, shortCircuit)
 		if err != nil {
-			return status, manifest, err
+			return status, err
 		}
 		status.ChildrenStatus[newArt.Path] = &childStatus
 	}
-	return status, manifest, nil
+	return status, nil
 }
 
 func readDirManifest(path string) (man directoryManifest, err error) {
