@@ -66,12 +66,16 @@ var canRenameFileBetweenDirs = func(srcDir, dstDir string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	srcFile.Close()
+	if err := srcFile.Close(); err != nil {
+		return false, err
+	}
 	dstFile, err := os.CreateTemp(dstDir, "")
 	if err != nil {
 		return false, err
 	}
-	dstFile.Close()
+	if err := dstFile.Close(); err != nil {
+		return false, err
+	}
 
 	// Attempt the rename.
 	renameErr := os.Rename(srcFile.Name(), dstFile.Name())

@@ -67,8 +67,8 @@ given stage(s).`,
 		}
 
 		writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		for path, stageStatus := range status {
-			if err := writeStageStatus(writer, path, stageStatus); err != nil {
+		for _, path := range idx.SortStagePaths() {
+			if err := writeStageStatus(writer, path, status[path]); err != nil {
 				fatal(err)
 			}
 			fmt.Fprintln(writer)

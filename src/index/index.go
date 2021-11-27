@@ -50,19 +50,23 @@ func (idx Index) ToFile(indexPath string) error {
 	}
 	defer file.Close()
 
-	// Sort the stage paths index file is written deterministically.
-	paths := []string{}
-	for stagePath := range idx {
-		paths = append(paths, stagePath)
-	}
-	sort.Strings(paths)
-
-	for _, stagePath := range paths {
+	// Sort the stage paths so the index file is written deterministically.
+	for _, stagePath := range idx.SortStagePaths() {
 		if _, err := fmt.Fprintln(file, stagePath); err != nil {
 			return errors.Wrapf(err, "%s: write %s", errPrefix, stagePath)
 		}
 	}
 	return nil
+}
+
+// SortStagePaths returns a sorted slice of Stage paths stored in the Index.
+func (idx Index) SortStagePaths() []string {
+	paths := []string{}
+	for stagePath := range idx {
+		paths = append(paths, stagePath)
+	}
+	sort.Strings(paths)
+	return paths
 }
 
 // FromFile reads and returns an Index from the specified file path.

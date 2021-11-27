@@ -40,22 +40,21 @@ func checksumStatus(ch LocalCache, art artifact.Artifact) (
 	err error,
 ) {
 	cachePath, err = ch.PathForChecksum(art.Checksum)
-	absCachePath := filepath.Join(ch.dir, cachePath)
-
 	if _, ok := err.(InvalidChecksumError); ok {
 		err = nil
 		status.HasChecksum = false
-	} else if err != nil {
 		return
-	} else {
-		status.HasChecksum = true
-		cacheFileInfo, err = os.Stat(absCachePath)
-		if err == nil {
-			status.ChecksumInCache = true
-		} else if os.IsNotExist(err) {
-			err = nil
-			status.ChecksumInCache = false
-		}
+	}
+	if err != nil {
+		return
+	}
+	status.HasChecksum = true
+	cacheFileInfo, err = os.Stat(filepath.Join(ch.dir, cachePath))
+	if err == nil {
+		status.ChecksumInCache = true
+	} else if os.IsNotExist(err) {
+		err = nil
+		status.ChecksumInCache = false
 	}
 	return
 }
@@ -189,7 +188,7 @@ func dirArtifactStatus(
 	}
 
 	// Second, get a directory listing and check for untracked files.
-	entries, err := os.ReadDir(workPath)
+	entries, err := os.ReadDir(workPath) // TODO: replace with readDir from commit
 	if err != nil {
 		return status, err
 	}
