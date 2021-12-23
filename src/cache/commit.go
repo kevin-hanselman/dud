@@ -288,9 +288,9 @@ func commitDirArtifact(
 	})
 
 	// Start workers to commit artifacts. We spawn workers when there's free
-	// space in either of the "active worker" channels. We quit when either
-	// we've either scheduled as many workers as files/sub-dirs, the manifest
-	// builder says the manifest is ready, or the group was cancelled.
+	// space in either of the "active worker" channels. We quit when we've
+	// either scheduled as many workers as files/sub-dirs, the manifest builder
+	// says the manifest is ready, or the group was cancelled.
 	for i := 0; i < len(entries); i++ {
 		select {
 		case <-groupCtx.Done():
@@ -410,7 +410,7 @@ func commitWorker(
 	return nil
 }
 
-func readDir(path string, excludeDirs bool) (out []os.DirEntry, err error) {
+func readDir(path string, excludeSubDirs bool) (out []os.DirEntry, err error) {
 	dir, err := os.Open(path)
 	if err != nil {
 		return
@@ -421,8 +421,8 @@ func readDir(path string, excludeDirs bool) (out []os.DirEntry, err error) {
 		return
 	}
 
-	if excludeDirs {
-		allOut := out
+	if excludeSubDirs {
+		allOut := out // TODO: refactor to avoid this potential copy
 		out = make([]os.DirEntry, 0, len(allOut))
 		for _, entry := range allOut {
 			if entry.IsDir() {

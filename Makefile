@@ -151,11 +151,10 @@ serve-hugo:
 # xargs trims whitespace from the hostname
 
 .PHONY: coverage
-coverage: test.coverage
-	go tool cover -html=$<
-
-test.coverage:
-	go test ./... -coverprofile=$@
+coverage:
+	rm -f test.coverage
+	go test ./... -coverprofile=test.coverage
+	go tool cover -html=test.coverage -o coverage.html
 
 .PHONY: integration-test
 integration-test: $(GOBIN)/dud

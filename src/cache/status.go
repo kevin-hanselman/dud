@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"encoding/json"
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -10,6 +10,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 // Status reports the status of an Artifact in the Cache. If shortCircuit is
@@ -22,11 +23,18 @@ func (ch LocalCache) Status(workspaceDir string, art artifact.Artifact, shortCir
 	err error,
 ) {
 	if art.IsDir {
-		status, err = dirArtifactStatus(ch, workspaceDir, art, shortCircuit)
+		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
+		status, err = dirArtifactStatus(
+			context.Background(),
+			ch,
+			workspaceDir,
+			art,
+			shortCircuit,
+			activeSharedWorkers,
+		)
 	} else {
 		status, err = fileArtifactStatus(ch, workspaceDir, art)
 	}
-	status.Artifact = art
 	err = errors.Wrapf(err, "status %s", art.Path)
 	return
 }
@@ -77,6 +85,7 @@ var quickStatus = func(
 	if err != nil {
 		return
 	}
+	status.Artifact = art
 
 	workPath = filepath.Join(workspaceDir, art.Path)
 	status.WorkspaceFileStatus, err = fsutil.FileStatusFromPath(workPath)
@@ -142,10 +151,12 @@ func fileArtifactStatus(
 }
 
 func dirArtifactStatus(
+	ctx context.Context,
 	ch LocalCache,
 	workspaceDir string,
 	art artifact.Artifact,
 	shortCircuit bool,
+	activeSharedWorkers chan struct{},
 ) (artifact.Status, error) {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
@@ -174,24 +185,37 @@ func dirArtifactStatus(
 			return status, err
 		}
 
-		for path, art := range manifest.Contents {
-			childStatus, err := ch.Status(workPath, *art, shortCircuit)
-			if err != nil {
-				return status, err
-			}
-			status.ChildrenStatus[path] = &childStatus
-			status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
-			if shortCircuit && !status.ContentsMatch {
-				return status, nil
-			}
+		children := make([]*artifact.Artifact, len(manifest.Contents))
+		i := 0
+		for _, art := range manifest.Contents {
+			children[i] = art
+			i++
+		}
+
+		err = concurrentStatus(
+			ctx,
+			ch,
+			workPath,
+			children,
+			shortCircuit,
+			activeSharedWorkers,
+			&status,
+		)
+		if err != nil {
+			return status, err
+		}
+		if shortCircuit && !status.ContentsMatch {
+			return status, nil
 		}
 	}
 
 	// Second, get a directory listing and check for untracked files.
-	entries, err := os.ReadDir(workPath) // TODO: replace with readDir from commit
+	entries, err := readDir(workPath, art.DisableRecursion)
 	if err != nil {
 		return status, err
 	}
+	children := make([]*artifact.Artifact, 0, len(entries))
+
 	for _, entry := range entries {
 		newArt := artifact.Artifact{Path: entry.Name(), IsDir: entry.IsDir()}
 		// Ignore all entries in the manifest; we've already checked them
@@ -200,33 +224,165 @@ func dirArtifactStatus(
 		if _, ok := manifest.Contents[newArt.Path]; ok {
 			continue
 		}
-		// Ignore sub-directories if recursion is disabled.
-		if newArt.IsDir && art.DisableRecursion {
-			continue
-		}
-		// After the two exceptions above, the presence of any untracked
-		// files/directories means this Artifact is out-of-date.
-		// Therefore we can exit early if needed.
-		status.ContentsMatch = false
-		if shortCircuit {
-			return status, nil
-		}
-		childStatus, err := ch.Status(workPath, newArt, shortCircuit)
-		if err != nil {
-			return status, err
-		}
-		status.ChildrenStatus[newArt.Path] = &childStatus
+		children = append(children, &newArt)
 	}
-	return status, nil
+	if len(children) == 0 {
+		return status, nil
+	}
+	// After the directory listing is filtered above, the presence of any
+	// untracked files or directories means this Artifact is out-of-date.
+	// Therefore we can exit early if needed.
+	status.ContentsMatch = false
+	if shortCircuit {
+		return status, nil
+	}
+	err = concurrentStatus(
+		ctx,
+		ch,
+		workPath,
+		children,
+		shortCircuit, // This will always be false due to the check above.
+		activeSharedWorkers,
+		&status,
+	)
+	return status, err
 }
 
-func readDirManifest(path string) (man directoryManifest, err error) {
-	var f *os.File
-	f, err = os.Open(path)
-	if err != nil {
-		return
+type shortCircuited struct{}
+
+func (c shortCircuited) Error() string {
+	return "short-circuited"
+}
+
+func concurrentStatus(
+	ctx context.Context,
+	ch LocalCache,
+	workspaceDir string,
+	children []*artifact.Artifact,
+	shortCircuit bool,
+	activeSharedWorkers chan struct{},
+	status *artifact.Status,
+) error {
+	work := make(chan *artifact.Artifact)
+	results := make(chan *artifact.Status)
+	statusReady := make(chan struct{})
+	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
+
+	// Start a goroutine to feed workers.
+	errGroup, groupCtx := errgroup.WithContext(ctx)
+	errGroup.Go(func() error {
+		defer close(work)
+		for _, child := range children {
+			select {
+			case work <- child:
+			case <-groupCtx.Done():
+				return groupCtx.Err()
+			}
+		}
+		return nil
+	})
+
+	// Start a goroutine to collect statuses of children.
+	errGroup.Go(func() error {
+		for i := 0; i < len(children); i++ {
+			select {
+			case childStatus := <-results:
+				status.ChildrenStatus[childStatus.Path] = childStatus
+				status.ContentsMatch = status.ContentsMatch && childStatus.ContentsMatch
+				if shortCircuit && !status.ContentsMatch {
+					return shortCircuited{}
+				}
+			case <-groupCtx.Done():
+				return groupCtx.Err()
+			}
+		}
+		close(statusReady)
+		return nil
+	})
+
+	// Start workers when there's free space in either of the "active worker"
+	// channels. We quit when we've either scheduled as many workers as
+	// child artifacts, the status builder says the parent status is ready, or
+	// the group was cancelled.
+	for i := 0; i < len(children); i++ {
+		select {
+		case <-groupCtx.Done():
+			break
+		case <-statusReady:
+			break
+		case activeSharedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeSharedWorkers }()
+				return statusWorker(
+					groupCtx,
+					ch,
+					workspaceDir,
+					shortCircuit,
+					activeSharedWorkers,
+					work,
+					results,
+				)
+			})
+		case activeDedicatedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeDedicatedWorkers }()
+				return statusWorker(
+					groupCtx,
+					ch,
+					workspaceDir,
+					shortCircuit,
+					activeSharedWorkers,
+					work,
+					results,
+				)
+			})
+		}
 	}
-	defer f.Close()
-	err = json.NewDecoder(f).Decode(&man)
-	return
+
+	// Wait for all goroutines to exit and collect the group error.
+	err := errGroup.Wait()
+	if _, ok := err.(shortCircuited); ok {
+		err = nil
+	}
+	return err
+}
+
+func statusWorker(
+	ctx context.Context,
+	ch LocalCache,
+	workspaceDir string,
+	shortCircuit bool,
+	activeSharedWorkers chan struct{},
+	work <-chan *artifact.Artifact,
+	out chan<- *artifact.Status,
+) (err error) {
+	for art := range work {
+		// It's important to declare this var inside the loop so we get a fresh
+		// object each iteration. If it's declared outside the loop, we'll
+		// continually overwrite the same struct and cause races with the
+		// consumers of the channel. Alternatively, we could make the output
+		// channel carry actual status structs, not pointers.
+		var st artifact.Status
+		if art.IsDir {
+			st, err = dirArtifactStatus(
+				ctx,
+				ch,
+				workspaceDir,
+				*art,
+				shortCircuit,
+				activeSharedWorkers,
+			)
+		} else {
+			st, err = fileArtifactStatus(ch, workspaceDir, *art)
+		}
+		if err != nil {
+			return err
+		}
+		select {
+		case out <- &st:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	return nil
 }

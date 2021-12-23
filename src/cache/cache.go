@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -72,10 +73,7 @@ func NewLocalCache(dir string) (ch LocalCache, err error) {
 		return ch, errors.New("cache directory path must be set")
 	}
 	ch.dir, err = filepath.Abs(dir)
-	if err != nil {
-		return ch, err
-	}
-	return ch, nil
+	return
 }
 
 // PathForChecksum returns the expected location of an object with the
@@ -91,6 +89,17 @@ func (ch LocalCache) PathForChecksum(checksum string) (string, error) {
 type directoryManifest struct {
 	Path     string                        `json:"path,"`
 	Contents map[string]*artifact.Artifact `json:"contents,"`
+}
+
+func readDirManifest(path string) (man directoryManifest, err error) {
+	var f *os.File
+	f, err = os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	err = json.NewDecoder(f).Decode(&man)
+	return
 }
 
 // InvalidChecksumError is an error case where a valid checksum was expected
