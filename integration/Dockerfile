@@ -51,7 +51,7 @@ RUN go mod download \
     && rm go.{mod,sum} \
     && go install mvdan.cc/gofumpt@latest \
     && go install golang.org/x/tools/cmd/goimports@latest \
-    && go install golang.org/x/lint/golint@latest \
+    && go install honnef.co/go/tools/cmd/staticcheck@latest \
     && rm -rf /home/user/go/src
 
 WORKDIR /dud

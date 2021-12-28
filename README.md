@@ -74,7 +74,7 @@ management without being burdened by extra baggage carried by a specific domain.
 For both Dud and DVC, committing data to the cache is one of the most expensive
 operations that each tool undertakes (in terms of both run-time and I/O).
 Because of this, Dud puts the user in absolute control of when to commit data.
-In Dud, commits only happen in when you run `dud commit`.
+In Dud, commits only happen when you run `dud commit`.
 
 In contrast, DVC often commits automatically on your behalf as a side effect of
 other commands (for example, during `dvc add` and `dvc repro`). While DVC is

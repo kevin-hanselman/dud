@@ -59,9 +59,9 @@ fmt: $(GOBIN)/gofumpt $(GOBIN)/goimports
 	gofumpt -w -l .
 
 .PHONY: lint
-lint: $(GOBIN)/golint
+lint: $(GOBIN)/staticcheck
 	go vet ./...
-	golint ./...
+	staticcheck ./...
 
 .PHONY: test%
 test-short: fmt lint
@@ -221,8 +221,8 @@ hyperfine: 50mb_random.bin dud
 $(GOBIN)/gofumpt:
 	go install mvdan.cc/gofumpt@latest
 
-$(GOBIN)/golint:
-	go install golang.org/x/lint/golint@latest
+$(GOBIN)/staticcheck:
+	go install honnef.co/go/tools/cmd/staticcheck@latest
 
 $(GOBIN)/goimports:
 	go install golang.org/x/tools/cmd/goimports@latest

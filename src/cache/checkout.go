@@ -205,20 +205,46 @@ func checkoutDir(
 		return nil
 	})
 
-	// Start workers to checkout artifacts.
+	startCheckoutWorkers(
+		groupCtx,
+		errGroup,
+		ch,
+		workPath,
+		len(man.Contents),
+		childArtifacts,
+		strat,
+		activeSharedWorkers,
+		progress,
+	)
+
+	// Wait for all goroutines to exit and collect the group error.
+	return errGroup.Wait()
+}
+
+func startCheckoutWorkers(
+	ctx context.Context,
+	errGroup *errgroup.Group,
+	ch LocalCache,
+	workPath string,
+	totalWorkItems int,
+	input <-chan *artifact.Artifact,
+	strat strategy.CheckoutStrategy,
+	activeSharedWorkers chan struct{},
+	progress *pb.ProgressBar,
+) {
 	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
-	for i := 0; i < len(man.Contents); i++ {
+	for i := 0; i < totalWorkItems; i++ {
 		select {
-		case <-groupCtx.Done():
-			break
+		case <-ctx.Done():
+			return
 		case activeSharedWorkers <- struct{}{}:
 			errGroup.Go(func() error {
 				defer func() { <-activeSharedWorkers }()
 				return checkoutWorker(
-					groupCtx,
+					ctx,
 					ch,
 					workPath,
-					childArtifacts,
+					input,
 					strat,
 					activeSharedWorkers,
 					progress,
@@ -228,10 +254,10 @@ func checkoutDir(
 			errGroup.Go(func() error {
 				defer func() { <-activeDedicatedWorkers }()
 				return checkoutWorker(
-					groupCtx,
+					ctx,
 					ch,
 					workPath,
-					childArtifacts,
+					input,
 					strat,
 					activeSharedWorkers,
 					progress,
@@ -239,8 +265,6 @@ func checkoutDir(
 			})
 		}
 	}
-	// Wait for all goroutines to exit and collect the group error.
-	return errGroup.Wait()
 }
 
 func checkoutWorker(

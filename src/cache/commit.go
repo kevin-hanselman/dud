@@ -259,7 +259,6 @@ func commitDirArtifact(
 		return nil
 	})
 
-	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
 	childArtifacts := make(chan *artifact.Artifact)
 	manifestReady := make(chan struct{})
 
@@ -287,52 +286,22 @@ func commitDirArtifact(
 		return nil
 	})
 
-	// Start workers to commit artifacts. We spawn workers when there's free
-	// space in either of the "active worker" channels. We quit when we've
-	// either scheduled as many workers as files/sub-dirs, the manifest builder
-	// says the manifest is ready, or the group was cancelled.
-	for i := 0; i < len(entries); i++ {
-		select {
-		case <-groupCtx.Done():
-			break
-		case <-manifestReady:
-			break
-		case activeSharedWorkers <- struct{}{}:
-			errGroup.Go(func() error {
-				defer func() { <-activeSharedWorkers }()
-				return commitWorker(
-					groupCtx,
-					ch,
-					*art,
-					workPath,
-					oldManifest,
-					strat,
-					inputFiles,
-					childArtifacts,
-					activeSharedWorkers,
-					progress,
-					canRenameFile,
-				)
-			})
-		case activeDedicatedWorkers <- struct{}{}:
-			errGroup.Go(func() error {
-				defer func() { <-activeDedicatedWorkers }()
-				return commitWorker(
-					groupCtx,
-					ch,
-					*art,
-					workPath,
-					oldManifest,
-					strat,
-					inputFiles,
-					childArtifacts,
-					activeSharedWorkers,
-					progress,
-					canRenameFile,
-				)
-			})
-		}
-	}
+	startCommitWorkers(
+		groupCtx,
+		errGroup,
+		ch,
+		*art,
+		workPath,
+		oldManifest,
+		strat,
+		len(entries),
+		inputFiles,
+		childArtifacts,
+		manifestReady,
+		activeSharedWorkers,
+		progress,
+		canRenameFile,
+	)
 
 	// Wait for all goroutines to exit and collect the group error.
 	if err := errGroup.Wait(); err != nil {
@@ -347,6 +316,71 @@ func commitDirArtifact(
 	}
 	art.Checksum = cksum
 	return nil
+}
+
+// Start workers to commit artifacts. We spawn workers when there's free
+// space in either of the "active worker" channels. We quit when we've
+// either scheduled as many workers as files/sub-dirs, the manifest builder
+// says the manifest is ready, or the group was cancelled.
+func startCommitWorkers(
+	ctx context.Context,
+	errGroup *errgroup.Group,
+	ch LocalCache,
+	art artifact.Artifact,
+	workPath string,
+	oldManifest directoryManifest,
+	strat strategy.CheckoutStrategy,
+	totalWorkItems int,
+	inputFiles <-chan os.DirEntry,
+	outputArtifacts chan<- *artifact.Artifact,
+	manifestReady chan struct{},
+	activeSharedWorkers chan struct{},
+	progress *pb.ProgressBar,
+	canRenameFile bool,
+) {
+	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
+	for i := 0; i < totalWorkItems; i++ {
+		select {
+		case <-ctx.Done():
+			return
+		case <-manifestReady:
+			return
+		case activeSharedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeSharedWorkers }()
+				return commitWorker(
+					ctx,
+					ch,
+					art,
+					workPath,
+					oldManifest,
+					strat,
+					inputFiles,
+					outputArtifacts,
+					activeSharedWorkers,
+					progress,
+					canRenameFile,
+				)
+			})
+		case activeDedicatedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeDedicatedWorkers }()
+				return commitWorker(
+					ctx,
+					ch,
+					art,
+					workPath,
+					oldManifest,
+					strat,
+					inputFiles,
+					outputArtifacts,
+					activeSharedWorkers,
+					progress,
+					canRenameFile,
+				)
+			})
+		}
+	}
 }
 
 func commitWorker(

@@ -266,7 +266,6 @@ func concurrentStatus(
 	work := make(chan *artifact.Artifact)
 	results := make(chan *artifact.Status)
 	statusReady := make(chan struct{})
-	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
 
 	// Start a goroutine to feed workers.
 	errGroup, groupCtx := errgroup.WithContext(ctx)
@@ -300,44 +299,18 @@ func concurrentStatus(
 		return nil
 	})
 
-	// Start workers when there's free space in either of the "active worker"
-	// channels. We quit when we've either scheduled as many workers as
-	// child artifacts, the status builder says the parent status is ready, or
-	// the group was cancelled.
-	for i := 0; i < len(children); i++ {
-		select {
-		case <-groupCtx.Done():
-			break
-		case <-statusReady:
-			break
-		case activeSharedWorkers <- struct{}{}:
-			errGroup.Go(func() error {
-				defer func() { <-activeSharedWorkers }()
-				return statusWorker(
-					groupCtx,
-					ch,
-					workspaceDir,
-					shortCircuit,
-					activeSharedWorkers,
-					work,
-					results,
-				)
-			})
-		case activeDedicatedWorkers <- struct{}{}:
-			errGroup.Go(func() error {
-				defer func() { <-activeDedicatedWorkers }()
-				return statusWorker(
-					groupCtx,
-					ch,
-					workspaceDir,
-					shortCircuit,
-					activeSharedWorkers,
-					work,
-					results,
-				)
-			})
-		}
-	}
+	startStatusWorkers(
+		groupCtx,
+		errGroup,
+		ch,
+		workspaceDir,
+		shortCircuit,
+		len(children),
+		activeSharedWorkers,
+		statusReady,
+		work,
+		results,
+	)
 
 	// Wait for all goroutines to exit and collect the group error.
 	err := errGroup.Wait()
@@ -345,6 +318,59 @@ func concurrentStatus(
 		err = nil
 	}
 	return err
+}
+
+// Start workers when there's free space in either of the "active worker"
+// channels. We quit when we've either scheduled as many workers as
+// child artifacts, the status builder says the parent status is ready, or
+// the group was cancelled.
+func startStatusWorkers(
+	ctx context.Context,
+	errGroup *errgroup.Group,
+	ch LocalCache,
+	workspaceDir string,
+	shortCircuit bool,
+	totalWorkItems int,
+	activeSharedWorkers chan struct{},
+	statusReady chan struct{},
+	work <-chan *artifact.Artifact,
+	out chan<- *artifact.Status,
+) {
+	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
+	for i := 0; i < totalWorkItems; i++ {
+		select {
+		case <-ctx.Done():
+			return
+		case <-statusReady:
+			return
+		case activeSharedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeSharedWorkers }()
+				return statusWorker(
+					ctx,
+					ch,
+					workspaceDir,
+					shortCircuit,
+					activeSharedWorkers,
+					work,
+					out,
+				)
+			})
+		case activeDedicatedWorkers <- struct{}{}:
+			errGroup.Go(func() error {
+				defer func() { <-activeDedicatedWorkers }()
+				return statusWorker(
+					ctx,
+					ch,
+					workspaceDir,
+					shortCircuit,
+					activeSharedWorkers,
+					work,
+					out,
+				)
+			})
+		}
+	}
 }
 
 func statusWorker(
