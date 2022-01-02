@@ -4,12 +4,13 @@ import subprocess
 import os
 import shutil
 import sys
+# TODO: consider switching to pathlib
 
 
 DIFF_CMD = 'git diff --no-index -b --word-diff=color --color=always'
 # Replace the username with a generic "user" for compatibility across systems.
 # Strangely, --sort=version is needed to exactly match the output of the Github
-# Action runner. The Github Action runner's output seems unphased by a manual
+# Action runner. The Github Action runner's output seems unfazed by a manual
 # '| sort -k4'. It may have something to do with hidden files being sorted
 # differently on different systems?
 FS_CMD = 'tree -afisup --sort=version --noreport | sed "s/$(whoami)/user/"'

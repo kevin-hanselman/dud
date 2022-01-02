@@ -189,6 +189,10 @@ mod-update:
 tidy:
 	go mod tidy -v
 
+.PHONY: submodule-update
+submodule-update:
+	git submodule update --init --recursive
+
 .PHONY: loc
 loc:
 	tokei --sort lines --exclude src/mocks/ ./src/ ./integration/

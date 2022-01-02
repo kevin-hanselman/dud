@@ -16,6 +16,7 @@ mkdir -p "$output_dir"
 echo -e "### $workflow_name\n" > "${output_dir}/header.md"
 
 hyperfine \
+    --warmup 1 \
     --max-runs 3 \
     --time-unit second \
     --show-output \

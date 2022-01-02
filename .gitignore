@@ -2,6 +2,7 @@
 /dud
 /mockery
 /goreleaser
+depgraph.png
 
 # auto-generated hugo files
 # (e.g. cobra CLI and converted Jupyter notebooks)
