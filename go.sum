@@ -402,8 +402,8 @@ github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9dec
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/zeebo/assert v1.1.0 h1:hU1L1vLTHsnO8x8c9KAR5GmM5QscxHg5RNU5z5qbUWY=
 github.com/zeebo/assert v1.1.0/go.mod h1:Pq9JiuJQpG8JLJdtkwrJESF0Foym2/D9XMU5ciN/wJ0=
-github.com/zeebo/blake3 v0.2.1 h1:O+N0Y8Re2XAYjp0adlZDA2juyRguhMfPCgh8YIf7vyE=
-github.com/zeebo/blake3 v0.2.1/go.mod h1:TSQ0KjMH+pht+bRyvVooJ1rBpvvngSGaPISafq9MxJk=
+github.com/zeebo/blake3 v0.2.2 h1:ddH9fUIlef5r+pqvJShGgSXFd6c7k54eQXZ48hNjotQ=
+github.com/zeebo/blake3 v0.2.2/go.mod h1:TSQ0KjMH+pht+bRyvVooJ1rBpvvngSGaPISafq9MxJk=
 github.com/zeebo/pcg v1.0.1 h1:lyqfGeWiv4ahac6ttHs+I5hwtH/+1mrhlCtVNQM2kHo=
 github.com/zeebo/pcg v1.0.1/go.mod h1:09F0S9iiKrwn9rlI5yjLkmrug154/YRW6KnnXVDM/l4=
 go.etcd.io/etcd/api/v3 v3.5.1/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQcPvs=
