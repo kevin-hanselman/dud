@@ -283,14 +283,15 @@ func lockProject(rootDir string) error {
 	if err == nil {
 		projectLocked = true
 		return lockFile.Close()
-	} else if os.IsExist(err) {
+	}
+	if os.IsExist(err) {
 		logger.Error.Println(`Another invocation of Dud may be running, or Dud may have exited
 unexpectedly and orphaned the lock file. If you are certain Dud is not already
 running and your project is healthy, you may remove the lock file and try
 running Dud again.`)
 		return projectLockedError{}
 	}
-	return nil
+	return err
 }
 
 func unlockProject() error {

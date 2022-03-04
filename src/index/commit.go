@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kevin-hanselman/dud/src/agglog"
+	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
@@ -36,17 +37,21 @@ func (idx Index) Commit(
 		return fmt.Errorf("unknown stage %#v", stagePath)
 	}
 
+	nonStageInputs := []*artifact.Artifact{}
+
 	for artPath, art := range stg.Inputs {
 		ownerPath, upstreamArt := idx.findOwner(artPath)
 		if ownerPath == "" {
-			// Always skip the cache for inputs. This is also enforced in
-			// stage.FromFile, but most tests obviously don't use FromFile to
-			// create Stages to test against. To be safe, it's best to force
-			// SkipCache to true here.
-			art.SkipCache = true
-			if err := ch.Commit(rootDir, art, strat, logger); err != nil {
-				return err
-			}
+			// Collect all inputs not owned by a stage and checksum them AFTER
+			// announcing "committing stage..." to the user.
+			// TODO: This is hard to test because the only indication of committing
+			// artifacts is the progress bar, and the progress bar is hidden
+			// when the environment is non-interactive (e.g. the integration
+			// test scripts). To ease testing of this and similar UI things, it
+			// may be best to output a static message (e.g. "committing
+			// file.txt...") instead of the dynamic progress report in
+			// non-interactive settings.
+			nonStageInputs = append(nonStageInputs, art)
 		} else {
 			if err := idx.Commit(
 				ownerPath,
@@ -63,6 +68,16 @@ func (idx Index) Commit(
 		}
 	}
 	logger.Info.Printf("committing stage %s\n", stagePath)
+	for _, art := range nonStageInputs {
+		// Always skip the cache for inputs. This is also enforced in
+		// stage.FromFile, but most tests obviously don't use FromFile to
+		// create Stages to test against. To be safe, it's best to force
+		// SkipCache to true here.
+		art.SkipCache = true
+		if err := ch.Commit(rootDir, art, strat, logger); err != nil {
+			return err
+		}
+	}
 	for _, art := range stg.Outputs {
 		if err := ch.Commit(rootDir, art, strat, logger); err != nil {
 			return err
