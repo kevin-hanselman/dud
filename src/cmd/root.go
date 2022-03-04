@@ -32,6 +32,12 @@ func (e emptyIndexError) Error() string {
 	return "index is empty"
 }
 
+type projectLockedError struct{}
+
+func (e projectLockedError) Error() string {
+	return fmt.Sprintf("project lock file '%s' exists", lockPath)
+}
+
 var (
 	// Version is the version of the app.
 	Version string
@@ -141,8 +147,10 @@ func Main() {
 
 // fatal ensures we gracefully stop profiling or tracing before exiting.
 func fatal(err error) {
-	if err := unlockProject(); err != nil {
-		logger.Error.Println(err)
+	if !errors.Is(err, projectLockedError{}) {
+		if err := unlockProject(); err != nil {
+			logger.Error.Println(err)
+		}
 	}
 	if err := stopDebugging(); err != nil {
 		logger.Error.Println(err)
@@ -258,10 +266,10 @@ func pathAbsThenRel(base, target string) (string, error) {
 	return filepath.Rel(base, target)
 }
 
-// Prevent concurrent invocations to Dud in the current project using a simple
+// Prevent concurrent invocations of Dud in the current project using a simple
 // lock file. This isn't a comprehensive solution for concurrent user errors,
 // but it should prevent the most common problems.
-func lockProject(rootDir string) (err error) {
+func lockProject(rootDir string) error {
 	// If we're already in the project root, we technically can use lockPath
 	// directly, but this approach explicitly requires we know the project
 	// root.
@@ -273,16 +281,16 @@ func lockProject(rootDir string) (err error) {
 		0o600,
 	)
 	if err == nil {
-		lockFile.Close()
+		projectLocked = true
+		return lockFile.Close()
 	} else if os.IsExist(err) {
-		err = fmt.Errorf("project lock file '%s' exists", lockPath)
 		logger.Error.Println(`Another invocation of Dud may be running, or Dud may have exited
 unexpectedly and orphaned the lock file. If you are certain Dud is not already
 running and your project is healthy, you may remove the lock file and try
 running Dud again.`)
+		return projectLockedError{}
 	}
-	projectLocked = true
-	return err
+	return nil
 }
 
 func unlockProject() error {
