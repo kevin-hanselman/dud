@@ -7,7 +7,6 @@ import (
 
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
-	"github.com/kevin-hanselman/dud/src/index"
 	"github.com/kevin-hanselman/dud/src/stage"
 
 	"github.com/spf13/cobra"
@@ -86,6 +85,8 @@ The output of this command can be redirected to a file and modified further as
 needed.`,
 	Example: `dud stage gen -o data/ python download_data.py > download.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Don't use prepare() here because we need to transform the path
+		// arguments (e.g. stageWorkingDir).
 		rootDir, err := getProjectRootDir()
 		if err != nil {
 			fatal(err)
@@ -132,34 +133,24 @@ Add loads each stage file passed on the command line, validates its contents,
 checks if it conflicts with any stages already in the index, then adds the
 stage to the index file.`,
 	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		rootDir, err := getProjectRootDir()
+	Run: func(cmd *cobra.Command, paths []string) {
+		rootDir, _, idx, err := prepare(paths)
 		if err != nil {
 			fatal(err)
 		}
 
-		fullIndexPath := filepath.Join(rootDir, indexPath)
-		idx, err := index.FromFile(fullIndexPath)
-		if err != nil {
-			fatal(err)
-		}
-
-		for _, path := range args {
-			pathRelToRoot, err := pathAbsThenRel(rootDir, path)
-			if err != nil {
-				fatal(err)
-			}
+		for _, path := range paths {
 			stg, err := stage.FromFile(path)
 			if err != nil {
 				fatal(err)
 			}
-			if err := idx.AddStage(stg, pathRelToRoot); err != nil {
+			if err := idx.AddStage(stg, path); err != nil {
 				fatal(err)
 			}
 			logger.Info.Printf("Added %s to the index.", path)
 		}
 
-		if err := idx.ToFile(fullIndexPath); err != nil {
+		if err := idx.ToFile(filepath.Join(rootDir, indexPath)); err != nil {
 			fatal(err)
 		}
 	},
@@ -201,11 +192,12 @@ func init() {
 }
 
 func createArtifactFromPath(rootDir, path string) (art *artifact.Artifact, err error) {
-	cleanPath, err := pathAbsThenRel(rootDir, path)
+	// Use 'path' here because we haven't changed to the project root.
+	fileStatus, err := fsutil.FileStatusFromPath(path)
 	if err != nil {
 		return
 	}
-	fileStatus, err := fsutil.FileStatusFromPath(cleanPath)
+	cleanPath, err := pathAbsThenRel(rootDir, path)
 	if err != nil {
 		return
 	}

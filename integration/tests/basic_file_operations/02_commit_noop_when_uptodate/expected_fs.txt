@@ -1,4 +1,4 @@
-.
+[drwxr-xr-x user            4096]  .
 [drwxr-xr-x user            4096]  ./.dud
 [-rw-r--r-- user              14]  ./.dud/.gitignore
 [drwxr-xr-x user            4096]  ./.dud/cache

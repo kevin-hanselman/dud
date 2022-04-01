@@ -29,7 +29,7 @@ act recursively on all stages upstream of the given stage(s).
 This command requires rclone to be installed on your machine. Visit
 https://rclone.org/ for more information and installation instructions.`,
 	Run: func(cmd *cobra.Command, paths []string) {
-		rootDir, ch, idx, err := prepare(paths...)
+		rootDir, ch, idx, err := prepare(paths)
 		if err != nil {
 			fatal(err)
 		}
