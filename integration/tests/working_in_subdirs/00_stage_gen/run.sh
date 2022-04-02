@@ -21,4 +21,4 @@ grep -Fq 'subdir/foo.txt:' stage.yaml || fail 'bad/missing output artifact'
 dud stage gen -o foo.txt -- 'echo foobar > foo.txt' | grep -Fq 'working-dir: subdir' \
     || fail 'bad/missing working dir #2'
 
-dud stage gen -o subsubdir | grep -Fq 'is-dir: true' || fail 'bad/missing working dir #3'
+dud stage gen -o subsubdir | grep -Fq 'is-dir: true' || fail 'bad/missing is-dir'
