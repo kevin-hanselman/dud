@@ -1,4 +1,5 @@
-integration/
+integration/benchmarks
+integration/tests
 .dud/
 .git/
 dist/

@@ -173,7 +173,7 @@ deep-lint:
 .PHONY: clean
 clean:
 	rm -rf hugo/content/docs/cli/dud*.md ./website
-	rm -f *.coverage *.bin depgraph.png goreleaser $(GOBIN)/dud
+	rm -f *.coverage *.bin depgraph.png $(GOBIN)/dud
 	go clean ./...
 
 .PHONY: clean-docker
@@ -197,10 +197,6 @@ submodule-update:
 loc:
 	tokei --sort lines --exclude src/mocks/ ./src/ ./integration/
 	tokei --sort lines --exclude src/mocks/ --exclude '*_test.go' ./src/
-
-goreleaser:
-	curl -L https://github.com/goreleaser/goreleaser/releases/download/v0.159.0/goreleaser_Linux_x86_64.tar.gz \
-		| tar -zxvf - goreleaser
 
 .PHONY: src/mocks
 src/mocks: $(GOBIN)/mockery
