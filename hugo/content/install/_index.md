@@ -46,7 +46,7 @@ executable to the user's default Go binary path, `~/go/bin`.
 You will need the following software packages:
 
 * git
-* Go (version 1.16 or greater)
+* Go (the version in `./go.mod`)
 * GNU Make
 
 First, clone the Dud code repository:

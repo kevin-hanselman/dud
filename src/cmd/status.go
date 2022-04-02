@@ -42,7 +42,7 @@ stage. If no stage files are passed in, status will act on all stages in the
 index. By default, status will act recursively on all stages upstream of the
 given stage(s).`,
 	Run: func(cmd *cobra.Command, paths []string) {
-		rootDir, ch, idx, err := prepare(paths...)
+		rootDir, ch, idx, err := prepare(paths)
 		if err != nil {
 			fatal(err)
 		}

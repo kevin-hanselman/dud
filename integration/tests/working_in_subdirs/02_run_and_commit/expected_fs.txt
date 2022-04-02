@@ -10,3 +10,4 @@
 [drwxr-xr-x user            4096]  ./subdir
 [lrwxrwxrwx user              79]  ./subdir/foo.txt -> ../.dud/cache/53/4659321d2eea6b13aea4f4c94c3b4f624622295da31506722b47a8eb9d726c
 [-rw-r--r-- user             232]  ./subdir/stage.yaml
+[drwxr-xr-x user            4096]  ./subdir/subsubdir

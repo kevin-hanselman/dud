@@ -1,32 +1,29 @@
-FROM archlinux
+FROM ubuntu:latest
 
-RUN pacman -Sy --noconfirm --needed \
-        base-devel \
-        diffutils \
+RUN apt update && apt install -y software-properties-common \
+    && add-apt-repository ppa:longsleep/golang-backports \
+    && apt update \
+    && apt install -y \
+        curl \
         git \
-        # Make sure glibc is up-to-date. Sometimes it isn't,
-        # and Go tools (e.g. go vet) can have problems.
-        glibc \
-        go \
+        golang-go \
         graphviz \
-        hugo \
-        hyperfine \
         jq \
-        jupyter \
         parallel \
-        python \
-        python-pip \
-        rclone \
+        python3-pip \
         sudo \
-        time \
-        tokei \
         tree \
-        xxhash \
-    && pacman -Scc --noconfirm
+        unzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sv $(which python3) /usr/local/bin/python
 
-RUN groupadd sudo && useradd --no-log-init -m user -G sudo
+COPY integration/install_hyperfine_deb.sh ./
+RUN ./install_hyperfine_deb.sh
 
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN curl https://rclone.org/install.sh | bash
+
+RUN useradd --no-log-init -m user -G sudo \
+    && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 USER user
 
@@ -39,7 +36,7 @@ RUN mkdir ~/dud-data
 
 ENV PATH=$PATH:/home/user/go/bin:/home/user/.local/bin
 
-RUN pip install --no-cache --user dvc \
+RUN pip install --no-cache --user dvc notebook \
     && dvc config --global core.analytics false \
     && dvc config --global core.check_update false \
     && dvc config --global cache.type symlink
@@ -48,7 +45,7 @@ RUN pip install --no-cache --user dvc \
 COPY --chown=user go.mod go.sum ./
 
 RUN go mod download \
-    && rm go.{mod,sum} \
+    && rm go.* \
     && go install mvdan.cc/gofumpt@latest \
     && go install golang.org/x/tools/cmd/goimports@latest \
     && go install honnef.co/go/tools/cmd/staticcheck@latest \

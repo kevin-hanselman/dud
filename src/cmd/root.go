@@ -61,6 +61,7 @@ building data pipelines.`,
 				if err != nil {
 					fatal(err)
 				}
+				// TODO: Consider replacing this with github.com/pkg/profile
 				stopProfiling = fgprof.Start(debugOutput, fgprof.FormatPprof)
 				fgprof.Start(debugOutput, fgprof.FormatPprof)
 			} else if doTrace {
@@ -174,23 +175,6 @@ func stopDebugging() error {
 	return nil
 }
 
-// This function also modifies any paths passed in to be relative to the
-// project root.
-func cdToProjectRoot(paths ...string) (rootDir string, err error) {
-	rootDir, err = getProjectRootDir()
-	if err != nil {
-		return
-	}
-	for i := range paths {
-		paths[i], err = pathAbsThenRel(rootDir, paths[i])
-		if err != nil {
-			return
-		}
-	}
-	err = os.Chdir(rootDir)
-	return
-}
-
 func readUserConfig() (path string, err error) {
 	userConfigDir := os.Getenv("XDG_CONFIG_HOME")
 	if userConfigDir == "" {
@@ -256,14 +240,14 @@ func getProjectRootDir() (string, error) {
 	}
 }
 
-// pathAbsThenRel ensures target is absolute before calling
+// pathAbsThenRel ensures path is absolute before calling
 // filepath.Rel(base, target).
-func pathAbsThenRel(base, target string) (string, error) {
-	target, err := filepath.Abs(target)
+func pathAbsThenRel(base string, path string) (string, error) {
+	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return "", err
 	}
-	return filepath.Rel(base, target)
+	return filepath.Rel(base, absPath)
 }
 
 // Prevent concurrent invocations of Dud in the current project using a simple
@@ -305,9 +289,25 @@ func unlockProject() error {
 }
 
 // Do a bunch of bookkeeping to prepare for usual execution of Dud operations.
-func prepare(paths ...string) (rootDir string, ch cache.LocalCache, idx index.Index, err error) {
-	rootDir, err = cdToProjectRoot(paths...)
+// The paths argument is updated in-place so each path is relative to the
+// project root directory.
+func prepare(paths []string) (rootDir string, ch cache.LocalCache, idx index.Index, err error) {
+	// The order of operations here is important. Before we cd to the project
+	// root directory, we need to adjust the paths, which are relative to the
+	// working directory (or absolute paths already).
+	rootDir, err = getProjectRootDir()
 	if err != nil {
+		return
+	}
+
+	for i, path := range paths {
+		paths[i], err = pathAbsThenRel(rootDir, path)
+		if err != nil {
+			return
+		}
+	}
+
+	if err = os.Chdir(rootDir); err != nil {
 		return
 	}
 

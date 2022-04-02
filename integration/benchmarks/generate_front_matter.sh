@@ -30,3 +30,5 @@ EOF
 
 # Add spaces to each line to treat the output as a Markdown code block.
 dvc config --list --global | awk '{ print "    " $0 }'
+
+echo

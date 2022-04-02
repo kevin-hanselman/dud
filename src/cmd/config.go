@@ -29,7 +29,7 @@ func init() {
 			ValidArgs: validFields,
 			Args:      cobra.ExactValidArgs(1),
 			Run: func(cmd *cobra.Command, args []string) {
-				rootDir, err := cdToProjectRoot()
+				rootDir, err := getProjectRootDir()
 				if err != nil {
 					fatal(err)
 				}
@@ -72,7 +72,7 @@ func init() {
 				_, err = readUserConfig()
 			} else {
 				var rootDir string
-				rootDir, err = cdToProjectRoot()
+				rootDir, err = getProjectRootDir()
 				if err != nil {
 					fatal(err)
 				}
@@ -115,7 +115,7 @@ func init() {
 				configPath, err = readUserConfig()
 			} else {
 				var rootDir string
-				rootDir, err = cdToProjectRoot()
+				rootDir, err = getProjectRootDir()
 				if err != nil {
 					fatal(err)
 				}

@@ -42,7 +42,7 @@ stage(s).`,
 			strat = strategy.CopyStrategy
 		}
 
-		rootDir, ch, idx, err := prepare(paths...)
+		rootDir, ch, idx, err := prepare(paths)
 		if err != nil {
 			fatal(err)
 		}

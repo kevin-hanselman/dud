@@ -28,7 +28,7 @@ default, run will act recursively on all stages upstream of the given stage,
 and thus run will execute a stage's command if any upstream stages are
 out-of-date.`,
 	Run: func(cmd *cobra.Command, paths []string) {
-		rootDir, ch, idx, err := prepare(paths...)
+		rootDir, ch, idx, err := prepare(paths)
 		if err != nil {
 			fatal(err)
 		}

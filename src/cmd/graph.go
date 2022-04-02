@@ -31,7 +31,7 @@ generate images of the stage graph. Visit https://graphviz.org for more
 information about Graphviz and for installation instructions.`,
 	Example: "dud graph | dot -Tpng -o dud.png",
 	Run: func(cmd *cobra.Command, paths []string) {
-		_, _, idx, err := prepare(paths...)
+		_, _, idx, err := prepare(paths)
 		if err != nil {
 			fatal(err)
 		}
