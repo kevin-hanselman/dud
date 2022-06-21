@@ -13,7 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/viper v1.12.0
-	github.com/stretchr/testify v1.7.3
+	github.com/stretchr/testify v1.7.4
 	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/goleak v1.1.12
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
