@@ -1,28 +1,25 @@
 #!/bin/bash
 set -euo pipefail
 
-BENCH_CPU=$(grep -m1 '^model name' /proc/cpuinfo | cut -d':' -f2 | xargs)
-BENCH_SYS_MEM_GB=$(free --giga | grep '^Mem' | awk '{print $2}')
-# Strip the minor version and misc qualifiers
-BENCH_OS=$(uname -sr | sed -e 's;\([0-9]\.[0-9]\+\)\.\S\+;\1;')
-
 command -v dud &>/dev/null || { echo >&2 'dud not installed'; exit 1; }
 command -v dvc &>/dev/null || { echo >&2 'dvc not installed'; exit 1; }
 
 cat << EOF
 # Benchmarks
 
-**OS**: $BENCH_OS
+## System Information
 
-**CPU**: $BENCH_CPU
+**OS**: $(uname -sr | grep -Po '\w+ \d+\.\d+')
 
-**RAM**: $BENCH_SYS_MEM_GB GB
+**CPU**: $(grep -m1 '^model name' /proc/cpuinfo | cut -d':' -f2 | xargs)
 
-**Software versions**:
+**RAM**: $(free --giga | grep '^Mem' | awk '{print $2}') GB
 
-Dud version: $(dud version | xargs)
+**Go version**: $(go env GOVERSION | sed 's;^go;;')
 
-$(dvc version | head -n1 | xargs)
+**Dud version**: $(dud version | xargs)
+
+**DVC version**: $(dvc version | head -n1 | cut -d':' -f2 | xargs)
 
 DVC non-default configuration:
 

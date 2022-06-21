@@ -74,6 +74,7 @@ stage(s).`,
 			); err != nil {
 				fatal(err)
 			}
+			logger.Info.Println()
 		}
 	},
 }
