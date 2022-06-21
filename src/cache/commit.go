@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -53,7 +54,7 @@ func (ch LocalCache) Commit(
 		err = commitFileArtifact(ch, workspaceDir, art, strat, progress, canRenameFile)
 	}
 	if err == nil && progress.Current() <= 0 {
-		logger.Info.Printf("  %s up-to-date; skipping commit\n", art.Path)
+		logger.Info.Printf("  %s  up-to-date; skipping commit\n", fmt.Sprintf(progressPrefixFormat, art.Path))
 	} else {
 		progress.Finish()
 	}
@@ -117,7 +118,6 @@ func commitFileArtifact(
 		return err
 	}
 	progress.AddTotal(fileInfo.Size())
-	progress.Start()
 	srcFile, err := os.Open(workPath)
 	if err != nil {
 		return err
@@ -155,7 +155,9 @@ func commitFileArtifact(
 				return err
 			}
 		}
-		return ch.Checkout(workspaceDir, *art, strat, nil)
+		// Purposefully avoid cache.Checkout here as we don't need or want the
+		// overhead of managing a progress bar.
+		return checkoutFile(ch, workspaceDir, *art, strat, nil)
 	}
 	return nil
 }
@@ -290,7 +292,6 @@ func commitDirArtifact(
 		groupCtx,
 		errGroup,
 		ch,
-		*art,
 		workPath,
 		oldManifest,
 		strat,
@@ -326,7 +327,6 @@ func startCommitWorkers(
 	ctx context.Context,
 	errGroup *errgroup.Group,
 	ch LocalCache,
-	art artifact.Artifact,
 	workPath string,
 	oldManifest directoryManifest,
 	strat strategy.CheckoutStrategy,
@@ -351,7 +351,6 @@ func startCommitWorkers(
 				return commitWorker(
 					ctx,
 					ch,
-					art,
 					workPath,
 					oldManifest,
 					strat,
@@ -368,7 +367,6 @@ func startCommitWorkers(
 				return commitWorker(
 					ctx,
 					ch,
-					art,
 					workPath,
 					oldManifest,
 					strat,
@@ -386,7 +384,6 @@ func startCommitWorkers(
 func commitWorker(
 	ctx context.Context,
 	ch LocalCache,
-	art artifact.Artifact,
 	workPath string,
 	dirMan directoryManifest,
 	strat strategy.CheckoutStrategy,

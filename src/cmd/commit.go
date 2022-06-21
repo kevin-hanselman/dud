@@ -56,6 +56,7 @@ recursively on all stages upstream of the given stage(s).`,
 			if err := idx[path].ToFile(path); err != nil {
 				fatal(err)
 			}
+			logger.Info.Println()
 		}
 
 		if err := idx.ToFile(indexPath); err != nil {

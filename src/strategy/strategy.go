@@ -4,7 +4,7 @@ package strategy
 type CheckoutStrategy int
 
 const (
-	// LinkStrategy creates read-only links to files in the cache (prefers hard links to symbolic)
+	// LinkStrategy creates read-only symbolic links to files in the cache
 	LinkStrategy CheckoutStrategy = iota
 	// CopyStrategy creates copies of files in the cache
 	CopyStrategy

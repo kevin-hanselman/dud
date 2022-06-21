@@ -30,6 +30,7 @@ func (cache LocalCache) Checkout(
 	if progress == nil {
 		progress = newProgress(art.Path)
 	}
+	progress.Start()
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = checkoutDir(
@@ -42,6 +43,11 @@ func (cache LocalCache) Checkout(
 			progress,
 		)
 	} else {
+		// Setting the total here avoids locking the progress bar in the hot path
+		// (checkoutFile, which is called from checkoutDir).
+		if strat == strategy.LinkStrategy {
+			progress.SetTotal(1)
+		}
 		err = checkoutFile(cache, workspaceDir, art, strat, progress)
 	}
 	progress.Finish()
@@ -76,7 +82,6 @@ func checkoutFile(
 			return err
 		}
 		progress.AddTotal(srcInfo.Size())
-		progress.Start()
 
 		srcFile, err := os.Open(cachePath)
 		if err != nil {
@@ -111,12 +116,14 @@ func checkoutFile(
 			return fmt.Errorf("found checksum %#v, expected %#v", checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
-		// Increment the count of files linked. If we're part of a directory,
-		// checkoutDir() has already accounted for this file and started the
-		// report. If we're a single file, this operation is essentially
-		// instant, so we let this be a noop and don't bother starting
-		// a report.
-		defer progress.Increment()
+		// Increment the count of files linked. We avoid adjusting the bar's
+		// total here to reduce the overhead in the hot path. For files that are
+		// part of a directory, checkoutDir() sets the total to account for
+		// this file. If this is a standalone file, cache.Checkout sets the
+		// total.
+		if progress != nil {
+			defer progress.Increment()
+		}
 		if status.ContentsMatch {
 			return nil
 		}
@@ -180,14 +187,13 @@ func checkoutDir(
 	// updating the report. (When copying, checkoutFile handles updating the
 	// bytes transferred completely.)
 	if strat == strategy.LinkStrategy {
-		fileCount := 0
+		var fileCount int64 = 0
 		for _, art := range man.Contents {
 			if !art.IsDir {
 				fileCount++
 			}
 		}
-		progress.AddTotal(int64(fileCount))
-		progress.Start()
+		progress.AddTotal(fileCount)
 	}
 
 	// Start a goroutine to feed artifacts to workers.

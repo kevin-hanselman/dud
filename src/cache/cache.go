@@ -19,6 +19,8 @@ import (
 const (
 	cacheFilePerms = 0o444
 
+	progressPrefixFormat = "%-20s"
+
 	// Template for progress report.
 	//
 	// rtime docs copied from cheggaaa/pb:
@@ -125,18 +127,24 @@ func (err MissingFromCacheError) Error() string {
 	return fmt.Sprintf("checksum missing from cache: %#v", err.checksum)
 }
 
+func newHiddenProgress() (progress *pb.ProgressBar) {
+	progress = progressTemplate.New(0)
+	progress.SetRefreshRate(time.Hour).SetWriter(io.Discard)
+	return progress
+}
+
 func newProgress(prefix string) (progress *pb.ProgressBar) {
 	// Only show the progress report if stderr is a terminal. Otherwise, don't
 	// bother updating the progress report and send any incidental output to
 	// /dev/null. Either way we instantiate the progress tracker because we
 	// still need it to tell us how many bytes we've read/written.
-	progress = progressTemplate.New(0)
 	if isatty.IsTerminal(os.Stderr.Fd()) {
+		progress = progressTemplate.New(0)
 		progress.SetRefreshRate(100 * time.Millisecond).SetWriter(os.Stderr)
 		progress.SetMaxWidth(120).Set(pb.TimeRound, time.Millisecond)
-		progress.Set("prefix", fmt.Sprintf("%-20s", prefix))
+		progress.Set("prefix", fmt.Sprintf(progressPrefixFormat, prefix))
 	} else {
-		progress.SetRefreshRate(time.Hour).SetWriter(io.Discard)
+		progress = newHiddenProgress()
 	}
 	return
 }
