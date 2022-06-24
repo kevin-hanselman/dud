@@ -28,7 +28,6 @@ docker: docker-image
 	docker run \
 		--rm \
 		-it \
-		-u $(shell id -u):$(shell id -g) \
 		-p 8888:8888 \
 		-v $(base_dir):/dud \
 		-v dud-data:/home/user/dud-data \

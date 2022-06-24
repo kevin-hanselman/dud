@@ -15,7 +15,12 @@ RUN apt update && apt install -y software-properties-common \
         tree \
         unzip \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sv $(which python3) /usr/local/bin/python
+    && ln -sv "$(which python3)" /usr/local/bin/python \
+    && git config --system --add safe.directory /dud
+# safe.directory allows Git to parse and operate on the mounted source repo,
+# even if it is owned by a different user (which is likely, unless the UIDs
+# happen to match).
+# See: https://git-scm.com/docs/git-config#Documentation/git-config.txt-safedirectory
 
 COPY integration/install_hyperfine_deb.sh ./
 RUN ./install_hyperfine_deb.sh
