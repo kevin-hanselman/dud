@@ -29,6 +29,8 @@ const (
 	// Third string will be used when value not available, default is "?"
 	progressTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
 		`  {{percent . "%3.0f%%"}}  {{speed . "%s/s" "?/s"}}  {{rtime . "ETA %s" "%s total"}}`
+
+	progressSkipCommitTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  up-to-date; skipping commit`
 )
 
 // These are somewhat arbitrary numbers. We need to profile more.

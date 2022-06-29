@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -38,6 +37,8 @@ func (ch LocalCache) Commit(
 		return errors.Wrapf(err, "commit %s", art.Path)
 	}
 	progress := newProgress(art.Path)
+	progress.Start()
+	defer progress.Finish()
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = commitDirArtifact(
@@ -54,9 +55,7 @@ func (ch LocalCache) Commit(
 		err = commitFileArtifact(ch, workspaceDir, art, strat, progress, canRenameFile)
 	}
 	if err == nil && progress.Current() <= 0 {
-		logger.Info.Printf("  %s  up-to-date; skipping commit\n", fmt.Sprintf(progressPrefixFormat, art.Path))
-	} else {
-		progress.Finish()
+		progress.SetTemplate(progressSkipCommitTemplate)
 	}
 	return errors.Wrapf(err, "commit %s", art.Path)
 }
