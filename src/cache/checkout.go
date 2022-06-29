@@ -31,6 +31,7 @@ func (cache LocalCache) Checkout(
 		progress = newProgress(art.Path)
 	}
 	progress.Start()
+	defer progress.Finish()
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = checkoutDir(
@@ -50,7 +51,6 @@ func (cache LocalCache) Checkout(
 		}
 		err = checkoutFile(cache, workspaceDir, art, strat, progress)
 	}
-	progress.Finish()
 	return errors.Wrapf(err, "checkout %s", art.Path)
 }
 
