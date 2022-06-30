@@ -132,7 +132,7 @@ func TestFetchIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Fetch(fakeRemote, art); err != nil {
+		if err := ch.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
 			t.Fatal(err)
 		}
 
@@ -155,7 +155,7 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := ch.Fetch("/dev/null", art); err != nil {
+		if err := ch.Fetch("/dev/null", map[string]*artifact.Artifact{"art": &art}); err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -176,7 +176,7 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		fetchErr := ch.Fetch("/dev/null", art)
+		fetchErr := ch.Fetch("/dev/null", map[string]*artifact.Artifact{"art": &art})
 		if fetchErr == nil {
 			t.Fatal("expected Fetch to return error")
 		}
@@ -222,7 +222,7 @@ func TestFetchIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Fetch(fakeRemote, art); err != nil {
+		if err := ch.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
 			t.Fatal(err)
 		}
 

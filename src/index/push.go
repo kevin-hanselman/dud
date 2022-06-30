@@ -54,7 +54,7 @@ func (idx Index) Push(
 	}
 	logger.Info.Printf("pushing stage %s\n", stagePath)
 	for _, art := range stg.Outputs {
-		if err := ch.Push(rootDir, remote, *art); err != nil {
+		if err := ch.Push(remote, *art); err != nil {
 			return err
 		}
 	}

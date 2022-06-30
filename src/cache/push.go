@@ -11,12 +11,9 @@ import (
 )
 
 // Push uploads an Artifact from the local cache to a remote cache.
-// TODO: Consider removing the workspaceDir argument. Technically Push and
-// Fetch shouldn't care about the workspace at all; they purely interact with
-// the local cache.
-func (ch LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact) error {
+func (ch LocalCache) Push(remoteDst string, art artifact.Artifact) error {
 	pushFiles := make(map[string]struct{})
-	if err := gatherFilesToPush(ch, workspaceDir, art, pushFiles); err != nil {
+	if err := gatherFilesToPush(ch, art, pushFiles); err != nil {
 		return errors.Wrapf(err, "push %s", art.Path)
 	}
 	if len(pushFiles) > 0 {
@@ -27,14 +24,13 @@ func (ch LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact)
 
 func gatherFilesToPush(
 	ch LocalCache,
-	workspaceDir string,
 	art artifact.Artifact,
 	filesToPush map[string]struct{},
 ) error {
 	if art.SkipCache {
 		return nil
 	}
-	status, cachePath, _, err := quickStatus(ch, workspaceDir, art)
+	status, cachePath, _, err := checksumStatus(ch, art)
 	if err != nil {
 		return err
 	}
@@ -49,9 +45,8 @@ func gatherFilesToPush(
 		if err != nil {
 			return err
 		}
-		childWorkspaceDir := filepath.Join(workspaceDir, art.Path)
 		for _, childArt := range man.Contents {
-			if err := gatherFilesToPush(ch, childWorkspaceDir, *childArt, filesToPush); err != nil {
+			if err := gatherFilesToPush(ch, *childArt, filesToPush); err != nil {
 				return err
 			}
 		}
