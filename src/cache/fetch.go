@@ -17,7 +17,8 @@ func (ch LocalCache) Fetch(
 	remoteSrc string,
 	artifacts map[string]*artifact.Artifact,
 ) error {
-	toFetch := make(map[string]struct{})
+	// TODO: add a progress bar or a spinner
+	fetchFiles := make(map[string]struct{})
 	dirArtifacts := make(map[string]*artifact.Artifact)
 	for _, art := range artifacts {
 		if art.SkipCache {
@@ -36,7 +37,7 @@ func (ch LocalCache) Fetch(
 		}
 		// Fetch an artifact if it's missing from the cache.
 		if !status.ChecksumInCache {
-			toFetch[cachePath] = struct{}{}
+			fetchFiles[cachePath] = struct{}{}
 		}
 		if art.IsDir {
 			dirArtifacts[cachePath] = art
@@ -46,15 +47,15 @@ func (ch LocalCache) Fetch(
 	// This length check could/should be handled in remoteCopy, but the tests
 	// currently expect remoteCopy not to be called if there's nothing to
 	// fetch.
-	if len(toFetch) > 0 {
-		if err := remoteCopy(remoteSrc, ch.dir, toFetch); err != nil {
+	if len(fetchFiles) > 0 {
+		if err := remoteCopy(remoteSrc, ch.dir, fetchFiles); err != nil {
 			return errors.Wrap(err, "fetch")
 		}
 	}
 
 	children := make(map[string]*artifact.Artifact)
-	// Collect all children of directory artifacts and recursively call Fetch
-	// on all of them.
+	// Collect all children of directory artifacts and call Fetch
+	// on all of them at once.
 	for cachePath, dirArt := range dirArtifacts {
 		man, err := readDirManifest(filepath.Join(ch.dir, cachePath))
 		if err != nil {

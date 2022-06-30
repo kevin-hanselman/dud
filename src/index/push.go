@@ -53,10 +53,8 @@ func (idx Index) Push(
 		}
 	}
 	logger.Info.Printf("pushing stage %s\n", stagePath)
-	for _, art := range stg.Outputs {
-		if err := ch.Push(remote, *art); err != nil {
-			return err
-		}
+	if err := ch.Push(remote, stg.Outputs); err != nil {
+		return err
 	}
 	pushed[stagePath] = true
 	delete(inProgress, stagePath)

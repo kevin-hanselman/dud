@@ -60,13 +60,13 @@ func (_m *Cache) Fetch(remoteSrc string, arts map[string]*artifact.Artifact) err
 	return r0
 }
 
-// Push provides a mock function with given fields: remoteDst, art
-func (_m *Cache) Push(remoteDst string, art artifact.Artifact) error {
-	ret := _m.Called(remoteDst, art)
+// Push provides a mock function with given fields: remoteDst, arts
+func (_m *Cache) Push(remoteDst string, arts map[string]*artifact.Artifact) error {
+	ret := _m.Called(remoteDst, arts)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, artifact.Artifact) error); ok {
-		r0 = rf(remoteDst, art)
+	if rf, ok := ret.Get(0).(func(string, map[string]*artifact.Artifact) error); ok {
+		r0 = rf(remoteDst, arts)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -61,9 +61,7 @@ type Cache interface {
 	) error
 	Status(workDir string, art artifact.Artifact, shortCircuit bool) (artifact.Status, error)
 	Fetch(remoteSrc string, arts map[string]*artifact.Artifact) error
-	// TODO: Refactor Push to take multiple Artifacts (like Fetch) to reduce
-	// the total number of underlying rclone calls.
-	Push(remoteDst string, art artifact.Artifact) error
+	Push(remoteDst string, arts map[string]*artifact.Artifact) error
 }
 
 // A LocalCache is a Cache that uses a directory on a local filesystem.

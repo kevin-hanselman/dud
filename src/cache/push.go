@@ -11,13 +11,21 @@ import (
 )
 
 // Push uploads an Artifact from the local cache to a remote cache.
-func (ch LocalCache) Push(remoteDst string, art artifact.Artifact) error {
+//
+// This uses a map of Artifacts instead of a slice to ease both testing and
+// calling code. Primarily, a Stage's outputs will be passed to this function,
+// so it's convenient to pass stage.Outputs directly. This also eases testing,
+// because transcribing the map into a slice would introduce non-determinism.
+func (ch LocalCache) Push(remoteDst string, arts map[string]*artifact.Artifact) error {
 	pushFiles := make(map[string]struct{})
-	if err := gatherFilesToPush(ch, art, pushFiles); err != nil {
-		return errors.Wrapf(err, "push %s", art.Path)
+	// TODO: add a progress bar while gathering files
+	for _, art := range arts {
+		if err := gatherFilesToPush(ch, *art, pushFiles); err != nil {
+			return errors.Wrapf(err, "push %s", art.Path)
+		}
 	}
 	if len(pushFiles) > 0 {
-		return errors.Wrapf(remoteCopy(ch.dir, remoteDst, pushFiles), "push %s", art.Path)
+		return errors.Wrap(remoteCopy(ch.dir, remoteDst, pushFiles), "push")
 	}
 	return nil
 }
@@ -103,6 +111,7 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	// chmod all files, ignoring "no such file" errors which are probably due
 	// to the destination being remote. This is important even for push,
 	// because the "remote" might be a local directory.
+	// TODO: make this concurrent and add a progress bar
 	var chmodErr error
 	for file := range fileSet {
 		// Try correcting all the files and return the last error seen.

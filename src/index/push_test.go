@@ -16,9 +16,7 @@ func expectOutputsPushed(
 	rootDir,
 	remote string,
 ) {
-	for _, art := range stg.Outputs {
-		mockCache.On("Push", remote, *art).Return(nil).Once()
-	}
+	mockCache.On("Push", remote, stg.Outputs).Return(nil).Once()
 }
 
 func TestPush(t *testing.T) {
