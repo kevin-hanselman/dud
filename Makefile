@@ -100,7 +100,11 @@ hugo/content/benchmarks/_index.md: \
 	integration/benchmarks/markdown/few_large_files/checkout/table.md \
 	integration/benchmarks/markdown/many_small_files/checkout/table.md \
 	integration/benchmarks/markdown/few_large_files/status/table.md \
-	integration/benchmarks/markdown/many_small_files/status/table.md
+	integration/benchmarks/markdown/many_small_files/status/table.md \
+	integration/benchmarks/markdown/few_large_files/push/table.md \
+	integration/benchmarks/markdown/many_small_files/push/table.md \
+	integration/benchmarks/markdown/few_large_files/fetch/table.md \
+	integration/benchmarks/markdown/many_small_files/fetch/table.md
 	mkdir -p $(dir $@)
 	find integration/benchmarks/markdown -type f -name '*.md' | sort | xargs cat > $@
 
