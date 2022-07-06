@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/pkg/errors"
@@ -111,14 +112,38 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	// chmod all files, ignoring "no such file" errors which are probably due
 	// to the destination being remote. This is important even for push,
 	// because the "remote" might be a local directory.
-	// TODO: make this concurrent and add a progress bar
-	var chmodErr error
-	for file := range fileSet {
-		// Try correcting all the files and return the last error seen.
-		err := os.Chmod(filepath.Join(dst, file), cacheFilePerms)
-		if err != nil && !os.IsNotExist(err) {
-			chmodErr = err
+	errs := make(chan error, len(fileSet))
+	fileChan := make(chan string)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for file := range fileSet {
+			fileChan <- file
 		}
+		close(fileChan)
+	}()
+	// One worker per file, capped at maxSharedWorkers.
+	numWorkers := len(fileSet)
+	if numWorkers > maxSharedWorkers {
+		numWorkers = maxSharedWorkers
 	}
-	return chmodErr
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for file := range fileChan {
+				err := os.Chmod(filepath.Join(dst, file), cacheFilePerms)
+				if err != nil && !os.IsNotExist(err) {
+					errs <- err
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	// Return the first error reported and ignore the rest. If there were no
+	// errors, because this is a buffered channel, we should receive the zero
+	// value, nil.
+	return <-errs
 }

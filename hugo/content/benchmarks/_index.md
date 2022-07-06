@@ -10,7 +10,7 @@
 
 **Go version**: 1.18.3
 
-**Dud version**: v0.3.1-9-gfb7994b
+**Dud version**: v0.3.1-10-gbb2c8b5
 
 **DVC version**: 2.11.0 (pip)
 
@@ -80,8 +80,8 @@ This dataset consists of twenty thousand 100 KB files in a single directory.
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
 |:---|---:|---:|---:|---:|
-| `Dud` | 8.685 ± 0.295 | 8.376 | 8.963 | 1.00 |
-| `DVC` | 47.422 ± 0.592 | 46.853 | 48.034 | 5.46 ± 0.20 |
+| `Dud` | 5.946 ± 0.224 | 5.802 | 6.204 | 1.00 |
+| `DVC` | 45.791 ± 0.153 | 45.670 | 45.962 | 7.70 ± 0.29 |
 ### status
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
