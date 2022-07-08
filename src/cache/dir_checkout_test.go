@@ -39,7 +39,7 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		progress := newProgress("test")
+		progress := newHiddenProgress()
 
 		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy, progress); err != nil {
 			t.Fatal(err)

@@ -36,7 +36,7 @@ func (ch LocalCache) Commit(
 	if err != nil {
 		return errors.Wrapf(err, "commit %s", art.Path)
 	}
-	progress := newProgress(art.Path)
+	progress := newProgress(progressTemplateDefault, 0, art.Path)
 	progress.Start()
 	defer progress.Finish()
 	if art.IsDir {
@@ -55,7 +55,7 @@ func (ch LocalCache) Commit(
 		err = commitFileArtifact(ch, workspaceDir, art, strat, progress, canRenameFile)
 	}
 	if err == nil && progress.Current() <= 0 {
-		progress.SetTemplate(progressSkipCommitTemplate)
+		progress.SetTemplate(progressTemplateSkipCommit)
 	}
 	return errors.Wrapf(err, "commit %s", art.Path)
 }

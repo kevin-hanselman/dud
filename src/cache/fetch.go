@@ -17,7 +17,6 @@ func (ch LocalCache) Fetch(
 	remoteSrc string,
 	artifacts map[string]*artifact.Artifact,
 ) error {
-	// TODO: add a progress bar or a spinner
 	fetchFiles := make(map[string]struct{})
 	dirArtifacts := make(map[string]*artifact.Artifact)
 	for _, art := range artifacts {

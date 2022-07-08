@@ -2,11 +2,13 @@ package cache
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sync"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/pkg/errors"
 )
@@ -18,13 +20,16 @@ import (
 // so it's convenient to pass stage.Outputs directly. This also eases testing,
 // because transcribing the map into a slice would introduce non-determinism.
 func (ch LocalCache) Push(remoteDst string, arts map[string]*artifact.Artifact) error {
+	progress := newProgress(progressTemplateCount, 0, "Gathering files")
+	progress.Start()
 	pushFiles := make(map[string]struct{})
-	// TODO: add a progress bar while gathering files
 	for _, art := range arts {
-		if err := gatherFilesToPush(ch, *art, pushFiles); err != nil {
+		if err := gatherFilesToPush(ch, *art, pushFiles, progress); err != nil {
+			progress.Finish()
 			return errors.Wrapf(err, "push %s", art.Path)
 		}
 	}
+	progress.Finish()
 	if len(pushFiles) > 0 {
 		return errors.Wrap(remoteCopy(ch.dir, remoteDst, pushFiles), "push")
 	}
@@ -35,6 +40,7 @@ func gatherFilesToPush(
 	ch LocalCache,
 	art artifact.Artifact,
 	filesToPush map[string]struct{},
+	progress *pb.ProgressBar,
 ) error {
 	if art.SkipCache {
 		return nil
@@ -55,11 +61,12 @@ func gatherFilesToPush(
 			return err
 		}
 		for _, childArt := range man.Contents {
-			if err := gatherFilesToPush(ch, *childArt, filesToPush); err != nil {
+			if err := gatherFilesToPush(ch, *childArt, filesToPush, progress); err != nil {
 				return err
 			}
 		}
 	}
+	progress.Increment()
 	filesToPush[cachePath] = struct{}{}
 	return nil
 }
@@ -112,7 +119,30 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	// chmod all files, ignoring "no such file" errors which are probably due
 	// to the destination being remote. This is important even for push,
 	// because the "remote" might be a local directory.
-	errs := make(chan error, len(fileSet))
+	return setFilePerms(dst, fileSet, cacheFilePerms)
+}
+
+func setFilePerms(commonDir string, fileSet map[string]struct{}, mode fs.FileMode) error {
+	numFiles := len(fileSet)
+	progress := newProgress(progressTemplateCount, numFiles, "Fixing permissions")
+	progress.Start()
+	defer progress.Finish()
+
+	// If there's a small number of files don't bother with concurrency.
+	if numFiles < maxSharedWorkers {
+		var chmodErr error = nil
+		for file := range fileSet {
+			err := os.Chmod(filepath.Join(commonDir, file), mode)
+			if err == nil || os.IsNotExist(err) {
+				progress.Increment()
+			} else {
+				chmodErr = err
+			}
+		}
+		return chmodErr
+	}
+
+	errs := make(chan error, numFiles)
 	fileChan := make(chan string)
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -123,18 +153,17 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 		}
 		close(fileChan)
 	}()
-	// One worker per file, capped at maxSharedWorkers.
-	numWorkers := len(fileSet)
-	if numWorkers > maxSharedWorkers {
-		numWorkers = maxSharedWorkers
-	}
-	for i := 0; i < numWorkers; i++ {
+	for i := 0; i < maxSharedWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for file := range fileChan {
-				err := os.Chmod(filepath.Join(dst, file), cacheFilePerms)
-				if err != nil && !os.IsNotExist(err) {
+				err := os.Chmod(filepath.Join(commonDir, file), mode)
+				// TODO: Consider exiting early on "no such file" errors; this
+				// likely means the remote is truly remote.
+				if err == nil || os.IsNotExist(err) {
+					progress.Increment()
+				} else {
 					errs <- err
 				}
 			}
