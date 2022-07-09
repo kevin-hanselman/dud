@@ -27,10 +27,12 @@ const (
 	// First string will be used as value for format time duration string, default is "%s".
 	// Second string will be used when bar finished and value indicates elapsed time, default is "%s"
 	// Third string will be used when value not available, default is "?"
-	progressTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
+	progressTemplateDefault pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
 		`  {{percent . "%3.0f%%"}}  {{speed . "%s/s" "?/s"}}  {{rtime . "ETA %s" "%s total"}}`
 
-	progressSkipCommitTemplate pb.ProgressBarTemplate = `  {{string . "prefix"}}  up-to-date; skipping commit`
+	progressTemplateSkipCommit pb.ProgressBarTemplate = `  {{string . "prefix"}}  up-to-date; skipping commit`
+
+	progressTemplateCount pb.ProgressBarTemplate = `{{string . "prefix"}} {{counters .}}`
 )
 
 // These are somewhat arbitrary numbers. We need to profile more.
@@ -60,10 +62,8 @@ type Cache interface {
 		p *pb.ProgressBar,
 	) error
 	Status(workDir string, art artifact.Artifact, shortCircuit bool) (artifact.Status, error)
-	Fetch(remoteSrc string, arts ...artifact.Artifact) error
-	// TODO: Refactor Push to take multiple Artifacts (like Fetch) to reduce
-	// the total number of underlying rclone calls.
-	Push(workDir, remoteDst string, art artifact.Artifact) error
+	Fetch(remoteSrc string, arts map[string]*artifact.Artifact) error
+	Push(remoteDst string, arts map[string]*artifact.Artifact) error
 }
 
 // A LocalCache is a Cache that uses a directory on a local filesystem.
@@ -129,24 +129,24 @@ func (err MissingFromCacheError) Error() string {
 	return fmt.Sprintf("checksum missing from cache: %#v", err.checksum)
 }
 
-func newHiddenProgress() (progress *pb.ProgressBar) {
-	progress = progressTemplate.New(0)
-	progress.SetRefreshRate(time.Hour).SetWriter(io.Discard)
-	return progress
+func newHiddenProgress() *pb.ProgressBar {
+	return pb.New(0).SetRefreshRate(time.Hour).SetWriter(io.Discard)
 }
 
-func newProgress(prefix string) (progress *pb.ProgressBar) {
+func newProgress(template pb.ProgressBarTemplate, initialValue int, prefix string) (p *pb.ProgressBar) {
 	// Only show the progress report if stderr is a terminal. Otherwise, don't
 	// bother updating the progress report and send any incidental output to
 	// /dev/null. Either way we instantiate the progress tracker because we
 	// still need it to tell us how many bytes we've read/written.
 	if isatty.IsTerminal(os.Stderr.Fd()) {
-		progress = progressTemplate.New(0)
-		progress.SetRefreshRate(100 * time.Millisecond).SetWriter(os.Stderr)
-		progress.SetMaxWidth(120).Set(pb.TimeRound, time.Millisecond)
-		progress.Set("prefix", fmt.Sprintf(progressPrefixFormat, prefix))
+		p = template.New(initialValue)
+		p.SetRefreshRate(100 * time.Millisecond)
+		p.SetWriter(os.Stderr)
+		p.SetMaxWidth(120)
+		p.Set(pb.TimeRound, time.Millisecond)
+		p.Set("prefix", fmt.Sprintf(progressPrefixFormat, prefix))
 	} else {
-		progress = newHiddenProgress()
+		p = newHiddenProgress()
 	}
 	return
 }

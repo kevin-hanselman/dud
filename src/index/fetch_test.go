@@ -16,9 +16,7 @@ func expectOutputsFetched(
 	rootDir,
 	remote string,
 ) {
-	for _, art := range stg.Outputs {
-		mockCache.On("Fetch", remote, *art).Return(nil).Once()
-	}
+	mockCache.On("Fetch", remote, stg.Outputs).Return(nil).Once()
 }
 
 func TestFetch(t *testing.T) {
@@ -32,10 +30,12 @@ func TestFetch(t *testing.T) {
 		stgA := stage.Stage{
 			WorkingDir: "a",
 			Inputs: map[string]*artifact.Artifact{
-				"bish.bin": {Path: "bish.bin"},
+				"foo.bin": {Path: "foo.bin"},
 			},
 			Outputs: map[string]*artifact.Artifact{
-				"foo.bin": {Path: "foo.bin"},
+				"bish.bin": {Path: "bish.bin"},
+				"bash.bin": {Path: "bash.bin"},
+				"bosh.bin": {Path: "bosh.bin"},
 			},
 		}
 		stgB := stage.Stage{

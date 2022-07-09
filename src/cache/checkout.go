@@ -28,7 +28,7 @@ func (cache LocalCache) Checkout(
 		return
 	}
 	if progress == nil {
-		progress = newProgress(art.Path)
+		progress = newProgress(progressTemplateDefault, 0, art.Path)
 	}
 	progress.Start()
 	defer progress.Finish()

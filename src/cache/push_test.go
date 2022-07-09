@@ -53,7 +53,7 @@ func TestPushIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Push(dirs.WorkDir, fakeRemote, art); err != nil {
+		if err := ch.Push(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
 			t.Fatal(err)
 		}
 
@@ -77,7 +77,7 @@ func TestPushIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushErr := ch.Push(dirs.WorkDir, "/dev/null", art)
+		pushErr := ch.Push("/dev/null", map[string]*artifact.Artifact{"art": &art})
 		if pushErr == nil {
 			t.Fatal("expected Push to return error")
 		}
@@ -104,7 +104,7 @@ func TestPushIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushErr := ch.Push(dirs.WorkDir, "/dev/null", art)
+		pushErr := ch.Push("/dev/null", map[string]*artifact.Artifact{"art": &art})
 		if pushErr == nil {
 			t.Fatal("expected Push to return error")
 		}
@@ -134,7 +134,7 @@ func TestPushIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Push(dirs.WorkDir, fakeRemote, art); err != nil {
+		if err := ch.Push(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
 			t.Fatal(err)
 		}
 

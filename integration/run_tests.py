@@ -27,6 +27,7 @@ def run_test(*, repo_dir, test_def_dir, pin=False):
         cwd=repo_dir,
         check=True,
         capture_output=True,
+        timeout=5,
     )
 
     expected_fs = os.path.join(test_def_dir, 'expected_fs.txt')
@@ -108,6 +109,10 @@ def run_tests(test_def_dir, pin=False):
                 print('-STDERR-')
                 print(proc.stderr.decode())
             return False  # stop running sub-tests on a failure
+        except Exception as ex:
+            print('ERR')
+            print(ex)
+            return False
     return True
 
 

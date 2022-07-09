@@ -2,39 +2,50 @@ package cache
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 
+	"github.com/cheggaaa/pb/v3"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/pkg/errors"
 )
 
 // Push uploads an Artifact from the local cache to a remote cache.
-// TODO: Consider removing the workspaceDir argument. Technically Push and
-// Fetch shouldn't care about the workspace at all; they purely interact with
-// the local cache.
-func (ch LocalCache) Push(workspaceDir, remoteDst string, art artifact.Artifact) error {
+//
+// This uses a map of Artifacts instead of a slice to ease both testing and
+// calling code. Primarily, a Stage's outputs will be passed to this function,
+// so it's convenient to pass stage.Outputs directly. This also eases testing,
+// because transcribing the map into a slice would introduce non-determinism.
+func (ch LocalCache) Push(remoteDst string, arts map[string]*artifact.Artifact) error {
+	progress := newProgress(progressTemplateCount, 0, "Gathering files")
+	progress.Start()
 	pushFiles := make(map[string]struct{})
-	if err := gatherFilesToPush(ch, workspaceDir, art, pushFiles); err != nil {
-		return errors.Wrapf(err, "push %s", art.Path)
+	for _, art := range arts {
+		if err := gatherFilesToPush(ch, *art, pushFiles, progress); err != nil {
+			progress.Finish()
+			return errors.Wrapf(err, "push %s", art.Path)
+		}
 	}
+	progress.Finish()
 	if len(pushFiles) > 0 {
-		return errors.Wrapf(remoteCopy(ch.dir, remoteDst, pushFiles), "push %s", art.Path)
+		return errors.Wrap(remoteCopy(ch.dir, remoteDst, pushFiles), "push")
 	}
 	return nil
 }
 
 func gatherFilesToPush(
 	ch LocalCache,
-	workspaceDir string,
 	art artifact.Artifact,
 	filesToPush map[string]struct{},
+	progress *pb.ProgressBar,
 ) error {
 	if art.SkipCache {
 		return nil
 	}
-	status, cachePath, _, err := quickStatus(ch, workspaceDir, art)
+	status, cachePath, _, err := checksumStatus(ch, art)
 	if err != nil {
 		return err
 	}
@@ -49,13 +60,13 @@ func gatherFilesToPush(
 		if err != nil {
 			return err
 		}
-		childWorkspaceDir := filepath.Join(workspaceDir, art.Path)
 		for _, childArt := range man.Contents {
-			if err := gatherFilesToPush(ch, childWorkspaceDir, *childArt, filesToPush); err != nil {
+			if err := gatherFilesToPush(ch, *childArt, filesToPush, progress); err != nil {
 				return err
 			}
 		}
 	}
+	progress.Increment()
 	filesToPush[cachePath] = struct{}{}
 	return nil
 }
@@ -108,13 +119,60 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	// chmod all files, ignoring "no such file" errors which are probably due
 	// to the destination being remote. This is important even for push,
 	// because the "remote" might be a local directory.
-	var chmodErr error
-	for file := range fileSet {
-		// Try correcting all the files and return the last error seen.
-		err := os.Chmod(filepath.Join(dst, file), cacheFilePerms)
-		if err != nil && !os.IsNotExist(err) {
-			chmodErr = err
+	return setFilePerms(dst, fileSet, cacheFilePerms)
+}
+
+func setFilePerms(commonDir string, fileSet map[string]struct{}, mode fs.FileMode) error {
+	numFiles := len(fileSet)
+	progress := newProgress(progressTemplateCount, numFiles, "Fixing permissions")
+	progress.Start()
+	defer progress.Finish()
+
+	// If there's a small number of files don't bother with concurrency.
+	if numFiles < maxSharedWorkers {
+		var chmodErr error = nil
+		for file := range fileSet {
+			err := os.Chmod(filepath.Join(commonDir, file), mode)
+			if err == nil || os.IsNotExist(err) {
+				progress.Increment()
+			} else {
+				chmodErr = err
+			}
 		}
+		return chmodErr
 	}
-	return chmodErr
+
+	errs := make(chan error, numFiles)
+	fileChan := make(chan string)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for file := range fileSet {
+			fileChan <- file
+		}
+		close(fileChan)
+	}()
+	for i := 0; i < maxSharedWorkers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for file := range fileChan {
+				err := os.Chmod(filepath.Join(commonDir, file), mode)
+				// TODO: Consider exiting early on "no such file" errors; this
+				// likely means the remote is truly remote.
+				if err == nil || os.IsNotExist(err) {
+					progress.Increment()
+				} else {
+					errs <- err
+				}
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	// Return the first error reported and ignore the rest. If there were no
+	// errors, because this is a buffered channel, we should receive the zero
+	// value, nil.
+	return <-errs
 }

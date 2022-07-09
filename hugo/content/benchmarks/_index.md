@@ -10,7 +10,9 @@
 
 **Go version**: 1.18.3
 
-**Dud version**: v0.3.1-4-g8912e16
+**Rclone version**: rclone v1.58.1
+
+**Dud version**: v0.3.1-12-g3f98bdd
 
 **DVC version**: 2.11.0 (pip)
 
@@ -36,6 +38,18 @@ This dataset consists of four 1 GB files in a single directory.
 |:---|---:|---:|---:|---:|
 | `Dud` | 0.665 ± 0.013 | 0.656 | 0.680 | 1.00 |
 | `DVC` | 3.669 ± 0.034 | 3.645 | 3.708 | 5.52 ± 0.12 |
+### fetch
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `Dud` | 11.792 ± 0.519 | 11.224 | 12.244 | 1.56 ± 0.16 |
+| `DVC` | 7.562 ± 0.703 | 6.865 | 8.270 | 1.00 |
+### push
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `Dud` | 11.577 ± 0.336 | 11.340 | 11.961 | 1.00 |
+| `DVC` | 12.794 ± 6.961 | 8.587 | 20.829 | 1.11 ± 0.60 |
 ### status
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
@@ -58,6 +72,18 @@ This dataset consists of twenty thousand 100 KB files in a single directory.
 |:---|---:|---:|---:|---:|
 | `Dud` | 1.583 ± 0.261 | 1.423 | 1.885 | 1.00 |
 | `DVC` | 46.087 ± 6.321 | 39.050 | 51.285 | 29.11 ± 6.25 |
+### fetch
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `Dud` | 7.227 ± 0.226 | 6.968 | 7.382 | 1.00 |
+| `DVC` | 56.176 ± 2.097 | 53.845 | 57.910 | 7.77 ± 0.38 |
+### push
+
+| Command | Mean [s] | Min [s] | Max [s] | Relative |
+|:---|---:|---:|---:|---:|
+| `Dud` | 5.644 ± 0.051 | 5.586 | 5.683 | 1.00 |
+| `DVC` | 44.879 ± 0.184 | 44.745 | 45.089 | 7.95 ± 0.08 |
 ### status
 
 | Command | Mean [s] | Min [s] | Max [s] | Relative |
