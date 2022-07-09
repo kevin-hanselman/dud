@@ -10,7 +10,9 @@
 
 **Go version**: 1.18.3
 
-**Dud version**: v0.3.1-11-g1c02698
+**Rclone version**: rclone v1.58.1
+
+**Dud version**: v0.3.1-12-g3f98bdd
 
 **DVC version**: 2.11.0 (pip)
 

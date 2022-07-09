@@ -1,23 +1,30 @@
 #!/bin/bash
 set -euo pipefail
 
-command -v dud &>/dev/null || { echo >&2 'dud not installed'; exit 1; }
-command -v dvc &>/dev/null || { echo >&2 'dvc not installed'; exit 1; }
+assert_installed() {
+    command -v "$1" &>/dev/null || { echo >&2 "$1 not installed"; exit 1; }
+}
+
+assert_installed dud
+assert_installed dvc
+assert_installed rclone
 
 cat << EOF
 # Benchmarks
 
 ## System Information
 
-**OS**: $(uname -sr | grep -Po '\w+ \d+\.\d+')
+**OS**: $(uname -sr | grep -Po '.+ \d+\.\d+')
 
 **CPU**: $(grep -m1 '^model name' /proc/cpuinfo | cut -d':' -f2 | xargs)
 
-**RAM**: $(free --giga | grep '^Mem' | awk '{print $2}') GB
+**RAM**: $(free --giga | awk '/^Mem:/ {print $2}') GB
 
 **Go version**: $(go env GOVERSION | sed 's;^go;;')
 
-**Dud version**: $(dud version | xargs)
+**Rclone version**: $(rclone version | head -n1 | xargs)
+
+**Dud version**: $(dud version)
 
 **DVC version**: $(dvc version | head -n1 | cut -d':' -f2 | xargs)
 
