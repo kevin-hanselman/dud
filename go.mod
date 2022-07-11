@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
 	github.com/c2h5oh/datasize v0.0.0-20220606134207-859f65c6625b
-	github.com/cheggaaa/pb/v3 v3.0.8
+	github.com/cheggaaa/pb/v3 v3.1.0
 	github.com/felixge/fgprof v0.9.2
 	github.com/google/go-cmp v0.5.8
 	github.com/mattn/go-isatty v0.0.14
