@@ -1,8 +1,6 @@
 package index
 
 import (
-	"fmt"
-
 	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/cache"
@@ -34,7 +32,7 @@ func (idx Index) Commit(
 
 	stg, ok := idx[stagePath]
 	if !ok {
-		return fmt.Errorf("unknown stage %#v", stagePath)
+		return unknownStageError{stagePath}
 	}
 
 	nonStageInputs := []*artifact.Artifact{}

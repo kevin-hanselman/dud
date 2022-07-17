@@ -1,8 +1,6 @@
 package index
 
 import (
-	"fmt"
-
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/kevin-hanselman/dud/src/stage"
 	"github.com/pkg/errors"
@@ -32,7 +30,7 @@ func (idx Index) Status(
 
 	stg, ok := idx[stagePath]
 	if !ok {
-		return fmt.Errorf("status: unknown stage %#v", stagePath)
+		return unknownStageError{stagePath}
 	}
 
 	stageStatus := stage.NewStatus()

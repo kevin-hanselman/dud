@@ -16,6 +16,14 @@ import (
 // Not threadsafe.
 type Index map[string]*stage.Stage
 
+type unknownStageError struct {
+	stagePath string
+}
+
+func (e unknownStageError) Error() string {
+	return fmt.Sprintf("unknown stage %#v", e.stagePath)
+}
+
 // AddStage adds the given Stage to the Index, with the given path as the key.
 func (idx *Index) AddStage(stg stage.Stage, path string) error {
 	if _, ok := (*idx)[path]; ok {
@@ -33,6 +41,14 @@ func (idx *Index) AddStage(stg stage.Stage, path string) error {
 		}
 	}
 	(*idx)[path] = &stg
+	return nil
+}
+
+func (idx *Index) RemoveStage(path string) error {
+	if _, ok := (*idx)[path]; !ok {
+		return unknownStageError{path}
+	}
+	delete(*idx, path)
 	return nil
 }
 

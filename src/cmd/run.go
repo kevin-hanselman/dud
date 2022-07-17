@@ -50,6 +50,7 @@ out-of-date.`,
 			if err != nil {
 				fatal(err)
 			}
+			logger.Info.Println()
 		}
 	},
 }

@@ -2,7 +2,6 @@ package index
 
 import (
 	"bytes"
-	"fmt"
 	"text/template"
 
 	"github.com/awalterschulze/gographviz"
@@ -50,7 +49,7 @@ func (idx Index) Graph(
 
 	stg, ok := idx[stagePath]
 	if !ok {
-		return fmt.Errorf("status: unknown stage %#v", stagePath)
+		return unknownStageError{stagePath}
 	}
 
 	// Ensure the graph is directed, and disallow multiple edges between the same nodes.

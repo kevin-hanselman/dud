@@ -68,6 +68,7 @@ https://rclone.org/ for more information and installation instructions.`,
 			); err != nil {
 				fatal(err)
 			}
+			logger.Info.Println()
 		}
 	},
 }

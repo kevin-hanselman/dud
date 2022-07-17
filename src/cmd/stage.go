@@ -156,6 +156,31 @@ stage to the index file.`,
 	},
 }
 
+var removeStageCmd = &cobra.Command{
+	Use:     "remove stage_file...",
+	Short:   "Remove one or more stage files from the index",
+	Long:    `Remove removes one or more stage files from the index.`,
+	Aliases: []string{"rm"},
+	Args:    cobra.MinimumNArgs(1),
+	Run: func(cmd *cobra.Command, paths []string) {
+		rootDir, _, idx, err := prepare(paths)
+		if err != nil {
+			fatal(err)
+		}
+
+		for _, path := range paths {
+			if err := idx.RemoveStage(path); err != nil {
+				fatal(err)
+			}
+			logger.Info.Printf("Removed %s from the index.", path)
+		}
+
+		if err := idx.ToFile(filepath.Join(rootDir, indexPath)); err != nil {
+			fatal(err)
+		}
+	},
+}
+
 var (
 	stageOutputs, stageInputs []string
 	stageWorkingDir           string
@@ -188,6 +213,7 @@ func init() {
 
 	stageCmd.AddCommand(genStageCmd)
 	stageCmd.AddCommand(addStageCmd)
+	stageCmd.AddCommand(removeStageCmd)
 	rootCmd.AddCommand(stageCmd)
 }
 

@@ -1,7 +1,6 @@
 package index
 
 import (
-	"fmt"
 	"os/exec"
 
 	"github.com/kevin-hanselman/dud/src/agglog"
@@ -35,7 +34,7 @@ func (idx Index) Run(
 
 	stg, ok := idx[stagePath]
 	if !ok {
-		return fmt.Errorf("unknown stage %#v", stagePath)
+		return unknownStageError{stagePath}
 	}
 
 	hasCommand := stg.Command != ""

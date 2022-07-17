@@ -1,8 +1,6 @@
 package index
 
 import (
-	"fmt"
-
 	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/cache"
 	"github.com/pkg/errors"
@@ -30,7 +28,7 @@ func (idx Index) Push(
 
 	stg, ok := idx[stagePath]
 	if !ok {
-		return fmt.Errorf("unknown stage %#v", stagePath)
+		return unknownStageError{stagePath}
 	}
 
 	for artPath := range stg.Inputs {

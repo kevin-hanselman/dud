@@ -37,7 +37,7 @@ In terms of speed, Dud is [generally much
 faster](https://kevin-hanselman.github.io/dud/benchmarks) than DVC. In terms of
 simplicity, Dud has a [smaller, more focused
 scope](https://kevin-hanselman.github.io/dud/cli/dud), and it is [distributed as
-a single executable](https://github.com/kevin-hanselman/dud/releases).
+a standalone executable](https://github.com/kevin-hanselman/dud/releases).
 
 To summarize with an analogy: Dud is to DVC what [Flask][1] is to [Django][1].
 Both Dud and DVC have their strengths. If you want a "batteries included" suite
