@@ -20,7 +20,7 @@ As Dud tells us, `dud init` creates a `.dud` directory and some config files. Du
 
 Next, let's download the CIFAR-10 computer vision dataset.
 
-    $ curl -C- -sO https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
+    $ curl -sSO 'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 
     $ du -h cifar-10-python.tar.gz
     163M	cifar-10-python.tar.gz
@@ -53,7 +53,7 @@ Now we have a stage file, but we need to register it with Dud. We do that with `
 
     $ dud commit
     committing stage cifar.yaml
-      cifar-10-python.tar.gz  162.60 MiB / 162.60 MiB  100%  ?/s  66ms total
+      cifar-10-python.tar.gz  162.60 MiB / 162.60 MiB  100%  ?/s  65ms total
 
 `dud commit` goes through all of our stages (in this case, just `cifar.yaml`) and copies their files/directories to the Dud cache. The cache is a directory that holds all versions of all files and directories owned by Dud. By default, the cache lives at `.dud/cache/`, but it's location is configurable (see `.dud/config.yaml`).
 
@@ -61,16 +61,16 @@ To get a better sense of what `dud commit` did, let's look at the directory stru
 
     $ tree -an
     .
+    ├── .dud
+    │   ├── .gitignore
+    │   ├── cache
+    │   │   └── fe
+    │   │       └── 3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+    │   ├── config.yaml
+    │   ├── index
+    │   └── rclone.conf
     ├── cifar-10-python.tar.gz -> .dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
-    ├── cifar.yaml
-    └── .dud
-        ├── cache
-        │   └── fe
-        │       └── 3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
-        ├── config.yaml
-        ├── .gitignore
-        ├── index
-        └── rclone.conf
+    └── cifar.yaml
 
     3 directories, 7 files
 
@@ -79,9 +79,9 @@ Our tarball has been replaced with a link to a file in Dud's cache. That cached 
 But how do we make sure we don't corrupt the cached version of the tarball? What happens if we accidentally modify our dataset?
 
     $ echo 'accidental overwrite' > cifar-10-python.tar.gz
-    /usr/sbin/sh: line 1: cifar-10-python.tar.gz: Permission denied
+    /usr/bin/sh: 1: cannot create cifar-10-python.tar.gz: Permission denied
 
-Dud makes it very difficult to accidentally modify committed files. When Dud commits a file, it makes the link to the cache read-only.
+Dud makes it difficult to accidentally modify committed files. When Dud commits a file, it makes the link to the cache read-only.
 
 The tarball isn't the only thing that's changed. Let's look at our stage file:
 
@@ -101,6 +101,7 @@ Dud recorded the tarball's checksum in the stage file. (It also checksummed the 
 
     $ dud checkout
     checking out stage cifar.yaml
+      cifar-10-python.tar.gz  1 / 1  100%  ?/s  0s total
 
     $ readlink -v cifar-10-python.tar.gz
     .dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
@@ -158,6 +159,7 @@ This looks as expected. Our tarball is committed, but we haven't extracted it ye
 
     $ dud run
     nothing to do for stage cifar.yaml
+
     running stage extract_cifar.yaml
     cifar-10-batches-py/
     cifar-10-batches-py/data_batch_4
@@ -181,9 +183,10 @@ Congrats on [defusing the bomb](https://xkcd.com/1168/)! Now that we know our pi
 
     $ dud commit
     committing stage cifar.yaml
-      cifar-10-python.tar.gz up-to-date; skipping commit
+      cifar-10-python.tar.gz  up-to-date; skipping commit
+
     committing stage extract_cifar.yaml
-      cifar-10-batches-py   177.59 MiB / 177.59 MiB  100%  ?/s  32ms total
+      cifar-10-batches-py   177.59 MiB / 177.59 MiB  100%  ?/s  30ms total
 
 Notice that Dud detected that the tarball from `cifar.yaml` hasn't changed, so it knew not to waste time committing it again.
 
@@ -202,6 +205,7 @@ Because everything is up-to-date, I bet you can guess what happens if we try re-
 
     $ dud run
     nothing to do for stage cifar.yaml
+
     nothing to do for stage extract_cifar.yaml
 
 Because both of our stages are committed and up-to-date, Dud detects that there's no sense in re-extracting the tarball. Excellent!
@@ -273,20 +277,25 @@ We're now ready to push our data to the remote cache! We do this with one simple
 
     $ dud push
     pushing stage cifar.yaml
-    Transferred:   	  162.600Mi / 162.600 MiByte, 100%, 0 Byte/s, ETA -
+    Gathering files      1
+    Transferred:   	  162.600 MiB / 162.600 MiB, 100%, 0 B/s, ETA -
     Transferred:            1 / 1, 100%
-    Elapsed time:         0.4s
+    Elapsed time:         0.3s
+    Fixing permissions   1 / 1
+
     pushing stage extract_cifar.yaml
-    Transferred:   	  177.589Mi / 177.589 MiByte, 100%, 0 Byte/s, ETA -
+    Gathering files      9
+    Transferred:   	  177.589 MiB / 177.589 MiB, 100%, 0 B/s, ETA -
     Transferred:            9 / 9, 100%
     Elapsed time:         0.2s
+    Fixing permissions   9 / 9
 
 `dud push` goes through all of our stages, looks up their committed artifacts (by checksum), and instructs rclone to copy them to the remote cache. We can confirm our artifacts were copied to `/tmp/dud/cache` using rclone as well, which provides the `check` command to compare two directories (or indeed remotes):
 
     $ rclone check .dud/cache /tmp/dud/cache
-    2022/01/02 16:37:52 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
-    2022/01/02 16:37:52 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
-    2022/01/02 16:37:52 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
+    2022/07/18 01:32:43 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
+    2022/07/18 01:32:45 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
+    2022/07/18 01:32:45 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
 
 Sure enough, rclone reports that `.dud/cache` and `/tmp/dud/cache` are identical. If it were "real", our collaborators with access to `fake_remote` could now access all of the data we've committed so far! Let's pretend we are one of those collaborators, and we need to fetch the data files from the remote cache. We can do that with the aptly-named `fetch` command:
 
@@ -294,21 +303,25 @@ Sure enough, rclone reports that `.dud/cache` and `/tmp/dud/cache` are identical
 
     $ dud fetch
     fetching stage cifar.yaml
-    Transferred:   	  162.600Mi / 162.600 MiByte, 100%, 0 Byte/s, ETA -
+    Transferred:   	  162.600 MiB / 162.600 MiB, 100%, 0 B/s, ETA -
     Transferred:            1 / 1, 100%
     Elapsed time:         0.3s
+    Fixing permissions   1 / 1
+
     fetching stage extract_cifar.yaml
-    Transferred:   	        974 / 974 Byte, 100%, 0 Byte/s, ETA -
+    Transferred:   	        974 B / 974 B, 100%, 0 B/s, ETA -
     Transferred:            1 / 1, 100%
     Elapsed time:         0.0s
-    Transferred:   	  177.588Mi / 177.588 MiByte, 100%, 0 Byte/s, ETA -
+    Fixing permissions   1 / 1
+    Transferred:   	  177.588 MiB / 177.588 MiB, 100%, 0 B/s, ETA -
     Transferred:            8 / 8, 100%
     Elapsed time:         0.2s
+    Fixing permissions   8 / 8
 
     $ rclone check .dud/cache /tmp/dud/cache
-    2022/01/02 16:37:55 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
-    2022/01/02 16:37:55 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
-    2022/01/02 16:37:55 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
+    2022/07/18 01:32:47 NOTICE: Config file "/home/user/.config/rclone/rclone.conf" not found - using defaults
+    2022/07/18 01:32:48 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
+    2022/07/18 01:32:48 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
 
 `dud fetch` is the inverse of `dud push`; it looks up artifacts the same way `push` does (from stage files), but it copies _from_ the remote cache _to_ the local cache.
 
@@ -322,7 +335,7 @@ The steps below gloss over installing and configuring Git. If you are new to Git
 
 First things first, let's create a Git repository for the project:
 
-    $ git init -b main
+    $ git init
     Initialized empty Git repository in /home/user/cifar/.git/
 
 Let's take a look at our status to decide what to commit:
@@ -390,7 +403,7 @@ Let's tell Git to track everything else:
 With everything in order, let's commit our code:
 
     $ git commit -m 'initial commit'
-    [main (root-commit) 5329de9] initial commit
+    [main (root-commit) ca689da] initial commit
      7 files changed, 25 insertions(+)
      create mode 100644 .dud/.gitignore
      create mode 100644 .dud/config.yaml

@@ -75,7 +75,7 @@ bench: test-short
 
 .PHONY: serve-jupyter
 serve-jupyter: $(GOBIN)/dud
-	jupyter notebook -y --ip=0.0.0.0 ./hugo/notebooks/
+	jupyter notebook -y --ip=0.0.0.0 --notebook-dir ./hugo/notebooks/
 
 # First delete stale supporting files, then convert the notebook to markdown,
 # and finally clear the notebook outputs.
@@ -113,7 +113,7 @@ bench-docs: hugo/content/benchmarks/_index.md
 
 hugo/content/%.md: hugo/notebooks/%.md
 	mkdir -p '$(dir $@)'
-	awk --lint=fatal -f ./hugo/notebooks/fix_md.awk '$<' > '$@'
+	gawk --lint=fatal -f ./hugo/notebooks/fix_md.awk '$<' > '$@'
 	$(eval supporting_files = $(wildcard $(patsubst %.md,%_files,$<)/*.*))
 	if test -n "$(supporting_files)"; then cp -v $(supporting_files) $(dir $@); fi
 
@@ -150,8 +150,10 @@ serve-hugo:
 	hugo server \
 		--disableFastRender \
 		--bind 0.0.0.0 \
-		--baseUrl $(shell hostname -i | xargs)/dud/
+		--port 8888 \
+		--baseUrl "$(shell hostname -i | xargs)/dud/"
 # xargs trims whitespace from the hostname
+# Port 8888 matches the port exposed by the docker rule above.
 
 .PHONY: coverage
 coverage:

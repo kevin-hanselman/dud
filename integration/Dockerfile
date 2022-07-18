@@ -4,7 +4,9 @@ RUN apt update && apt install -y software-properties-common \
     && add-apt-repository ppa:longsleep/golang-backports \
     && apt update \
     && apt install -y \
+        build-essential \
         curl \
+        gawk \
         git \
         golang-go \
         graphviz \
@@ -22,11 +24,6 @@ RUN apt update && apt install -y software-properties-common \
 # happen to match).
 # See: https://git-scm.com/docs/git-config#Documentation/git-config.txt-safedirectory
 
-COPY integration/install_hyperfine_deb.sh ./
-RUN ./install_hyperfine_deb.sh
-
-RUN curl https://rclone.org/install.sh | bash
-
 RUN useradd --no-log-init -m user -G sudo \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
@@ -34,17 +31,21 @@ USER user
 
 WORKDIR /home/user
 
-# Create a directory to mount a Docker volume to. If we don't create the mount
-# point now as the user, Docker will create it with root permissions when it
-# creates the container.
-RUN mkdir ~/dud-data
+RUN curl --fail --location https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh | bash
 
-ENV PATH=$PATH:/home/user/go/bin:/home/user/.local/bin
+ENV PATH=$PATH:/home/user/go/bin:/home/user/.local/bin:/home/linuxbrew/.linuxbrew/bin
+
+RUN brew install hyperfine hugo rclone
 
 RUN pip install --no-cache --user dvc notebook \
     && dvc config --global core.analytics false \
     && dvc config --global core.check_update false \
     && dvc config --global cache.type symlink
+
+# Create a directory to mount a Docker volume to. If we don't create the mount
+# point now as the user, Docker will create it with root permissions when it
+# creates the container.
+RUN mkdir ~/dud-data
 
 # Pre-download the Go dependencies for Dud.
 COPY --chown=user go.mod go.sum ./

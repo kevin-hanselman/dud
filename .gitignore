@@ -1,8 +1,7 @@
-.tags*
+/.tags*
 /dud
-/mockery
-/goreleaser
-depgraph.png
+/depgraph.png
+/website
 
 # auto-generated hugo files
 # (e.g. cobra CLI and converted Jupyter notebooks)
