@@ -3,6 +3,7 @@ package artifact
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 )
 
@@ -127,7 +128,7 @@ func TestArtifactStatusString(t *testing.T) {
 			},
 		}
 
-		want := "x3 up-to-date, x1 not committed"
+		want := "3x up-to-date, 2x directory, 1x not committed"
 
 		got := status.String()
 		if got != want {
@@ -144,11 +145,37 @@ func TestArtifactStatusString(t *testing.T) {
 			ContentsMatch:       false,
 		}
 
-		want := "empty directory"
+		want := "1x empty directory"
 
 		got := status.String()
 		if got != want {
 			t.Fatalf("Status.String() got %#v, want %#v", got, want)
+		}
+	})
+
+	t.Run("empty sub-directory", func(t *testing.T) {
+		status := Status{
+			Artifact:            Artifact{IsDir: true},
+			WorkspaceFileStatus: fsutil.StatusDirectory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       false,
+			ChildrenStatus: map[string]*Status{
+				"c": {
+					Artifact:            Artifact{IsDir: true},
+					WorkspaceFileStatus: fsutil.StatusDirectory,
+					HasChecksum:         true,
+					ChecksumInCache:     true,
+					ContentsMatch:       false,
+				},
+			},
+		}
+
+		want := "1x directory, 1x empty directory"
+
+		got := status.String()
+		if diff := cmp.Diff(want, got); diff != "" {
+			t.Fatalf("Status.String() -want +got:\n%s", diff)
 		}
 	})
 

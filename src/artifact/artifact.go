@@ -85,26 +85,41 @@ type Status struct {
 	ChildrenStatus map[string]*Status
 }
 
-func (stat Status) childStatusCounts(out map[string]int) {
+func (stat Status) dirStatusCounts(counts map[string]int) {
+	// len(nil map) returns 0
+	if len(stat.ChildrenStatus) == 0 {
+		counts["empty directory"]++
+	} else {
+		counts["directory"]++
+	}
 	for _, childStatus := range stat.ChildrenStatus {
 		if childStatus.IsDir {
-			childStatus.childStatusCounts(out)
+			childStatus.dirStatusCounts(counts)
 		} else {
-			out[childStatus.String()]++
+			counts[childStatus.String()]++
 		}
 	}
 }
 
-func sortByValue(counts map[string]int) []string {
+func sortCounts(counts map[string]int) []string {
 	keys := make([]string, len(counts))
 	i := 0
 	for key := range counts {
 		keys[i] = key
 		i++
 	}
-	sort.Slice(keys, func(i, j int) bool {
-		// Sort into descending order.
-		return counts[keys[i]] > counts[keys[j]]
+	sort.Slice(keys, func(a, b int) bool {
+		aKey := keys[a]
+		aVal := counts[aKey]
+		bKey := keys[b]
+		bVal := counts[keys[b]]
+		// If the values are equal, fallback to lexicographic order of the
+		// string keys. This is primarily for writing deterministic tests.
+		if aVal == bVal {
+			return aKey < bKey
+		}
+		// Sort by highest value first.
+		return aVal > bVal
 	})
 	return keys
 }
@@ -166,15 +181,11 @@ func (stat Status) String() string {
 	}
 
 	if stat.IsDir {
-		// len(nil map) returns 0
-		if len(stat.ChildrenStatus) == 0 {
-			return "empty directory"
-		}
 		counts := make(map[string]int)
-		stat.childStatusCounts(counts)
+		stat.dirStatusCounts(counts)
 		countStrings := make([]string, len(counts))
-		for i, status := range sortByValue(counts) {
-			countStrings[i] = fmt.Sprintf("x%d %s", counts[status], status)
+		for i, status := range sortCounts(counts) {
+			countStrings[i] = fmt.Sprintf("%dx %s", counts[status], status)
 		}
 		return strings.Join(countStrings, ", ")
 	}
