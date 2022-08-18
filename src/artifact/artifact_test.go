@@ -93,13 +93,14 @@ func TestArtifactStatusString(t *testing.T) {
 		}
 	})
 
-	t.Run("up-to-date recursive directory", func(t *testing.T) {
-		upToDate := Status{
-			WorkspaceFileStatus: fsutil.StatusRegularFile,
-			HasChecksum:         true,
-			ChecksumInCache:     true,
-			ContentsMatch:       true,
-		}
+	fileUpToDate := Status{
+		WorkspaceFileStatus: fsutil.StatusRegularFile,
+		HasChecksum:         true,
+		ChecksumInCache:     true,
+		ContentsMatch:       true,
+	}
+
+	t.Run("nested directory", func(t *testing.T) {
 		status := Status{
 			Artifact:            Artifact{IsDir: true},
 			WorkspaceFileStatus: fsutil.StatusDirectory,
@@ -107,8 +108,8 @@ func TestArtifactStatusString(t *testing.T) {
 			ChecksumInCache:     true,
 			ContentsMatch:       true,
 			ChildrenStatus: map[string]*Status{
-				"a": &upToDate,
-				"b": &upToDate,
+				"a": &fileUpToDate,
+				"b": &fileUpToDate,
 				"c": {
 					Artifact:            Artifact{IsDir: true},
 					WorkspaceFileStatus: fsutil.StatusDirectory,
@@ -116,7 +117,7 @@ func TestArtifactStatusString(t *testing.T) {
 					ChecksumInCache:     true,
 					ContentsMatch:       false,
 					ChildrenStatus: map[string]*Status{
-						"d": &upToDate,
+						"d": &fileUpToDate,
 						"e": {
 							WorkspaceFileStatus: fsutil.StatusRegularFile,
 							HasChecksum:         false,
@@ -129,6 +130,32 @@ func TestArtifactStatusString(t *testing.T) {
 		}
 
 		want := "3x up-to-date, 2x directory, 1x not committed"
+
+		got := status.String()
+		if got != want {
+			t.Fatalf("Status.String() got %#v, want %#v", got, want)
+		}
+	})
+
+	t.Run("missing file in sub-directory", func(t *testing.T) {
+		status := Status{
+			Artifact:            Artifact{IsDir: true},
+			WorkspaceFileStatus: fsutil.StatusDirectory,
+			HasChecksum:         true,
+			ChecksumInCache:     true,
+			ContentsMatch:       true,
+			ChildrenStatus: map[string]*Status{
+				"a": &fileUpToDate,
+				"b": {
+					WorkspaceFileStatus: fsutil.StatusAbsent,
+					HasChecksum:         true,
+					ChecksumInCache:     true,
+					ContentsMatch:       false,
+				},
+			},
+		}
+
+		want := "1x directory, 1x missing from workspace, 1x up-to-date"
 
 		got := status.String()
 		if got != want {

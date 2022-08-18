@@ -1,6 +1,7 @@
 package fsutil
 
 import (
+	"encoding/json"
 	"os"
 )
 
@@ -22,6 +23,13 @@ const (
 
 func (fs FileStatus) String() string {
 	return [...]string{"absent", "regular file", "link", "directory", "other"}[fs]
+}
+
+// MarshalJSON marshals the FileStatus enum as a quoted JSON string.
+// Note there is no UnmarshalJSON function, as marshalling to JSON is currently
+// only used for printing debug information.
+func (fs FileStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(fs.String())
 }
 
 // Exists returns true if path is an existing file or directory, otherwise it
