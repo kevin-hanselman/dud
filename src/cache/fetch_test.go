@@ -14,11 +14,11 @@ import (
 )
 
 func getCacheFiles(cacheDir string) (map[string]struct{}, error) {
-	fileSet := make(map[string]struct{})
 	files, err := filepath.Glob(filepath.Join(cacheDir, "*", "*"))
 	if err != nil {
 		return nil, err
 	}
+	fileSet := make(map[string]struct{})
 	for _, file := range files {
 		relFile, err := filepath.Rel(cacheDir, file)
 		if err != nil {
@@ -215,14 +215,77 @@ func TestFetchIntegration(t *testing.T) {
 			}
 		}
 
-		ch, err := NewLocalCache(dirs.CacheDir)
+		remoteCopy = mockRemoteCopy
+
+		if err := cache.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
+			t.Fatal(err)
+		}
+
+		assertCacheDirsEqual(dirs.CacheDir, fakeRemote, t)
+	})
+
+	t.Run("fetch dir artifact with identically named grandchildren", func(t *testing.T) {
+		defer resetMocks()
+		dirs, err := testutil.CreateTempDirs()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.RemoveAll(dirs.CacheDir)
+		defer os.RemoveAll(dirs.WorkDir)
+
+		art := artifact.Artifact{Path: "bish", IsDir: true}
+
+		// Create two sub-directories in the Artifact, each with its own
+		// file with the same basename.
+		subDirA := filepath.Join(dirs.WorkDir, art.Path, "bash")
+		if err := os.MkdirAll(subDirA, 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := os.WriteFile(filepath.Join(subDirA, "same_name.txt"), []byte("bash"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		subDirB := filepath.Join(dirs.WorkDir, art.Path, "bosh")
+		if err := os.MkdirAll(subDirB, 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := os.WriteFile(filepath.Join(subDirB, "same_name.txt"), []byte("bosh"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		fakeRemote := filepath.Join(dirs.WorkDir, "fake_remote")
+
+		cache, err := NewLocalCache(dirs.CacheDir)
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+			t.Fatal(err)
+		}
+
+		// Find all files that were committed and move them to the fake remote
+		// cache. Moving the files instead of copying (the latter would emulate
+		// a push) checks that fetch is actually calling remoteCopy.
+		cachedFiles, err := getCacheFiles(dirs.CacheDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for cacheFile := range cachedFiles {
+			if err := mkdirsThen(
+				filepath.Join(dirs.CacheDir, cacheFile),
+				filepath.Join(fakeRemote, cacheFile),
+				os.Rename,
+			); err != nil {
+				t.Fatal(err)
+			}
+		}
+
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
+		if err := cache.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
 			t.Fatal(err)
 		}
 
