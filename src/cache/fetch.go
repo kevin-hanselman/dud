@@ -19,6 +19,10 @@ func (ch LocalCache) Fetch(
 ) error {
 	fetchFiles := make(map[string]struct{})
 	dirArtifacts := make(map[string]*artifact.Artifact)
+	// It's important not to use/assume what the string key in 'artifacts'
+	// represents. Before recursing below, we change the keys to checksums to
+	// prevent Artifacts with the same relative path from clobbering each
+	// other.
 	for _, art := range artifacts {
 		if art.SkipCache {
 			continue
@@ -60,8 +64,11 @@ func (ch LocalCache) Fetch(
 		if err != nil {
 			return errors.Wrapf(err, "fetch %s", dirArt.Path)
 		}
-		for path, art := range man.Contents {
-			children[path] = art
+		for _, art := range man.Contents {
+			// Use the Artifact's checksum as a key to ensure Artifacts with
+			// the same relative path (from different parent Artifacts) don't
+			// clobber each other.
+			children[art.Checksum] = art
 		}
 	}
 	if len(children) == 0 {
