@@ -110,7 +110,7 @@ func commitFileArtifact(
 		return nil
 	}
 	if status.WorkspaceFileStatus != fsutil.StatusRegularFile {
-		return errors.New("not a regular file")
+		return errors.Errorf("%s: expected regular file, got %s", workPath, status.WorkspaceFileStatus)
 	}
 	fileInfo, err := os.Stat(workPath)
 	if err != nil {
