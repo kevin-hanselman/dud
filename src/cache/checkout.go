@@ -182,6 +182,10 @@ func checkoutDir(
 		return err
 	}
 
+	if err := os.MkdirAll(workPath, 0o755); err != nil {
+		return err
+	}
+
 	// When linking, the progress report counts files linked. Add all of the
 	// files we know about here to the total, and let checkoutFile handle
 	// updating the report. (When copying, checkoutFile handles updating the

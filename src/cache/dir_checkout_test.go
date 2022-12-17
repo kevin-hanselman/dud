@@ -10,6 +10,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
+	"github.com/kevin-hanselman/dud/src/testutil"
 	"go.uber.org/goleak"
 )
 
@@ -25,7 +26,6 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 	maxSharedWorkers = 1
 	maxDedicatedWorkers = 1
 
-	// TODO: add more tests
 	t.Run("committed and absent from workspace", func(t *testing.T) {
 		dirs, art, cache := setupDirTest(t)
 		defer os.RemoveAll(dirs.CacheDir)
@@ -104,6 +104,48 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 
 		if diff := cmp.Diff(expectedStatus, actualStatus); diff != "" {
 			t.Fatalf("Status -want +got:\n%s", diff)
+		}
+	})
+
+	t.Run("empty directory", func(t *testing.T) {
+		dirs, err := testutil.CreateTempDirs()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		cache, err := NewLocalCache(dirs.CacheDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		artFullPath := filepath.Join(dirs.WorkDir, "foo")
+
+		if err := os.MkdirAll(artFullPath, 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		art := artifact.Artifact{Path: "foo", IsDir: true}
+
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := os.RemoveAll(artFullPath); err != nil {
+			t.Fatal(err)
+		}
+
+		progress := newHiddenProgress()
+
+		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy, progress); err != nil {
+			t.Fatal(err)
+		}
+
+		fileInfo, err := os.Lstat(artFullPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !fileInfo.IsDir() {
+			t.Fatalf("expected %s to be a directory, got %s", artFullPath, fileInfo)
 		}
 	})
 }
