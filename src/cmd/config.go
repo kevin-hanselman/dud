@@ -27,7 +27,7 @@ func init() {
 			Short:     "Get the value of a field in the config file",
 			Long:      "Get the value of a field in the config file",
 			ValidArgs: validFields,
-			Args:      cobra.ExactValidArgs(1),
+			Args:      cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 			Run: func(cmd *cobra.Command, args []string) {
 				rootDir, err := getProjectRootDir()
 				if err != nil {
