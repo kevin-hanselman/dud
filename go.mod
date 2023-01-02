@@ -8,7 +8,7 @@ require (
 	github.com/cheggaaa/pb/v3 v3.1.0
 	github.com/felixge/fgprof v0.9.3
 	github.com/google/go-cmp v0.5.9
-	github.com/mattn/go-isatty v0.0.16
+	github.com/mattn/go-isatty v0.0.17
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.6.1
