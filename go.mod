@@ -15,7 +15,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.1
 	github.com/zeebo/blake3 v0.2.3
-	go.uber.org/goleak v1.2.0
+	go.uber.org/goleak v1.2.1
 	golang.org/x/sync v0.1.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -45,7 +45,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/text v0.5.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
