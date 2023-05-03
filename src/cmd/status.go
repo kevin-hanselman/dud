@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"text/tabwriter"
 
 	"github.com/kevin-hanselman/dud/src/index"
@@ -62,6 +63,8 @@ given stage(s).`,
 				}
 			}
 
+			sort.Strings(paths)
+
 			status := make(index.Status)
 			for _, path := range paths {
 				inProgress := make(map[string]bool)
@@ -80,7 +83,7 @@ given stage(s).`,
 			}
 
 			writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			for _, path := range idx.SortStagePaths() {
+			for _, path := range paths {
 				if err := writeStageStatus(writer, path, status[path]); err != nil {
 					fatal(err)
 				}
