@@ -5,7 +5,7 @@ ARG HUGO_VERSION=0.111.3
 ARG HYPERFINE_VERSION=1.15.0
 
 RUN apt update \
-    && DEBIAN_FRONTEND=noninteractive apt install -y \
+    && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
         build-essential \
         curl \
         gawk \
@@ -37,7 +37,8 @@ RUN set -x \
     && curl -fLO "https://github.com/sharkdp/hyperfine/releases/download/v${HYPERFINE_VERSION}/hyperfine_${HYPERFINE_VERSION}_${ARCH}.deb" \
     && dpkg --install hyperfine*.deb \
     && rm -v hyperfine*.deb \
-    && curl -f 'https://rclone.org/install.sh' | bash
+    && curl -f 'https://rclone.org/install.sh' | bash \
+    && rm -rf /tmp/*
 
 RUN useradd --no-log-init -m user -G sudo \
     && echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
@@ -48,9 +49,9 @@ WORKDIR /home/user
 
 ENV PATH=$PATH:/home/user/go/bin:/home/user/.local/bin:/usr/local/go/bin
 
-RUN python3 -m pip install --no-cache --user pipx \
-    && pipx install notebook \
-    && pipx install dvc \
+RUN python3 -m pip install --no-cache-dir --user pipx \
+    && pipx install notebook --pip-args='--no-cache-dir' \
+    && pipx install dvc --pip-args='--no-cache-dir' \
     && dvc config --global core.analytics false \
     && dvc config --global core.check_update false \
     && dvc config --global cache.type symlink
