@@ -1,0 +1,17 @@
+.
+[drwxr-xr-x user            4096]  ./.dud
+[-rw-r--r-- user              14]  ./.dud/.gitignore
+[drwxr-xr-x user            4096]  ./.dud/cache
+[drwxr-xr-x user            4096]  ./.dud/cache/8b
+[-r--r--r-- user               5]  ./.dud/cache/8b/1fb124d106482a515064f25e40940fb76b0a3148783590e2a7dbeba20b616b
+[drwxr-xr-x user            4096]  ./.dud/cache/99
+[-r--r--r-- user               5]  ./.dud/cache/99/b5a7753e41e7049463d5c6ceabfcbcbbbb6297a74d4dc2b09eeb06cfb79847
+[-rw-r--r-- user             621]  ./.dud/config.yaml
+[-rw-r--r-- user              30]  ./.dud/index
+[-rw-r--r-- user             240]  ./.dud/rclone.conf
+[lrwxrwxrwx user              76]  ./bash.txt -> .dud/cache/99/b5a7753e41e7049463d5c6ceabfcbcbbbb6297a74d4dc2b09eeb06cfb79847
+[-rw-r--r-- user             321]  ./bash.yaml
+[lrwxrwxrwx user              76]  ./bish.txt -> .dud/cache/8b/1fb124d106482a515064f25e40940fb76b0a3148783590e2a7dbeba20b616b
+[-rw-r--r-- user             190]  ./bish.yaml
+[-rw-r--r-- user               5]  ./bosh.txt
+[-rw-r--r-- user              94]  ./bosh.yaml

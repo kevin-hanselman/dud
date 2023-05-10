@@ -47,20 +47,23 @@ recursively on all stages upstream of the given stage(s).`,
 		}
 
 		committed := make(map[string]bool)
+		written := make(map[string]bool)
 		for _, path := range paths {
 			inProgress := make(map[string]bool)
 			err := idx.Commit(path, ch, rootDir, strat, committed, inProgress, logger)
 			if err != nil {
 				fatal(err)
 			}
-			if err := idx[path].ToFile(path); err != nil {
-				fatal(err)
+			for path := range committed {
+				if written[path] {
+					continue
+				}
+				if err := idx[path].ToFile(path); err != nil {
+					fatal(err)
+				}
+				written[path] = true
 			}
 			logger.Info.Println()
-		}
-
-		if err := idx.ToFile(indexPath); err != nil {
-			fatal(err)
 		}
 	},
 }
