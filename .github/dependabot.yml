@@ -13,3 +13,10 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: 'deps'
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: 'deps'
