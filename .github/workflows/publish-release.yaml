@@ -34,7 +34,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./website
           publish_branch: gh-pages
-          force_orphan: true  # Limit to one commit in the published branch.
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
 
   goreleaser:
     runs-on: ubuntu-20.04
