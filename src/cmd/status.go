@@ -65,10 +65,10 @@ given stage(s).`,
 
 			sort.Strings(paths)
 
-			status := make(index.Status)
+			indexStatus := make(index.Status)
 			for _, path := range paths {
 				inProgress := make(map[string]bool)
-				err := idx.Status(path, ch, rootDir, status, inProgress)
+				err := idx.Status(path, ch, rootDir, indexStatus, inProgress)
 				if err != nil {
 					fatal(err)
 				}
@@ -76,15 +76,15 @@ given stage(s).`,
 
 			if debugStatus {
 				encoder := json.NewEncoder(os.Stdout)
-				if err := encoder.Encode(status); err != nil {
+				if err := encoder.Encode(indexStatus); err != nil {
 					fatal(err)
 				}
 				return
 			}
 
 			writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			for _, path := range paths {
-				if err := writeStageStatus(writer, path, status[path]); err != nil {
+			for path, stageStatus := range indexStatus {
+				if err := writeStageStatus(writer, path, stageStatus); err != nil {
 					fatal(err)
 				}
 				fmt.Fprintln(writer)
