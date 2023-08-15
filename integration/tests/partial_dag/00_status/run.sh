@@ -31,3 +31,5 @@ dud status bash.yaml
 if dud status bash.yaml | grep -q bosh; then
     fail "'dud status bash.yaml' mentions bosh"
 fi
+dud status bash.yaml | grep -q bish \
+    || fail "'dud status bash.yaml' does not mention bish"
