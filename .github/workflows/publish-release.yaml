@@ -21,7 +21,7 @@ jobs:
           extended: true
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: 1.19
 
@@ -45,7 +45,7 @@ jobs:
           fetch-depth: 0    # Fetch all Git history, for release notes.
 
       - name: Install Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: 1.19
 
