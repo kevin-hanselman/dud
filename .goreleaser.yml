@@ -9,12 +9,9 @@ builds:
       - arm64
 checksum:
   name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ .Tag }}-next"
+# The expected release workflow is to use the GitHub UI to create a new release
+# (and tag) and manually curate the release notes.
+release:
+  mode: keep-existing
 changelog:
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
-      - '^misc:'
-      - '^deps:'
+  skip: true
