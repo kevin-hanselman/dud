@@ -2,8 +2,8 @@ package checksum
 
 import (
 	"bytes"
+	"crypto/rand"
 	"io"
-	"math/rand"
 	"testing"
 
 	"github.com/c2h5oh/datasize"
@@ -37,7 +37,9 @@ func benchmarkChecksum(inputSize datasize.ByteSize, b *testing.B) {
 	b.StopTimer()
 	b.ResetTimer()
 	input := make([]byte, inputSize)
-	rand.Read(input)
+	if _, err := rand.Read(input); err != nil {
+		b.Error(err)
+	}
 	reader := bytes.NewReader(input)
 	for i := 0; i < b.N; i++ {
 		b.StartTimer()
