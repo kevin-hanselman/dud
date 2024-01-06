@@ -23,10 +23,10 @@ jobs:
         with:
           go-version: 1.21
 
-      - name: Build
+      - name: Build website
         run: make website
 
-      - name: Deploy
+      - name: Deploy website
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
