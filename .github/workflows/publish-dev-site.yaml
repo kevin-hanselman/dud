@@ -2,6 +2,7 @@ name: Publish dev site
 on:
   push:
     branches: ['main']
+    tags-ignore: ['v*.*.*']
 
 jobs:
   github-pages:
