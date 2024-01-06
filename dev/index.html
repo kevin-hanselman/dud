@@ -1,0 +1,128 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta name=generator content="Hugo 0.121.1"><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Dud # Website | Install | Getting Started | Source Code
+Dud is a lightweight tool for versioning data alongside source code and building data pipelines. In practice, Dud extends many of the benefits of source control to large binary data.
+With Dud, you can commit, checkout, fetch, and push large files and directories with a simple command line interface. Dud stores recipes (a.k.a. stages) for retrieving your data in small YAML files."><meta name=theme-color content="#FFFFFF"><meta name=color-scheme content="light dark"><meta property="og:title" content><meta property="og:description" content><meta property="og:type" content="website"><meta property="og:url" content="https://kevin-hanselman.github.io/dud/dev/"><title>| Dud</title>
+<link rel=manifest href=/dud/dev/manifest.json><link rel=icon href=/dud/dev/favicon.png type=image/x-icon><link rel=stylesheet href=/dud/dev/book.min.a82d7e77ceb134d151c4d7e381eeb30623fbd5a524d58c584d8716ecec0205bd.css integrity="sha256-qC1+d86xNNFRxNfjge6zBiP71aUk1YxYTYcW7OwCBb0=" crossorigin=anonymous><script defer src=/dud/dev/flexsearch.min.js></script><script defer src=/dud/dev/en.search.min.35f980db2b2f59b4d36be6e8a8f2598090325788b019951df0f69841de033285.js integrity="sha256-NfmA2ysvWbTTa+boqPJZgJAyV4iwGZUd8PaYQd4DMoU=" crossorigin=anonymous></script><link rel=alternate type=application/rss+xml href=https://kevin-hanselman.github.io/dud/dev/index.xml title=Dud></head><body dir=ltr><input type=checkbox class="hidden toggle" id=menu-control>
+<input type=checkbox class="hidden toggle" id=toc-control><main class="container flex"><aside class=book-menu><div class=book-menu-content><nav><h2 class=book-brand><a class="flex align-center" href=/dud/dev/><span>Dud</span></a></h2><div class=book-search><input type=text id=book-search-input placeholder=Search aria-label=Search maxlength=64 data-hotkeys=s/><div class="book-search-spinner hidden"></div><ul id=book-search-results></ul></div><ul><li><a href=/dud/dev/install/>Install</a><ul></ul></li><li><a href=/dud/dev/getting_started/>Getting Started</a></li><li><input type=checkbox id=section-8c728f663f5d611199f5b6f4f3a214a5 class=toggle>
+<label for=section-8c728f663f5d611199f5b6f4f3a214a5 class="flex justify-between"><a role=button>CLI Reference</a></label><ul><li><a href=/dud/dev/cli/dud/>dud</a></li><li><a href=/dud/dev/cli/dud_checkout/>dud checkout</a></li><li><a href=/dud/dev/cli/dud_checksum/>dud checksum</a></li><li><a href=/dud/dev/cli/dud_commit/>dud commit</a></li><li><a href=/dud/dev/cli/dud_completion/>dud completion</a></li><li><a href=/dud/dev/cli/dud_config/>dud config</a></li><li><a href=/dud/dev/cli/dud_config_get/>dud config get</a></li><li><a href=/dud/dev/cli/dud_config_path/>dud config path</a></li><li><a href=/dud/dev/cli/dud_config_set/>dud config set</a></li><li><a href=/dud/dev/cli/dud_fetch/>dud fetch</a></li><li><a href=/dud/dev/cli/dud_graph/>dud graph</a></li><li><a href=/dud/dev/cli/dud_init/>dud init</a></li><li><a href=/dud/dev/cli/dud_pull/>dud pull</a></li><li><a href=/dud/dev/cli/dud_push/>dud push</a></li><li><a href=/dud/dev/cli/dud_run/>dud run</a></li><li><a href=/dud/dev/cli/dud_stage/>dud stage</a></li><li><a href=/dud/dev/cli/dud_stage_add/>dud stage add</a></li><li><a href=/dud/dev/cli/dud_stage_gen/>dud stage gen</a></li><li><a href=/dud/dev/cli/dud_stage_remove/>dud stage remove</a></li><li><a href=/dud/dev/cli/dud_status/>dud status</a></li><li><a href=/dud/dev/cli/dud_version/>dud version</a></li></ul></li><li><a href=/dud/dev/benchmarks/>Benchmarks</a><ul></ul></li><li><a href=/dud/dev/concepts/>Concepts</a></li></ul><ul><li><a href=https://github.com/kevin-hanselman/dud target=_blank rel=noopener>Source code</a></li></ul></nav><script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script></div></aside><div class=book-page><header class=book-header><div class="flex align-center justify-between"><label for=menu-control><img src=/dud/dev/svg/menu.svg class=book-icon alt=Menu>
+</label><strong></strong>
+<label for=toc-control><img src=/dud/dev/svg/toc.svg class=book-icon alt="Table of Contents"></label></div><aside class="hidden clearfix"><nav id=TableOfContents><ul><li><a href=#motivation>Motivation</a><ul><li><a href=#concrete-differences-with-dvc>Concrete differences with DVC</a></li></ul></li><li><a href=#contributing>Contributing</a></li><li><a href=#license>License</a></li></ul></nav></aside></header><article class=markdown><h1 id=dud>Dud
+<a class=anchor href=#dud>#</a></h1><p><a href="https://github.com/kevin-hanselman/dud/actions?query=workflow%3Abuild"><img src=https://github.com/kevin-hanselman/dud/workflows/build/badge.svg alt="Build status"></a>
+<a href=https://goreportcard.com/report/github.com/kevin-hanselman/dud><img src=https://goreportcard.com/badge/github.com/kevin-hanselman/dud alt="Go report card"></a></p><p><a href=https://kevin-hanselman.github.io/dud/>Website</a>
+| <a href=https://kevin-hanselman.github.io/dud/install>Install</a>
+| <a href=https://kevin-hanselman.github.io/dud/getting_started>Getting Started</a>
+| <a href=https://github.com/kevin-hanselman/dud>Source Code</a></p><p>Dud is a lightweight tool for versioning data alongside source code and building
+data pipelines. In practice, Dud extends many of the benefits of source
+control to large binary data.</p><p>With Dud, you can <strong>commit, checkout, fetch, and push large files and
+directories</strong> with a simple command line interface. Dud stores recipes (a.k.a.
+stages) for retrieving your data in small YAML files. These stages can be
+stored in source control to <strong>link your data to your code</strong>. On top of that,
+stages can <strong>run the commands to generate the data</strong>, sort of like
+<a href=https://www.gnu.org/software/make/>Make</a>. Stages can be chained together to
+<strong>create data pipelines</strong>. See the <a href=https://kevin-hanselman.github.io/dud/getting_started>Getting
+Started</a> guide for
+a hands-on overview.</p><p>Dud is pronounced &ldquo;duhd&rdquo;, not &ldquo;dood&rdquo;. Dud is not an acronym.</p><h2 id=motivation>Motivation
+<a class=anchor href=#motivation>#</a></h2><p>Dud is heavily inspired by <a href=https://dvc.org/>DVC</a>. DVC addresses the need for
+data versioning and reproducibility, but its implementation is not without
+problems. My criticisms of DVC boil down to two things: speed and simplicity. By
+speed, I mean throughput and responsiveness. By simplicity, I mean doing
+less&ndash;both in project scope and amount of abstraction.</p><p>In terms of speed, Dud is <a href=https://kevin-hanselman.github.io/dud/benchmarks>generally much
+faster</a> than DVC. In terms of
+simplicity, Dud has a <a href=https://kevin-hanselman.github.io/dud/cli/dud>smaller, more focused
+scope</a>, and it is <a href=https://github.com/kevin-hanselman/dud/releases>distributed as
+a standalone executable</a>.</p><p>To summarize with an analogy: Dud is to DVC what <a href=https://hackr.io/blog/flask-vs-django>Flask</a> is to <a href=https://hackr.io/blog/flask-vs-django>Django</a>.
+Both Dud and DVC have their strengths. If you want a &ldquo;batteries included&rdquo; suite
+of tools for managing machine learning projects, DVC may be a good fit for you.
+If data management is your main area of need and you want something lightweight
+and fast, Dud may be a better fit.</p><p>To get down to brass tacks, read on.</p><h3 id=concrete-differences-with-dvc>Concrete differences with DVC
+<a class=anchor href=#concrete-differences-with-dvc>#</a></h3><h4 id=dud-does-not-manage-experiments-andor-metrics>Dud does not manage experiments and/or metrics.
+<a class=anchor href=#dud-does-not-manage-experiments-andor-metrics>#</a></h4><p>Dud is solely focused on versioning and reproducing data alongside source code.
+DVC&rsquo;s scope has grown to encompass a large portion of a traditional machine
+learning workflow. While an integrated suite of tools has its benefits, if UNIX
+is any guide, the composition of smaller, more focused tools generally yield
+more productivity than their monolithic counterparts. For example, there&rsquo;s no
+reason you couldn&rsquo;t use <a href=https://mlflow.org/>MLflow</a> or
+<a href=https://aimstack.io/>Aim</a> alongside Dud to track your experiments. Dud does
+not prescribe any solution for experiment tracking, and it doesn&rsquo;t try to enter
+the new, yet already crowded, marketplace for such tools.</p><p>Secondly, versioning data alongside source code is an incredibly useful concept
+in its own right. Domains beyond machine learning and data science (e.g. game
+development and digital design) may greatly benefit from this approach to data
+management without being burdened by extra baggage carried by a specific domain.</p><h4 id=dud-commits-must-always-be-explicitly-invoked-they-are-never-side-effects>Dud commits must always be explicitly invoked; they are never side effects.
+<a class=anchor href=#dud-commits-must-always-be-explicitly-invoked-they-are-never-side-effects>#</a></h4><p>For both Dud and DVC, committing data to the cache is one of the most expensive
+operations that each tool undertakes (in terms of both run-time and I/O).
+Because of this, Dud puts the user in absolute control of when to commit data.
+In Dud, commits only happen when you run <code>dud commit</code>.</p><p>In contrast, DVC often commits automatically on your behalf as a side effect of
+other commands (for example, during <code>dvc add</code> and <code>dvc repro</code>). While DVC is
+trying to be helpful, these implicit commits are often accidental commits.
+For example, if you&rsquo;re rapidly iterating on a pipeline, you&rsquo;re likely running
+<code>dvc repro</code> or <code>dvc run</code> repeatedly as you develop. However, DVC will
+automatically commit the results each time you run <code>dvc repro</code> or <code>dvc run</code>&ndash;even if you are just debugging something or tweaking your code. Such
+accidental commits have a high cost; they turn &ldquo;rapid development&rdquo; into
+&ldquo;development&rdquo;, and they bloat your cache. (You can disable DVC&rsquo;s implicit
+commits using the <code>--no-commit</code> flag, but you have to remember to type it each
+time, and DVC does not support enabling this flag by default, e.g. via
+configuration file.)</p><h4 id=dud-checks-out-files-as-symbolic-links-by-default>Dud checks out files as symbolic links by default.
+<a class=anchor href=#dud-checks-out-files-as-symbolic-links-by-default>#</a></h4><p>When Dud checks out cached files into the workspace, it uses symbolic links
+(a.k.a. symlinks) by default. Symlinks have a number of benefits that make them
+an excellent choice for checkouts. First, symlinks require very little I/O to
+create, so <code>dud checkout</code> usually completes almost instantaneously. Second,
+symlinks transparently redirect to the cached files themselves, so data isn&rsquo;t
+duplicated between the workspace and the cache, and your storage space is used
+efficiently. Last but not least, symlinks make it trivial to check if a file is
+up-to-date (by checking the link target), so <code>dud status</code> can also be extremely
+fast.</p><p>By default, DVC checks out files as hard copies. (Technically, DVC tries to use
+<a href=https://en.wikipedia.org/wiki/Data_deduplication#reflink>reflinks</a> before copies, but very few filesystems support reflinks, so
+copies are far more likely to be the default.) With hard copies, efficiencies
+listed above are not possible, so checkouts and status checks are inefficient by
+default. To its credit, DVC&rsquo;s cache can be configured to use symlinks, but
+arguably DVC&rsquo;s default cache configuration is not sensible for projects of any
+significant size.</p><h4 id=running-a-dud-pipeline-never-implicitly-alters-a-stages-artifacts>Running a Dud pipeline never implicitly alters a stage&rsquo;s artifacts.
+<a class=anchor href=#running-a-dud-pipeline-never-implicitly-alters-a-stages-artifacts>#</a></h4><p>When you run a pipeline in DVC, DVC will remove all pipeline outputs before
+running the pipeline&rsquo;s command(s). While this can help ensure reproducible
+pipelines, it is another implicit behavior the user must consider, and it
+prevents the user from deciding when stage outputs can safely be reused.</p><p>If you don&rsquo;t want DVC to automatically remove outputs for you, you need to
+explicitly tell it each output you&rsquo;d like to persist. However, by telling DVC to
+persist an output, DVC may perform a new and different automatic behavior. If
+you&rsquo;re using symbolic links (or hard links) for checkouts (which is generally
+a good idea; see above), DVC will &ldquo;unprotect&rdquo; all output links by replacing them
+with hard copies from the cache. Not only is this behavior surprising, it&rsquo;s also
+very costly in both runtime and storage.</p><p>The result of these two behaviors in DVC means that, in a sensible
+configuration, stages simply cannot reuse outputs efficiently; the user has
+little choice but to accept DVC&rsquo;s limitations.</p><p>When you run a pipeline Dud, Dud doesn&rsquo;t do any implicit modification of
+existing files. Dud defers all modification of workspace files to the user. If
+you want a specific behavior, you should code it into your stage&rsquo;s command. For
+example, if you want to clear all outputs of a stage prior to it running, you
+can delete any outputs at the beginning of your command&rsquo;s script. If you want
+to reuse outputs, you can check for preexisting outputs in your script and
+choose not to recreate them. Dud&rsquo;s minimalist approach results in a stage&rsquo;s
+command entirely owning it&rsquo;s own reproducibility; the responsibility is
+not awkwardly shared between the stage and the tool.</p><h4 id=dud-delegates-remote-cache-management-to-rclone>Dud delegates remote cache management to Rclone.
+<a class=anchor href=#dud-delegates-remote-cache-management-to-rclone>#</a></h4><p><a href=https://rclone.org>Rclone</a> is a very popular command-line tool which describes
+itself as &ldquo;The Swiss army knife of cloud storage.&rdquo; At the time of writing,
+Rclone has more than 28,000 stars on Github. Rclone supports just about any
+cloud storage provider you&rsquo;ve possibly heard of. (S3, GCS, Dropbox, Backblaze,
+to name a few.) This is all to say: Rclone is a top-tier choice for moving data
+around the internet.</p><p>Dud internally calls Rclone for all of its remote cache functionality, such as
+<code>dud fetch</code> and <code>dud push</code>. But Dud doesn&rsquo;t hide the Rclone abstraction
+entirely. Dud exposes its Rclone configuration file, and it&rsquo;s expected and
+encouraged that users will use Rclone directly to configure remote storage or
+interact with their remote data. By using Rclone, Dud&rsquo;s remote cache interface
+immediately gains the benefit of years of open-source development and a rich,
+well-documented CLI. This is an example of how Dud embraces the UNIX philosophy
+and the composition of single-focus tools, as stated above.</p><p>In contrast, DVC stiches together various Python packages to support a modest
+assortment of cloud storage options. At the time of writing, DVC 2.6 supports
+eleven cloud storage providers, and Rclone 1.56 supports more than fifty. But
+the amount of cloud storage options isn&rsquo;t the critical disadvantage of DVC&rsquo;s
+approach. (Both Dud and DVC support the biggest players, such as S3 and GCS.)
+DVC&rsquo;s critical disadvantage is that they must develop and maintain most of their
+remote data management stack themselves. If Rclone is any indication, cloud data
+transfer is a very hard problem, and DVC has their work cut out for them.</p><p>In summary, Dud leverages the deep knowledge and effort of the Rclone developers
+to provide a robust and familiar remote cache experience. DVC plots their own
+course, and in doing so incurs a steep development cost.</p><h4 id=dud-does-not-use-analytics-and-it-never-will>Dud does not use analytics. (And it never will.)
+<a class=anchor href=#dud-does-not-use-analytics-and-it-never-will>#</a></h4><p>By default, DVC enables <a href=https://dvc.org/doc/user-guide/analytics#anonymized-usage-analytics>embedded
+analytics</a>.
+I strongly disagree with this practice, especially in free and open-source
+software. I will never embed analytics in Dud.</p><h2 id=contributing>Contributing
+<a class=anchor href=#contributing>#</a></h2><p>See
+<a href=https://github.com/kevin-hanselman/dud/blob/main/CONTRIBUTING.md>CONTRIBUTING.md</a>.</p><h2 id=license>License
+<a class=anchor href=#license>#</a></h2><p>BSD-3-Clause. See
+<a href=https://github.com/kevin-hanselman/dud/blob/main/LICENSE>LICENSE</a>.</p></article><footer class=book-footer><div class="flex flex-wrap justify-between"></div><script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script></footer><div class=book-comments></div><label for=menu-control class="hidden book-menu-overlay"></label></div><aside class=book-toc><div class=book-toc-content><nav id=TableOfContents><ul><li><a href=#motivation>Motivation</a><ul><li><a href=#concrete-differences-with-dvc>Concrete differences with DVC</a></li></ul></li><li><a href=#contributing>Contributing</a></li><li><a href=#license>License</a></li></ul></nav></div></aside></main></body></html>
