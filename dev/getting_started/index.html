@@ -1,0 +1,256 @@
+<!doctype html><html lang=en-us dir=ltr><head><meta charset=UTF-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="A Tour of Dud # The goal of this page is to walk through the core capabilities of Dud. After creating a Dud project, we&rsquo;ll store and version a large archive file. Then we&rsquo;ll create a reproducible data pipeline to extract files from the archive. Finally, we&rsquo;ll push our data and code to remote locations to share our work with others. If you want to follow along, install Dud before getting started."><meta name=theme-color content="#FFFFFF"><meta name=color-scheme content="light dark"><meta property="og:title" content="Getting Started"><meta property="og:description" content="A Tour of Dud # The goal of this page is to walk through the core capabilities of Dud. After creating a Dud project, we&rsquo;ll store and version a large archive file. Then we&rsquo;ll create a reproducible data pipeline to extract files from the archive. Finally, we&rsquo;ll push our data and code to remote locations to share our work with others. If you want to follow along, install Dud before getting started."><meta property="og:type" content="article"><meta property="og:url" content="https://kevin-hanselman.github.io/dud/dev/getting_started/"><meta property="article:section" content><title>Getting Started | Dud</title>
+<link rel=manifest href=/dud/dev/manifest.json><link rel=icon href=/dud/dev/favicon.png type=image/x-icon><link rel=stylesheet href=/dud/dev/book.min.a82d7e77ceb134d151c4d7e381eeb30623fbd5a524d58c584d8716ecec0205bd.css integrity="sha256-qC1+d86xNNFRxNfjge6zBiP71aUk1YxYTYcW7OwCBb0=" crossorigin=anonymous><script defer src=/dud/dev/flexsearch.min.js></script><script defer src=/dud/dev/en.search.min.35f980db2b2f59b4d36be6e8a8f2598090325788b019951df0f69841de033285.js integrity="sha256-NfmA2ysvWbTTa+boqPJZgJAyV4iwGZUd8PaYQd4DMoU=" crossorigin=anonymous></script></head><body dir=ltr><input type=checkbox class="hidden toggle" id=menu-control>
+<input type=checkbox class="hidden toggle" id=toc-control><main class="container flex"><aside class=book-menu><div class=book-menu-content><nav><h2 class=book-brand><a class="flex align-center" href=/dud/dev/><span>Dud</span></a></h2><div class=book-search><input type=text id=book-search-input placeholder=Search aria-label=Search maxlength=64 data-hotkeys=s/><div class="book-search-spinner hidden"></div><ul id=book-search-results></ul></div><ul><li><a href=/dud/dev/install/>Install</a><ul></ul></li><li><a href=/dud/dev/getting_started/ class=active>Getting Started</a></li><li><input type=checkbox id=section-8c728f663f5d611199f5b6f4f3a214a5 class=toggle>
+<label for=section-8c728f663f5d611199f5b6f4f3a214a5 class="flex justify-between"><a role=button>CLI Reference</a></label><ul><li><a href=/dud/dev/cli/dud/>dud</a></li><li><a href=/dud/dev/cli/dud_checkout/>dud checkout</a></li><li><a href=/dud/dev/cli/dud_checksum/>dud checksum</a></li><li><a href=/dud/dev/cli/dud_commit/>dud commit</a></li><li><a href=/dud/dev/cli/dud_completion/>dud completion</a></li><li><a href=/dud/dev/cli/dud_config/>dud config</a></li><li><a href=/dud/dev/cli/dud_config_get/>dud config get</a></li><li><a href=/dud/dev/cli/dud_config_path/>dud config path</a></li><li><a href=/dud/dev/cli/dud_config_set/>dud config set</a></li><li><a href=/dud/dev/cli/dud_fetch/>dud fetch</a></li><li><a href=/dud/dev/cli/dud_graph/>dud graph</a></li><li><a href=/dud/dev/cli/dud_init/>dud init</a></li><li><a href=/dud/dev/cli/dud_pull/>dud pull</a></li><li><a href=/dud/dev/cli/dud_push/>dud push</a></li><li><a href=/dud/dev/cli/dud_run/>dud run</a></li><li><a href=/dud/dev/cli/dud_stage/>dud stage</a></li><li><a href=/dud/dev/cli/dud_stage_add/>dud stage add</a></li><li><a href=/dud/dev/cli/dud_stage_gen/>dud stage gen</a></li><li><a href=/dud/dev/cli/dud_stage_remove/>dud stage remove</a></li><li><a href=/dud/dev/cli/dud_status/>dud status</a></li><li><a href=/dud/dev/cli/dud_version/>dud version</a></li></ul></li><li><a href=/dud/dev/benchmarks/>Benchmarks</a><ul></ul></li><li><a href=/dud/dev/concepts/>Concepts</a></li></ul><ul><li><a href=https://github.com/kevin-hanselman/dud target=_blank rel=noopener>Source code</a></li></ul></nav><script>(function(){var e=document.querySelector("aside .book-menu-content");addEventListener("beforeunload",function(){localStorage.setItem("menu.scrollTop",e.scrollTop)}),e.scrollTop=localStorage.getItem("menu.scrollTop")})()</script></div></aside><div class=book-page><header class=book-header><div class="flex align-center justify-between"><label for=menu-control><img src=/dud/dev/svg/menu.svg class=book-icon alt=Menu>
+</label><strong>Getting Started</strong>
+<label for=toc-control><img src=/dud/dev/svg/toc.svg class=book-icon alt="Table of Contents"></label></div><aside class="hidden clearfix"><nav id=TableOfContents><ul><li><a href=#creating-a-dud-project>Creating a Dud project</a></li><li><a href=#storing-and-versioning-large-files>Storing and versioning large files</a></li><li><a href=#creating-a-data-pipeline>Creating a data pipeline</a></li><li><a href=#sharing-our-work>Sharing our work</a><ul><li><a href=#sharing-our-data-with-dud-and-rclone>Sharing our data with Dud and Rclone</a></li><li><a href=#versioning-our-code-with-git>Versioning our code with Git</a></li></ul></li><li><a href=#summary>Summary</a></li></ul></nav></aside></header><article class=markdown><h1 id=a-tour-of-dud>A Tour of Dud
+<a class=anchor href=#a-tour-of-dud>#</a></h1><p>The goal of this page is to walk through the core capabilities of Dud. After creating a Dud project, we&rsquo;ll store and version a large archive file. Then we&rsquo;ll create a reproducible data pipeline to extract files from the archive. Finally, we&rsquo;ll push our data and code to remote locations to share our work with others. If you want to follow along, <a href=https://kevin-hanselman.github.io/dud/dev/install/>install Dud</a> before getting started. If you want to complete the last section of this walkthrough, be sure to install <a href=https://rclone.org>rclone</a> as well.</p><h2 id=creating-a-dud-project>Creating a Dud project
+<a class=anchor href=#creating-a-dud-project>#</a></h2><p>First, let&rsquo;s create a new Dud project:</p><pre><code>$ mkdir ~/cifar &amp;&amp; cd ~/cifar
+
+$ dud init
+Dud project initialized.
+See .dud/config.yaml and .dud/rclone.conf to customize the project.
+</code></pre><p>As Dud tells us, <code>dud init</code> creates a <code>.dud</code> directory and some config files. Dud is designed to be ready to use out of the box, so don&rsquo;t worry about these files for now; we&rsquo;ll revisit them towards the end of this walkthrough.</p><p>Next, let&rsquo;s download the CIFAR-10 computer vision dataset.</p><pre><code>$ curl -sSO 'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
+
+$ du -h cifar-10-python.tar.gz
+163M	cifar-10-python.tar.gz
+</code></pre><h2 id=storing-and-versioning-large-files>Storing and versioning large files
+<a class=anchor href=#storing-and-versioning-large-files>#</a></h2><p>Now we have a tarball of the dataset. This file is fairly large, so it&rsquo;s not a good idea to store it in Git. Dud, however, is purpose-built for large files. (In fact, this file is quite small for Dud; it can comfortably handle files in the hundreds of Gigabytes.)</p><p>To have Dud store and version this file, we need to create a stage. In Dud, a stage is basically a record of one or more files (or directories) that Dud should track. Stages are written in YAML, and Dud provides a command-line interface to help you with the stage syntax. Here&rsquo;s the command to create the stage file for our dataset tarball:</p><pre><code>$ dud stage gen -o cifar-10-python.tar.gz | tee cifar.yaml
+working-dir: .
+outputs:
+  cifar-10-python.tar.gz: {}
+</code></pre><p><code>dud stage gen -o cifar-10-python.tar.gz</code> tells Dud: &ldquo;Generate the stage YAML to track the file <code>cifar-10-python.tar.gz</code>, and print the YAML to standard output.&rdquo; Because <code>dud stage gen</code> prints to stdout, in true UNIX fashion we can redirect its output anywhere we like. In this example, I use <code>tee</code> to copy the YAML to <code>cifar.yaml</code> while keeping stdout intact. This is just so we can quickly see the contents of the file in this walkthrough. I could&rsquo;ve just as easily used <code>> cifar.yaml</code>.</p><p>Now we have a stage file, but we need to register it with Dud. We do that with <code>dud stage add</code>:</p><pre><code>$ dud stage add cifar.yaml
+Added cifar.yaml to the index.
+</code></pre><p><code>dud stage add</code> adds a stage to Dud&rsquo;s index. The index is a simple text file (located at <code>.dud/index</code>) that tells Dud where all the stages are defined in the project. Don&rsquo;t worry too much about the index for now. It&rsquo;s enough to know that the index makes commands like <code>dud status</code> find and load our stage files:</p><pre><code>$ dud status
+cifar.yaml                stage definition not checksummed
+  cifar-10-python.tar.gz  not committed
+</code></pre><p><code>dud status</code> gives us an overview of the Dud project. Here we can see our new stage, <code>cifar.yaml</code>, and the file it tracks, <code>cifar-10-python.tar.gz</code>. Dud tells us that the tarball is &ldquo;uncommitted.&rdquo; This means Dud isn&rsquo;t storing this version of the file yet. Let&rsquo;s fix that by committing the stage:</p><pre><code>$ dud commit
+committing stage cifar.yaml
+  cifar-10-python.tar.gz  162.60 MiB / 162.60 MiB  100%  ?/s  65ms total
+</code></pre><p><code>dud commit</code> goes through all of our stages (in this case, just <code>cifar.yaml</code>) and copies their files/directories to the Dud cache. The cache is a directory that holds all versions of all files and directories owned by Dud. By default, the cache lives at <code>.dud/cache/</code>, but it&rsquo;s location is configurable (see <code>.dud/config.yaml</code>).</p><p>To get a better sense of what <code>dud commit</code> did, let&rsquo;s look at the directory structure of the project:</p><pre><code>$ tree -an
+.
+├── .dud
+│   ├── .gitignore
+│   ├── cache
+│   │   └── fe
+│   │       └── 3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+│   ├── config.yaml
+│   ├── index
+│   └── rclone.conf
+├── cifar-10-python.tar.gz -&gt; .dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+└── cifar.yaml
+
+3 directories, 7 files
+</code></pre><p>Our tarball has been replaced with a link to a file in Dud&rsquo;s cache. That cached file is our original tarball, but it&rsquo;s named after the checksum of its contents. This is called <a href=https://en.wikipedia.org/wiki/Content-addressable_storage>content-addressed storage</a>, and it allows Dud to track any number of files (and any number of <em>versions</em> of files) with reasonable assurances against conflicts or duplication.</p><p>But how do we make sure we don&rsquo;t corrupt the cached version of the tarball? What happens if we accidentally modify our dataset?</p><pre><code>$ echo 'accidental overwrite' &gt; cifar-10-python.tar.gz
+/usr/bin/sh: 1: cannot create cifar-10-python.tar.gz: Permission denied
+</code></pre><p>Dud makes it difficult to accidentally modify committed files. When Dud commits a file, it makes the link to the cache read-only.</p><p>The tarball isn&rsquo;t the only thing that&rsquo;s changed. Let&rsquo;s look at our stage file:</p><pre><code>$ cat cifar.yaml
+checksum: 801b84d7215b34f14d04db1750edf0ede4686b606b8028bdda63f681bf62d324
+working-dir: .
+outputs:
+  cifar-10-python.tar.gz:
+    checksum: fe3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+</code></pre><p>Dud recorded the tarball&rsquo;s checksum in the stage file. (It also checksummed the stage file itself; more on that later.) With a copy of this stage file and the Dud cache, we can easily get this specific version of the tarball back. Let&rsquo;s see how that works by deleting the link to the tarball and asking Dud to <code>checkout</code> our stage:</p><pre><code>$ rm cifar-10-python.tar.gz
+
+$ readlink -v cifar-10-python.tar.gz
+readlink: cifar-10-python.tar.gz: No such file or directory
+
+$ dud checkout
+checking out stage cifar.yaml
+  cifar-10-python.tar.gz  1 / 1  100%  ?/s  0s total
+
+$ readlink -v cifar-10-python.tar.gz
+.dud/cache/fe/3d11c475ae0f6fec91f3cf42f9c69e87dc32ec6b44a83f8b22544666e25eea
+</code></pre><p><code>dud checkout</code> goes through all of our stages, finds their checksummed files in the cache, and makes the appropriate links in our workspace.</p><p>Before we move on, let&rsquo;s check <code>dud status</code> again:</p><pre><code>$ dud status
+cifar.yaml                stage definition up-to-date
+  cifar-10-python.tar.gz  up-to-date (link)
+</code></pre><p>Dud tells us that <code>cifar-10-python.tar.gz</code> is committed and up-to-date, and it&rsquo;s available in our working directory as a read-only link to the cache.</p><p>We also see that <code>cifar.yaml</code> has its &ldquo;stage definition up-to-date.&rdquo; Don&rsquo;t worry about this for this walkthrough. But if you&rsquo;re curious, this is what the top-level checksum in <code>cifar.yaml</code> buys us: Dud can detect when we&rsquo;ve changed the stage (for example, added another file to track) to better inform its actions.</p><h2 id=creating-a-data-pipeline>Creating a data pipeline
+<a class=anchor href=#creating-a-data-pipeline>#</a></h2><p>Okay, let&rsquo;s extract the tarball already! We do that with <code>tar</code>, but it turns out <a href=https://xkcd.com/1168/><code>tar</code> is hard to use</a>. We could write a quick shell script so we don&rsquo;t have to remember the <code>tar</code> flags, but we can do one better with Dud.</p><p>Now we&rsquo;ll glimpse the full power of Dud stages. As we&rsquo;ve seen already, Dud stages own files, but they can also own the <em>command that generates those files</em>. On top of that, stages can <em>depend on other stages</em>. Let&rsquo;s see this in action by creating a stage to extract the CIFAR-10 tarball:</p><pre><code>$ mkdir cifar-10-batches-py
+
+$ dud stage gen \
+    -i cifar-10-python.tar.gz \
+    -o cifar-10-batches-py/ \
+    -- tar -xvf cifar-10-python.tar.gz \
+    | tee extract_cifar.yaml
+command: tar -xvf cifar-10-python.tar.gz
+working-dir: .
+inputs:
+  cifar-10-python.tar.gz: {}
+outputs:
+  cifar-10-batches-py:
+    is-dir: true
+</code></pre><p>There&rsquo;s only two lines in this <code>dud stage gen</code> command that are new to us. <code>-i cifar-10-python.tar.gz</code> declares the tarball as an input to this stage. If the tarball changes (for example, if new images are added), Dud will know this stage should be re-run. The <code>--</code> tells Dud to stop looking for command-line flags (like <code>-i</code> and <code>-o</code>) and to treat the rest of the arguments as a shell command. In this case, our command is the <code>tar</code> command to extract the contents of the archive.</p><p>In the YAML output, notice that Dud can own entire directories, not just files. <code>dud stage gen</code> knew to add <code>is-dir: true</code> because we created the directory ahead of time.</p><p>Let&rsquo;s add the stage and check our status:</p><pre><code>$ dud stage add extract_cifar.yaml
+Added extract_cifar.yaml to the index.
+
+$ dud status
+cifar.yaml                stage definition up-to-date
+  cifar-10-python.tar.gz  up-to-date (link)
+
+extract_cifar.yaml     stage definition not checksummed
+  cifar-10-batches-py  empty directory
+</code></pre><p>This looks as expected. Our tarball is committed, but we haven&rsquo;t extracted it yet. We do that using <code>dud run</code>:</p><pre><code>$ dud run
+nothing to do for stage cifar.yaml
+
+running stage extract_cifar.yaml
+cifar-10-batches-py/
+cifar-10-batches-py/data_batch_4
+cifar-10-batches-py/readme.html
+cifar-10-batches-py/test_batch
+cifar-10-batches-py/data_batch_3
+cifar-10-batches-py/batches.meta
+cifar-10-batches-py/data_batch_2
+cifar-10-batches-py/data_batch_5
+cifar-10-batches-py/data_batch_1
+</code></pre><p>As we can see, <code>dud run</code> was considering more than just our new stage. It notes that there is &ldquo;nothing to do for stage cifar.yaml&rdquo;. This makes sense because we didn&rsquo;t define a command in that stage. Then, Dud begins running <code>extract_cifar.yaml</code>, and it sends all of <code>tar</code>&rsquo;s output to the terminal.</p><p>Now we can check that the <code>tar</code> command worked:</p><pre><code>$ ls cifar-10-batches-py/
+batches.meta  data_batch_2  data_batch_4  readme.html
+data_batch_1  data_batch_3  data_batch_5  test_batch
+</code></pre><p>Congrats on <a href=https://xkcd.com/1168/>defusing the bomb</a>! Now that we know our pipeline worked, let&rsquo;s commit everything:</p><pre><code>$ dud commit
+committing stage cifar.yaml
+  cifar-10-python.tar.gz  up-to-date; skipping commit
+
+committing stage extract_cifar.yaml
+  cifar-10-batches-py   177.59 MiB / 177.59 MiB  100%  ?/s  30ms total
+</code></pre><p>Notice that Dud detected that the tarball from <code>cifar.yaml</code> hasn&rsquo;t changed, so it knew not to waste time committing it again.</p><p>Let&rsquo;s take another look at our project status for good measure:</p><pre><code>$ dud status
+cifar.yaml                stage definition up-to-date
+  cifar-10-python.tar.gz  up-to-date (link)
+
+extract_cifar.yaml     stage definition up-to-date
+  cifar-10-batches-py  x8 up-to-date (link)
+</code></pre><p>Looks good! Note that because <code>cifar-10-batches-py</code> is a directory, <code>dud status</code> reports the status of the contained files. Here, Dud is telling us that the <code>cifar-10-batches-py</code> directory has eight files, and they are all up-to-date and linked to the Dud cache.</p><p>Because everything is up-to-date, I bet you can guess what happens if we try re-running our pipeline:</p><pre><code>$ dud run
+nothing to do for stage cifar.yaml
+
+nothing to do for stage extract_cifar.yaml
+</code></pre><p>Because both of our stages are committed and up-to-date, Dud detects that there&rsquo;s no sense in re-extracting the tarball. Excellent!</p><p>Let&rsquo;s finish up by visualizing our data pipeline. Dud can output its pipelines in DOT format to be visualized with <a href=https://graphviz.org/>Graphviz</a>. If we have Graphviz installed, we can pipe <code>dud graph</code> directly into <code>dot</code> to generate an image of the pipeline:</p><pre><code>$ dud graph | dot -Tpng -o pipeline.png
+</code></pre><p><img src=../getting_started_51_0.png alt=png></p><p>Dud shows our two stages as boxes with the files/directories they own as encapsulated ellipses. The arrow between stages shows that the <code>extract_cifar.yaml</code> stage depends on the tarball file owned by the <code>cifar.yaml</code> stage.</p><h2 id=sharing-our-work>Sharing our work
+<a class=anchor href=#sharing-our-work>#</a></h2><p>Now that we have the humble beginnings of our data pipeline working, it&rsquo;s a good time to upload our work to a shared location so other people can access and/or collaborate on our code and data. Currently our &ldquo;code&rdquo; is our data pipeline definition &ndash; the Dud stage files we wrote in the steps above &ndash; and miscellaneous configuration files. Our data is the binary files that we&rsquo;ve committed to Dud&rsquo;s cache &ndash; the CIFAR tarball and its extracted contents. Let&rsquo;s tackle uploading our data first.</p><h3 id=sharing-our-data-with-dud-and-rclone>Sharing our data with Dud and Rclone
+<a class=anchor href=#sharing-our-data-with-dud-and-rclone>#</a></h3><p>Dud uses <a href=https://rclone.org>rclone</a> to synchronize the local Dud cache (<code>.dud/cache</code>) with a remote location. Rclone supports an impressive number of storage systems/providers, but for this demo we&rsquo;ll use a &ldquo;fake&rdquo; remote cache &ndash; another local directory on our computer. However, the following steps apply to any &ldquo;real&rdquo; remote. (If you&rsquo;re following along and haven&rsquo;t installed rclone yet, now&rsquo;s the time. Check the <a href=https://rclone.org>rclone website</a> for instructions.)</p><p>Recall that when we ran <code>dud init</code>, Dud told us that it created two config files: <code>.dud/config.yaml</code> and <code>.dud/rclone.conf</code>. Let&rsquo;s peek at these files now, starting with <code>.dud/rclone.conf</code>:</p><pre><code>$ cat .dud/rclone.conf
+# rclone config file
+# Run 'rclone --config .dud/rclone.conf config' to setup a remote Dud cache,
+# and then set the 'remote' value in .dud/config.yaml to a valid rclone remote
+# path.
+# See: https://rclone.org/docs/#syntax-of-remote-paths
+</code></pre><p><code>.dud/rclone.conf</code> is an rclone configuration file dedicated to the project. In it, we will tell rclone where to send and receive our data files. It&rsquo;s currently empty, but Dud gives us pointers on how to proceed with setting up a remote cache.</p><p><code>rclone config</code> starts an interactive command-line interface to configure a remote location step-by-step, and the <code>--config .dud/rclone.conf</code> flag tells <code>rclone</code> where to store the resulting configuration. Most of the time, you&rsquo;ll want to use this command to configure a remote with rclone. In our case, we&rsquo;ll cut to the chase. Add the following two lines to the config file:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#75715e># .dud/rclone.conf</span>
+</span></span><span style=display:flex><span>[fake_remote]
+</span></span><span style=display:flex><span>type <span style=color:#f92672>=</span> local
+</span></span></code></pre></div><p>This config file will tell rclone that we have a remote location called <code>fake_remote</code> that&rsquo;s actually just the local filesystem. Again, in a real scenario you&rsquo;ll want to follow the <code>rclone config</code> command to configure a true remote cache that collaborators can access. The important outcome is that we can now tell Dud the name of the rclone remote we created (<code>fake_remote</code>) and it will coordinate with rclone to handle the rest &ndash; regardless of the location and underlying implementation of the &ldquo;remote&rdquo; itself.</p><p>To tell Dud about our new &ldquo;remote&rdquo;, we&rsquo;ll edit Dud&rsquo;s configuration file, <code>.dud/config.yaml</code>. Before we do that, let&rsquo;s examine the file:</p><pre><code>$ cat .dud/config.yaml
+# Dud project-level config file
+
+# This config file overrides any user configuration from
+# &quot;$XDG_CONFIG_HOME/dud/config.yaml&quot; or &quot;~/.config/dud/config.yaml&quot;.
+
+# This is the default cache location. Uncomment here or add to your user-level
+# config to override.
+# cache: .dud/cache
+
+# To enable push and fetch, set 'remote' to a valid rclone remote path. For
+# example, if you have a remote called &quot;s3&quot; in your .dud/rclone.conf, and you
+# want your remote cache to live in a bucket called 'dud', you would write:
+#
+# remote: s3:dud
+#
+# For more info, see the rclone docs:
+# https://rclone.org/docs/#syntax-of-remote-paths
+</code></pre><p>Dud again gives us some pointers on configuring a remote cache: we need to set the <code>remote</code> value to a <a href=https://rclone.org/docs/#syntax-of-remote-paths>path format described in the rclone documentation</a>. We can accomplish this any number of ways, but we&rsquo;ll use the opportunity to explore more of Dud&rsquo;s CLI. <code>dud config</code> allows programmatic access to Dud&rsquo;s config file. Let&rsquo;s use it to set our <code>remote</code>:</p><pre><code>$ dud config set remote fake_remote:/tmp/dud/cache
+</code></pre><p>This command sets the <code>remote</code> key in the Dud config to the value <code>fake_remote:/tmp/dud/cache</code>. This value tells Dud and rclone that we&rsquo;re communicating with the remote named <code>fake_remote</code>, and the base directory of our remote cache will be <code>/tmp/dud/cache</code>. (As mentioned in the rclone documentation, including a leading forward slash in the remote path is not recommended in most cases. It&rsquo;s required here because the remote is an absolute path on our local filesystem.)</p><p>We&rsquo;re now ready to push our data to the remote cache! We do this with one simple command:</p><pre><code>$ dud push
+pushing stage cifar.yaml
+Gathering files      1
+Transferred:   	  162.600 MiB / 162.600 MiB, 100%, 0 B/s, ETA -
+Transferred:            1 / 1, 100%
+Elapsed time:         0.3s
+Fixing permissions   1 / 1
+
+pushing stage extract_cifar.yaml
+Gathering files      9
+Transferred:   	  177.589 MiB / 177.589 MiB, 100%, 0 B/s, ETA -
+Transferred:            9 / 9, 100%
+Elapsed time:         0.2s
+Fixing permissions   9 / 9
+</code></pre><p><code>dud push</code> goes through all of our stages, looks up their committed artifacts (by checksum), and instructs rclone to copy them to the remote cache. We can confirm our artifacts were copied to <code>/tmp/dud/cache</code> using rclone as well, which provides the <code>check</code> command to compare two directories (or indeed remotes):</p><pre><code>$ rclone check .dud/cache /tmp/dud/cache
+2022/07/18 01:32:43 NOTICE: Config file &quot;/home/user/.config/rclone/rclone.conf&quot; not found - using defaults
+2022/07/18 01:32:45 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
+2022/07/18 01:32:45 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
+</code></pre><p>Sure enough, rclone reports that <code>.dud/cache</code> and <code>/tmp/dud/cache</code> are identical. If it were &ldquo;real&rdquo;, our collaborators with access to <code>fake_remote</code> could now access all of the data we&rsquo;ve committed so far! Let&rsquo;s pretend we are one of those collaborators, and we need to fetch the data files from the remote cache. We can do that with the aptly-named <code>fetch</code> command:</p><pre><code>$ rm -rf .dud/cache/*    # start with an empty local cache
+
+$ dud fetch
+fetching stage cifar.yaml
+Transferred:   	  162.600 MiB / 162.600 MiB, 100%, 0 B/s, ETA -
+Transferred:            1 / 1, 100%
+Elapsed time:         0.3s
+Fixing permissions   1 / 1
+
+fetching stage extract_cifar.yaml
+Transferred:   	        974 B / 974 B, 100%, 0 B/s, ETA -
+Transferred:            1 / 1, 100%
+Elapsed time:         0.0s
+Fixing permissions   1 / 1
+Transferred:   	  177.588 MiB / 177.588 MiB, 100%, 0 B/s, ETA -
+Transferred:            8 / 8, 100%
+Elapsed time:         0.2s
+Fixing permissions   8 / 8
+
+$ rclone check .dud/cache /tmp/dud/cache
+2022/07/18 01:32:47 NOTICE: Config file &quot;/home/user/.config/rclone/rclone.conf&quot; not found - using defaults
+2022/07/18 01:32:48 NOTICE: Local file system at /tmp/dud/cache: 0 differences found
+2022/07/18 01:32:48 NOTICE: Local file system at /tmp/dud/cache: 10 matching files
+</code></pre><p><code>dud fetch</code> is the inverse of <code>dud push</code>; it looks up artifacts the same way <code>push</code> does (from stage files), but it copies <em>from</em> the remote cache <em>to</em> the local cache.</p><h3 id=versioning-our-code-with-git>Versioning our code with Git
+<a class=anchor href=#versioning-our-code-with-git>#</a></h3><p>We&rsquo;ve now stored our data in a shared location and we know how to get it back. Next, we need to do the same with our code. Sharing the code &ndash; our stage files and configuration &ndash; is critical; without them, our collaborators (and ourselves!) won&rsquo;t be able to make sense of the data. Furthermore, we want to version our stage files so we can trace the changes in our pipeline over time. Lucky for us, the practice of versioning and sharing source code is a pillar of the digital world, and there are many source control management (SCM) tools at our disposal that are designed for our situation.</p><p>We&rsquo;ll use <a href=https://git-scm.com/>Git</a> to version and share our code. Git is the most popular SCM tool, but in practice you could use any SCM tool for this project (e.g. Mercurial). If you&rsquo;re not familiar with Git, don&rsquo;t worry; we&rsquo;ll only be running the most basic Git operations in this walkthrough. That said, Dud&rsquo;s command-line interface (CLI) is intentionally meant to mirror the core Git commands. If you&rsquo;ve followed along this far, the Git commands below should hopefully look very familiar. (And indeed the inverse is true as well: If you&rsquo;re familiar with Git but new to Dud, the hope is you&rsquo;ll feel right at home with Dud&rsquo;s CLI.)</p><p>The steps below gloss over installing and configuring Git. If you are new to Git, please search out any of the countless resources on the Web to learn more.</p><p>First things first, let&rsquo;s create a Git repository for the project:</p><pre><code>$ git init
+Initialized empty Git repository in /home/user/cifar/.git/
+</code></pre><p>Let&rsquo;s take a look at our status to decide what to commit:</p><pre><code>$ git status
+On branch main
+
+No commits yet
+
+Untracked files:
+  (use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)
+	.dud/
+	cifar-10-batches-py/
+	cifar-10-python.tar.gz
+	cifar.yaml
+	extract_cifar.yaml
+	pipeline.png
+
+nothing added to commit but untracked files present (use &quot;git add&quot; to track)
+</code></pre><p>We can see that Git is suggesting that we use it to track a bunch of files. We&rsquo;re already tracking the CIFAR tarball and its contents with Dud, so we don&rsquo;t want them tracked in Git. (But remember, we <em>do</em> want to track their <em>Dud stage files</em> in Git! See the discussion directly above.) Also, it&rsquo;s not important to track our picture of the Dud pipeline, <code>pipeline.png</code>. With these things in mind, we&rsquo;ll write a <code>.gitignore</code> file that tells Git to ignore these files:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python data-lang=python><span style=display:flex><span><span style=color:#75715e># .gitignore</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>/</span>cifar<span style=color:#f92672>-</span><span style=color:#ae81ff>10</span><span style=color:#f92672>-</span>batches<span style=color:#f92672>-</span>py
+</span></span><span style=display:flex><span><span style=color:#f92672>*.</span>tar<span style=color:#f92672>.*</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>*.</span>png
+</span></span></code></pre></div><pre><code>$ git status
+On branch main
+
+No commits yet
+
+Untracked files:
+  (use &quot;git add &lt;file&gt;...&quot; to include in what will be committed)
+	.dud/
+	.gitignore
+	cifar.yaml
+	extract_cifar.yaml
+
+nothing added to commit but untracked files present (use &quot;git add&quot; to track)
+</code></pre><p>That&rsquo;s better. Now, the Git-savvy folks in the audience may be concerned about tracking the entire <code>.dud</code> directory in Git. After all, <code>.dud/cache</code> contains all of our large binary files, and they are not suited for source control. As it turns out, <code>dud init</code> automatically creates its own <code>.gitignore</code> file in the <code>.dud</code> directory to help prevent the painful mistake of committing the Dud cache to source control. (If you use another SCM tool, be careful: You&rsquo;ll need to manually exclude your Dud cache!)</p><p>Let&rsquo;s tell Git to track everything else:</p><pre><code>$ git add .
+
+$ git status
+On branch main
+
+No commits yet
+
+Changes to be committed:
+  (use &quot;git rm --cached &lt;file&gt;...&quot; to unstage)
+	new file:   .dud/.gitignore
+	new file:   .dud/config.yaml
+	new file:   .dud/index
+	new file:   .dud/rclone.conf
+	new file:   .gitignore
+	new file:   cifar.yaml
+	new file:   extract_cifar.yaml
+</code></pre><p>With everything in order, let&rsquo;s commit our code:</p><pre><code>$ git commit -m 'initial commit'
+[main (root-commit) ca689da] initial commit
+ 7 files changed, 25 insertions(+)
+ create mode 100644 .dud/.gitignore
+ create mode 100644 .dud/config.yaml
+ create mode 100644 .dud/index
+ create mode 100644 .dud/rclone.conf
+ create mode 100644 .gitignore
+ create mode 100644 cifar.yaml
+ create mode 100644 extract_cifar.yaml
+</code></pre><p>Excellent, our code is committed to our Git repository! The next step would be to create a remote Git repository and push our commit to it. I&rsquo;ll leave this as an exercise for the reader, but once you&rsquo;ve done that, this entire project &ndash; the data and the code &ndash; will be fully published and ready to share with others! You can find good tutorials on how to set up a remote Git repository on any number of Git hosting services, such as GitHub, GitLab, sourcehut, and many more.</p><h2 id=summary>Summary
+<a class=anchor href=#summary>#</a></h2><p>In this page we walked through the core capabilities of Dud: storing and versioning large files and directories, and creating reproducible data pipelines. We finished by preparing our code and data to be shared with others. If you haven&rsquo;t already, now&rsquo;s a good time to <a href=https://kevin-hanselman.github.io/dud/dev/install/>install Dud</a> and give it a go yourself! If you want to learn more, check out the <a href=https://kevin-hanselman.github.io/dud/dev/cli/dud/>CLI Reference</a> or reach out on <a href=https://github.com/kevin-hanselman/dud/discussions>Github Discussions</a>.</p></article><footer class=book-footer><div class="flex flex-wrap justify-between"></div><script>(function(){function e(e){const t=window.getSelection(),n=document.createRange();n.selectNodeContents(e),t.removeAllRanges(),t.addRange(n)}document.querySelectorAll("pre code").forEach(t=>{t.addEventListener("click",function(){if(window.getSelection().toString())return;e(t.parentElement),navigator.clipboard&&navigator.clipboard.writeText(t.parentElement.textContent)})})})()</script></footer><div class=book-comments></div><label for=menu-control class="hidden book-menu-overlay"></label></div><aside class=book-toc><div class=book-toc-content><nav id=TableOfContents><ul><li><a href=#creating-a-dud-project>Creating a Dud project</a></li><li><a href=#storing-and-versioning-large-files>Storing and versioning large files</a></li><li><a href=#creating-a-data-pipeline>Creating a data pipeline</a></li><li><a href=#sharing-our-work>Sharing our work</a><ul><li><a href=#sharing-our-data-with-dud-and-rclone>Sharing our data with Dud and Rclone</a></li><li><a href=#versioning-our-code-with-git>Versioning our code with Git</a></li></ul></li><li><a href=#summary>Summary</a></li></ul></nav></div></aside></main></body></html>
