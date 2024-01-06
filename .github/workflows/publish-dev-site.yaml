@@ -1,8 +1,8 @@
-name: Publish release
-
+name: Publish dev site
 on:
   push:
-    tags: ['v*.*.*']
+    branches: ['main']
+    tags-ignore: ['v*.*.*']
 
 jobs:
   github-pages:
@@ -24,6 +24,8 @@ jobs:
           go-version: 1.21
 
       - name: Build website
+        env:
+          HUGO_BASEURL: 'https://kevin-hanselman.github.io/dud/dev'
         run: make website
 
       - name: Deploy website
@@ -31,24 +33,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./website
+          destination_dir: ./dev
           publish_branch: gh-pages
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
-
-  goreleaser:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.21
-
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          version: latest
-          args: release --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
