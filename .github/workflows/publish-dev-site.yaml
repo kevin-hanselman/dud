@@ -1,4 +1,4 @@
-name: build
+name: Publish dev site
 on:
   push:
     branches: ['main']
