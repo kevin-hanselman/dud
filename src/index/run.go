@@ -83,6 +83,8 @@ func (idx Index) Run(
 	}
 	if doRun && hasCommand {
 		logger.Info.Printf("running stage %s\n", stagePath)
+		logger.Info.Printf("  command    : %s\n", stg.Command)
+		logger.Info.Printf("  working dir: %s\n", stg.WorkingDir)
 		if err := runCommand(stg.CreateCommand()); err != nil {
 			return err
 		}
