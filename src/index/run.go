@@ -48,11 +48,17 @@ func (idx Index) Run(
 		checksumUpToDate = realChecksum == stg.Checksum
 	}
 
-	// Run if we have a command and no inputs.
-	doRun := hasCommand && (len(stg.Inputs) == 0)
+	var doRun bool
 
-	// Run if our checksum is stale.
-	doRun = doRun || !checksumUpToDate
+	if hasCommand && (len(stg.Inputs) == 0) {
+		// Run if we have a command and no inputs.
+		doRun = true
+		logger.Info.Printf("running stage %s because there is a command and no inputs\n", stagePath)
+	} else if !checksumUpToDate {
+		// Run if our checksum is stale.
+		doRun = true
+		logger.Info.Printf("running stage %s because the checksum is not up to date\n", stagePath)
+	}
 
 	for artPath, art := range stg.Inputs {
 		ownerPath, _ := idx.findOwner(artPath)
