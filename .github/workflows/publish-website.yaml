@@ -29,7 +29,7 @@ jobs:
 
       - name: Deploy website
         if: github.ref_type == 'tag'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./website
@@ -48,7 +48,7 @@ jobs:
         run: make website
 
       - name: Deploy dev website
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./website
