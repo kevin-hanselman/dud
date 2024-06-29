@@ -48,12 +48,22 @@ func (idx Index) Run(
 		checksumUpToDate = realChecksum == stg.Checksum
 	}
 
+	doRun := false
+	var runReason string
+
 	// Run if we have a command and no inputs.
-	doRun := hasCommand && (len(stg.Inputs) == 0)
+	if hasCommand && (len(stg.Inputs) == 0) {
+		doRun = true
+		runReason = "has command and no inputs"
+	}
 
 	// Run if our checksum is stale.
-	doRun = doRun || !checksumUpToDate
+	if !checksumUpToDate {
+		doRun = true
+		runReason = "definition modified"
+	}
 
+	// Always check all upstream stages.
 	for artPath, art := range stg.Inputs {
 		ownerPath, _ := idx.findOwner(artPath)
 		if ownerPath == "" {
@@ -61,14 +71,21 @@ func (idx Index) Run(
 			if err != nil {
 				return err
 			}
-			doRun = doRun || !artStatus.ContentsMatch
+			if !artStatus.ContentsMatch {
+				doRun = true
+				runReason = "input out-of-date"
+			}
 		} else if recursive {
 			if err := idx.Run(ownerPath, ch, rootDir, recursive, ran, inProgress, logger); err != nil {
 				return err
 			}
-			doRun = doRun || ran[ownerPath]
+			if ran[ownerPath] {
+				doRun = true
+				runReason = "upstream stage out-of-date"
+			}
 		}
 	}
+
 	if !doRun {
 		for _, art := range stg.Outputs {
 			artStatus, err := ch.Status(rootDir, *art, true)
@@ -77,17 +94,25 @@ func (idx Index) Run(
 			}
 			if !artStatus.ContentsMatch {
 				doRun = true
+				runReason = "output out-of-date"
 				break
 			}
 		}
 	}
-	if doRun && hasCommand {
-		logger.Info.Printf("running stage %s\n", stagePath)
-		if err := runCommand(stg.CreateCommand()); err != nil {
-			return err
+	if doRun {
+		if hasCommand {
+			logger.Info.Printf("running stage %s (%s)\n", stagePath, runReason)
+			cmd := stg.CreateCommand()
+			// Avoid cmd.Command here because it will include "sh -c ...".
+			logger.Debug.Printf("(in %s) %s\n", cmd.Dir, stg.Command)
+			if err := runCommand(cmd); err != nil {
+				return err
+			}
+		} else {
+			logger.Info.Printf("nothing to do for stage %s (%s, but no command)\n", stagePath, runReason)
 		}
 	} else {
-		logger.Info.Printf("nothing to do for stage %s\n", stagePath)
+		logger.Info.Printf("nothing to do for stage %s (up-to-date)\n", stagePath)
 	}
 	ran[stagePath] = doRun
 	delete(inProgress, stagePath)

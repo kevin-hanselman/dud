@@ -1,8 +1,10 @@
 package index
 
 import (
+	"log"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -49,9 +51,6 @@ func TestRun(t *testing.T) {
 	rootDir := "project/root"
 
 	var commands map[string]*exec.Cmd
-	resetRunCommandMock := func() {
-		commands = make(map[string]*exec.Cmd)
-	}
 	runCommandOrig := runCommand
 	runCommand = func(cmd *exec.Cmd) error {
 		lastArg := cmd.Args[len(cmd.Args)-1]
@@ -68,11 +67,17 @@ func TestRun(t *testing.T) {
 		}
 	}
 
-	// TODO: Consider checking the logs instead of throwing them away.
+	var infoLog strings.Builder
 	logger := agglog.NewNullLogger()
 
+	resetTestHarness := func() {
+		commands = make(map[string]*exec.Cmd)
+		infoLog = strings.Builder{}
+		logger.Info = log.New(&infoLog, "", 0)
+	}
+
 	t.Run("up-to-date stage without command doesn't suggest run", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			WorkingDir: "a",
 			Outputs: map[string]*artifact.Artifact{
@@ -104,10 +109,15 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "nothing to do for stage foo.yaml (up-to-date)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("out-of-date stage without command does suggest run", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			WorkingDir: "a",
 			Outputs: map[string]*artifact.Artifact{
@@ -118,7 +128,6 @@ func TestRun(t *testing.T) {
 		idx := Index{"foo.yaml": &stgA}
 
 		mockCache := mocks.Cache{}
-
 		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate(), true)
 
 		ran := make(map[string]bool)
@@ -139,10 +148,15 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "nothing to do for stage foo.yaml (output out-of-date, but no command)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("stage with command and no inputs always runs (outputs up-to-date)", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			Command:    "echo 'Running Stage A'",
 			WorkingDir: "a",
@@ -175,24 +189,28 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "running stage foo.yaml (has command and no inputs)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("stage with command and no inputs always runs (outputs out-of-date)", func(t *testing.T) {
-		defer resetRunCommandMock()
-		stgA := stage.Stage{
+		resetTestHarness()
+		stg := stage.Stage{
 			Command:    "echo 'Running Stage A'",
 			WorkingDir: "a",
 			Outputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
 			},
 		}
+		updateChecksum(&stg, t)
 		idx := Index{
-			"foo.yaml": &stgA,
+			"foo.yaml": &stg,
 		}
 
 		mockCache := mocks.Cache{}
-
-		expectStageStatusCalled(&stgA, &mockCache, rootDir, outOfDate(), true)
 
 		ran := make(map[string]bool)
 		inProgress := make(map[string]bool)
@@ -204,7 +222,7 @@ func TestRun(t *testing.T) {
 			t.Fatalf("runCommand called %d time(s), want 1", len(commands))
 		}
 
-		assertCorrectCommand(stgA, commands, t)
+		assertCorrectCommand(stg, commands, t)
 
 		expectedRan := map[string]bool{
 			"foo.yaml": true,
@@ -212,10 +230,15 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "running stage foo.yaml (has command and no inputs)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("two stages, both up-to-date", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
@@ -261,10 +284,16 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "nothing to do for stage foo.yaml (up-to-date)\n" +
+			"nothing to do for stage bar.yaml (up-to-date)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("two stages, upstream out-of-date", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
@@ -313,10 +342,16 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "nothing to do for stage foo.yaml (output out-of-date, but no command)\n" +
+			"running stage bar.yaml (upstream stage out-of-date)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("two stages, downstream out-of-date", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
@@ -364,10 +399,16 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "nothing to do for stage foo.yaml (up-to-date)\n" +
+			"running stage bar.yaml (output out-of-date)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("ensure all inputs are checked", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		inA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"bish.bin": {Path: "bish.bin"},
@@ -424,10 +465,25 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		gotLogs := make(map[string]bool)
+		for _, line := range strings.Split(infoLog.String(), "\n") {
+			if len(line) > 0 {
+				gotLogs[line] = true
+			}
+		}
+		wantLogs := map[string]bool{
+			"nothing to do for stage bish.yaml (output out-of-date, but no command)": true,
+			"nothing to do for stage bash.yaml (up-to-date)":                         true,
+			"running stage bosh.yaml (upstream stage out-of-date)":                   true,
+		}
+		if diff := cmp.Diff(wantLogs, gotLogs); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("cycles are prevented", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		// stgA <-- stgB <-- stgC --> stgD
 		//    |---------------^
 		stgA := stage.Stage{
@@ -496,7 +552,7 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("run when any orphan input is out-of-date", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		bish := upToDate()
 		bish.Artifact = artifact.Artifact{Path: "bish.bin"}
 
@@ -542,10 +598,15 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "running stage bosh.yaml (input out-of-date)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("can disable recursion", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
@@ -590,10 +651,15 @@ func TestRun(t *testing.T) {
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
+
+		wantLog := "running stage bar.yaml (output out-of-date)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
+		}
 	})
 
 	t.Run("stage with out-of-date definition does run", func(t *testing.T) {
-		defer resetRunCommandMock()
+		resetTestHarness()
 		stgA := stage.Stage{
 			Outputs: map[string]*artifact.Artifact{
 				"foo.bin": {Path: "foo.bin"},
@@ -638,6 +704,12 @@ func TestRun(t *testing.T) {
 		}
 		if diff := cmp.Diff(expectedRan, ran); diff != "" {
 			t.Fatalf("committed -want +got:\n%s", diff)
+		}
+
+		wantLog := "nothing to do for stage foo.yaml (up-to-date)\n" +
+			"running stage bar.yaml (definition modified)\n"
+		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
+			t.Fatalf("log -want +got:\n%s", diff)
 		}
 	})
 }

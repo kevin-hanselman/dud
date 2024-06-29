@@ -148,6 +148,7 @@ func FromFile(stagePath string) (stg Stage, err error) {
 // If stagePath is not empty, Artifacts matching stagePath will cause an error;
 // stages cannot track or reference themselves.
 func (stg Stage) Validate(stagePath string) error {
+	// TODO: Resolve paths instead of a string check.
 	if strings.Contains(stg.WorkingDir, "..") {
 		return fmt.Errorf("working directory %s is outside of the project root", stg.WorkingDir)
 	}
