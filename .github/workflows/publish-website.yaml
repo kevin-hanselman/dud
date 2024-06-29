@@ -25,11 +25,11 @@ jobs:
           go-version: 1.21
 
       - name: Build website
-        if: github.ref_type == 'tag'
+        if: github.event_name == 'release'
         run: make website
 
       - name: Deploy website
-        if: github.ref_type == 'tag'
+        if: github.event_name == 'release'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
