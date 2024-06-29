@@ -1,8 +1,8 @@
 name: Publish release artifacts
 
 on:
-  push:
-    tags: ['v*.*.*']
+  release:
+    types: ['released']
 
 jobs:
   goreleaser:
@@ -16,7 +16,7 @@ jobs:
           go-version: 1.21
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --clean
