@@ -2,6 +2,8 @@ name: Publish website
 on:
   push:
     branches: ['main']
+  pull_request:
+    branches: ['main']
   release:
     types: ['released']
 
@@ -43,12 +45,16 @@ jobs:
       # before pushing changes. This behavior can be avoided using
       # "keep_files: true", but that approach could lead to hard-to-debug issues
       # and is discouraged by the actions-gh-pages authors.
+      #
+      # Also, build (but not deploy) the dev website during PRs for more
+      # testing.
       - name: Build dev website
         env:
           HUGO_BASEURL: 'https://kevin-hanselman.github.io/dud/dev'
         run: make website
 
       - name: Deploy dev website
+        if: github.event_name == 'push'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
