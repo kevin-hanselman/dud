@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/cheggaaa/pb/v3"
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/pkg/errors"
 )
 
@@ -19,8 +20,13 @@ import (
 // calling code. Primarily, a Stage's outputs will be passed to this function,
 // so it's convenient to pass stage.Outputs directly. This also eases testing,
 // because transcribing the map into a slice would introduce non-determinism.
-func (ch LocalCache) Push(remoteDst string, arts map[string]*artifact.Artifact) error {
-	progress := newProgress(progressTemplateCount, 0, "Gathering files")
+func (ch LocalCache) Push(
+	remoteDst string,
+	arts map[string]*artifact.Artifact,
+	logger *agglog.AggLogger,
+) error {
+	logger.Info.Print("Gathering files to push")
+	progress := progress.NewProgress(false, "  ")
 	progress.Start()
 	pushFiles := make(map[string]struct{})
 	for _, art := range arts {
@@ -31,7 +37,7 @@ func (ch LocalCache) Push(remoteDst string, arts map[string]*artifact.Artifact) 
 	}
 	progress.Finish()
 	if len(pushFiles) > 0 {
-		return errors.Wrap(remoteCopy(ch.dir, remoteDst, pushFiles), "push")
+		return errors.Wrap(remoteCopy(ch.dir, remoteDst, pushFiles, logger), "push")
 	}
 	return nil
 }
@@ -40,7 +46,7 @@ func gatherFilesToPush(
 	ch LocalCache,
 	art artifact.Artifact,
 	filesToPush map[string]struct{},
-	progress *pb.ProgressBar,
+	progress progress.Progress,
 ) error {
 	if art.SkipCache {
 		return nil
@@ -66,12 +72,17 @@ func gatherFilesToPush(
 			}
 		}
 	}
-	progress.Increment()
 	filesToPush[cachePath] = struct{}{}
+	progress.DoneFile()
 	return nil
 }
 
-var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
+var remoteCopy = func(
+	src,
+	dst string,
+	fileSet map[string]struct{},
+	logger *agglog.AggLogger,
+) error {
 	cmd := exec.Command(
 		"rclone",
 		"--config",
@@ -119,12 +130,19 @@ var remoteCopy = func(src, dst string, fileSet map[string]struct{}) error {
 	// chmod all files, ignoring "no such file" errors which are probably due
 	// to the destination being remote. This is important even for push,
 	// because the "remote" might be a local directory.
-	return setFilePerms(dst, fileSet, cacheFilePerms)
+	return setFilePerms(dst, fileSet, cacheFilePerms, logger)
 }
 
-func setFilePerms(commonDir string, fileSet map[string]struct{}, mode fs.FileMode) error {
+func setFilePerms(
+	commonDir string,
+	fileSet map[string]struct{},
+	mode fs.FileMode,
+	logger *agglog.AggLogger,
+) error {
 	numFiles := len(fileSet)
-	progress := newProgress(progressTemplateCount, numFiles, "Fixing permissions")
+	logger.Info.Print("Fixing permissions")
+	progress := progress.NewProgress(false, "  ")
+	progress.AddFiles(numFiles)
 	progress.Start()
 	defer progress.Finish()
 
@@ -134,7 +152,7 @@ func setFilePerms(commonDir string, fileSet map[string]struct{}, mode fs.FileMod
 		for file := range fileSet {
 			err := os.Chmod(filepath.Join(commonDir, file), mode)
 			if err == nil || os.IsNotExist(err) {
-				progress.Increment()
+				progress.DoneFile()
 			} else {
 				chmodErr = err
 			}
@@ -162,7 +180,7 @@ func setFilePerms(commonDir string, fileSet map[string]struct{}, mode fs.FileMod
 				// TODO: Consider exiting early on "no such file" errors; this
 				// likely means the remote is truly remote.
 				if err == nil || os.IsNotExist(err) {
-					progress.Increment()
+					progress.DoneFile()
 				} else {
 					errs <- err
 				}

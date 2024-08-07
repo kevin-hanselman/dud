@@ -8,6 +8,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/mocks"
 	"github.com/kevin-hanselman/dud/src/stage"
+	"github.com/stretchr/testify/mock"
 )
 
 func expectOutputsPushed(
@@ -16,7 +17,7 @@ func expectOutputsPushed(
 	rootDir,
 	remote string,
 ) {
-	mockCache.On("Push", remote, stg.Outputs).Return(nil).Once()
+	mockCache.On("Push", remote, stg.Outputs, mock.Anything).Return(nil).Once()
 }
 
 func TestPush(t *testing.T) {

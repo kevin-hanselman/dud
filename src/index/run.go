@@ -101,7 +101,7 @@ func (idx Index) Run(
 	}
 	if doRun {
 		if hasCommand {
-			logger.Info.Printf("running stage %s (%s)\n", stagePath, runReason)
+			logger.Info.Printf("Running stage %s (%s)", stagePath, runReason)
 			cmd := stg.CreateCommand()
 			// Avoid cmd.Command here because it will include "sh -c ...".
 			logger.Debug.Printf("(in %s) %s\n", cmd.Dir, stg.Command)

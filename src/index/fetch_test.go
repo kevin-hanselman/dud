@@ -8,6 +8,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/mocks"
 	"github.com/kevin-hanselman/dud/src/stage"
+	"github.com/stretchr/testify/mock"
 )
 
 func expectOutputsFetched(
@@ -16,7 +17,7 @@ func expectOutputsFetched(
 	rootDir,
 	remote string,
 ) {
-	mockCache.On("Fetch", remote, stg.Outputs).Return(nil).Once()
+	mockCache.On("Fetch", remote, stg.Outputs, mock.Anything).Return(nil).Once()
 }
 
 func TestFetch(t *testing.T) {

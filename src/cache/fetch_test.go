@@ -65,7 +65,11 @@ func mkdirsThen(src, dst string, f func(src, dst string) error) error {
 
 // Mock remoteCopy with a version that creates hard links between directories
 // TODO: Consider asserting the number of calls to remoteCopy.
-func mockRemoteCopy(src, dst string, fileSet map[string]struct{}) error {
+func mockRemoteCopy(
+	src, dst string,
+	fileSet map[string]struct{},
+	logger *agglog.AggLogger,
+) error {
 	for file := range fileSet {
 		if err := mkdirsThen(
 			filepath.Join(src, file),
@@ -86,7 +90,11 @@ func TestFetchIntegration(t *testing.T) {
 	logger := agglog.NewNullLogger()
 
 	remoteCopyOrig := remoteCopy
-	remoteCopyPanic := func(src, dst string, fileSet map[string]struct{}) error {
+	remoteCopyPanic := func(
+		src, dst string,
+		fileSet map[string]struct{},
+		logger *agglog.AggLogger,
+	) error {
 		panic("unexpected call to remoteCopy")
 	}
 	remoteCopy = remoteCopyPanic
@@ -132,7 +140,8 @@ func TestFetchIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
+		err = ch.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}, logger)
+		if err != nil {
 			t.Fatal(err)
 		}
 
@@ -155,7 +164,8 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := ch.Fetch("/dev/null", map[string]*artifact.Artifact{"art": &art}); err != nil {
+		err = ch.Fetch("/dev/null", map[string]*artifact.Artifact{"art": &art}, logger)
+		if err != nil {
 			t.Fatal(err)
 		}
 	})
@@ -176,7 +186,7 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		fetchErr := ch.Fetch("/dev/null", map[string]*artifact.Artifact{"art": &art})
+		fetchErr := ch.Fetch("/dev/null", map[string]*artifact.Artifact{"art": &art}, logger)
 		if fetchErr == nil {
 			t.Fatal("expected Fetch to return error")
 		}
@@ -217,7 +227,8 @@ func TestFetchIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := cache.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
+		err = cache.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}, logger)
+		if err != nil {
 			t.Fatal(err)
 		}
 
@@ -285,7 +296,8 @@ func TestFetchIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := cache.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
+		err = cache.Fetch(fakeRemote, map[string]*artifact.Artifact{"art": &art}, logger)
+		if err != nil {
 			t.Fatal(err)
 		}
 

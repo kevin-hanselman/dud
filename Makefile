@@ -205,7 +205,7 @@ loc:
 
 .PHONY: src/mocks
 src/mocks: $(GOBIN)/mockery
-	mockery --all --output src/mocks
+	mockery --name Cache --dir src/cache --output src/mocks
 
 # The awk command removes all graph edge definitions that don't include dud
 depgraph.png:

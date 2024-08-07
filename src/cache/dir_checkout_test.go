@@ -9,6 +9,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
 	"go.uber.org/goleak"
@@ -39,19 +40,19 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		progress := newHiddenProgress()
+		prog := progress.NewHiddenProgress()
 
-		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy, progress); err != nil {
+		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy, prog, logger); err != nil {
 			t.Fatal(err)
 		}
 
 		// Expect the progress bar to report 10 out of 10 files checked out.
 		// Directories aren't counted. See setupDirTest for the 10 files.
-		if progress.Total() != 10 {
-			t.Fatalf("progress.Total() = %v, want 10", progress.Total())
+		if total := prog.TotalFiles(); total != 10 {
+			t.Fatalf("progress.TotalFiles() = %v, want 10", total)
 		}
-		if progress.Current() != 10 {
-			t.Fatalf("progress.Current() = %v, want 10", progress.Current())
+		if current := prog.CurrentFiles(); current != 10 {
+			t.Fatalf("progress.CurrentFiles() = %v, want 10", current)
 		}
 
 		actualStatus, err := cache.Status(dirs.WorkDir, art, false)
@@ -134,9 +135,9 @@ func TestDirectoryCheckoutIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		progress := newHiddenProgress()
+		prog := progress.NewHiddenProgress()
 
-		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy, progress); err != nil {
+		if err := cache.Checkout(dirs.WorkDir, art, strategy.LinkStrategy, prog, logger); err != nil {
 			t.Fatal(err)
 		}
 

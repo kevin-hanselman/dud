@@ -7,10 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cheggaaa/pb/v3"
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -22,16 +23,18 @@ func (cache LocalCache) Checkout(
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-	progress *pb.ProgressBar,
+	prog progress.Progress,
+	logger *agglog.AggLogger,
 ) (err error) {
 	if art.SkipCache {
 		return
 	}
-	if progress == nil {
-		progress = newProgress(progressTemplateDefault, 0, art.Path)
+	logger.Info.Printf("  %s", art.Path)
+	if prog == nil {
+		prog = progress.NewProgress(strat == strategy.CopyStrategy, "    ")
 	}
-	progress.Start()
-	defer progress.Finish()
+	prog.Start()
+	defer prog.Finish()
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = checkoutDir(
@@ -41,15 +44,15 @@ func (cache LocalCache) Checkout(
 			art,
 			strat,
 			activeSharedWorkers,
-			progress,
+			prog,
 		)
 	} else {
 		// Setting the total here avoids locking the progress bar in the hot path
 		// (checkoutFile, which is called from checkoutDir).
 		if strat == strategy.LinkStrategy {
-			progress.SetTotal(1)
+			prog.AddFiles(1)
 		}
-		err = checkoutFile(cache, workspaceDir, art, strat, progress)
+		err = checkoutFile(cache, workspaceDir, art, strat, prog)
 	}
 	return errors.Wrapf(err, "checkout %s", art.Path)
 }
@@ -59,8 +62,17 @@ func checkoutFile(
 	workspaceDir string,
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-	progress *pb.ProgressBar,
+	prog progress.Progress,
 ) error {
+	// Increment the file count when done. We avoid adjusting the bar's
+	// total here to reduce the overhead in the hot path. For files that are
+	// part of a directory, checkoutDir() sets the total to account for
+	// this file. If this is a standalone file, cache.Checkout sets the
+	// total.
+	if prog != nil {
+		defer prog.DoneFile()
+	}
+
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
 		return err
@@ -74,6 +86,7 @@ func checkoutFile(
 	if err := os.MkdirAll(filepath.Dir(workPath), 0o755); err != nil {
 		return err
 	}
+
 	cachePath = filepath.Join(ch.dir, cachePath)
 	switch strat {
 	case strategy.CopyStrategy:
@@ -81,7 +94,7 @@ func checkoutFile(
 		if err != nil {
 			return err
 		}
-		progress.AddTotal(srcInfo.Size())
+		prog.AddBytes(srcInfo.Size())
 
 		srcFile, err := os.Open(cachePath)
 		if err != nil {
@@ -107,7 +120,7 @@ func checkoutFile(
 		defer dstFile.Close()
 
 		// Might as well checksum the file while we copy to check data integrity.
-		srcReader := io.TeeReader(progress.NewProxyReader(srcFile), dstFile)
+		srcReader := io.TeeReader(prog.ProxyReader(srcFile), dstFile)
 		checksum, err := checksum.Checksum(srcReader)
 		if err != nil {
 			return err
@@ -116,14 +129,6 @@ func checkoutFile(
 			return fmt.Errorf("found checksum %#v, expected %#v", checksum, art.Checksum)
 		}
 	case strategy.LinkStrategy:
-		// Increment the count of files linked. We avoid adjusting the bar's
-		// total here to reduce the overhead in the hot path. For files that are
-		// part of a directory, checkoutDir() sets the total to account for
-		// this file. If this is a standalone file, cache.Checkout sets the
-		// total.
-		if progress != nil {
-			defer progress.Increment()
-		}
 		if status.ContentsMatch {
 			return nil
 		}
@@ -157,7 +162,7 @@ func checkoutDir(
 	art artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 	activeSharedWorkers chan struct{},
-	progress *pb.ProgressBar,
+	prog progress.Progress,
 ) error {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, art)
 	if err != nil {
@@ -186,19 +191,15 @@ func checkoutDir(
 		return err
 	}
 
-	// When linking, the progress report counts files linked. Add all of the
-	// files we know about here to the total, and let checkoutFile handle
-	// updating the report. (When copying, checkoutFile handles updating the
-	// bytes transferred completely.)
-	if strat == strategy.LinkStrategy {
-		var fileCount int64 = 0
-		for _, art := range man.Contents {
-			if !art.IsDir {
-				fileCount++
-			}
+	// Add all of the files we know about here to the total,
+	// and let checkoutFile handle marking files as done.
+	fileCount := 0
+	for _, art := range man.Contents {
+		if !art.IsDir {
+			fileCount++
 		}
-		progress.AddTotal(fileCount)
 	}
+	prog.AddFiles(fileCount)
 
 	// Start a goroutine to feed artifacts to workers.
 	errGroup, groupCtx := errgroup.WithContext(ctx)
@@ -224,7 +225,7 @@ func checkoutDir(
 		childArtifacts,
 		strat,
 		activeSharedWorkers,
-		progress,
+		prog,
 	)
 
 	// Wait for all goroutines to exit and collect the group error.
@@ -240,7 +241,7 @@ func startCheckoutWorkers(
 	input <-chan *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 	activeSharedWorkers chan struct{},
-	progress *pb.ProgressBar,
+	prog progress.Progress,
 ) {
 	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
 	for i := 0; i < totalWorkItems; i++ {
@@ -257,7 +258,7 @@ func startCheckoutWorkers(
 					input,
 					strat,
 					activeSharedWorkers,
-					progress,
+					prog,
 				)
 			})
 		case activeDedicatedWorkers <- struct{}{}:
@@ -270,7 +271,7 @@ func startCheckoutWorkers(
 					input,
 					strat,
 					activeSharedWorkers,
-					progress,
+					prog,
 				)
 			})
 		}
@@ -284,7 +285,7 @@ func checkoutWorker(
 	input <-chan *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 	activeSharedWorkers chan struct{},
-	progress *pb.ProgressBar,
+	prog progress.Progress,
 ) error {
 	for {
 		select {
@@ -301,10 +302,10 @@ func checkoutWorker(
 					*childArt,
 					strat,
 					activeSharedWorkers,
-					progress,
+					prog,
 				)
 			} else {
-				err = checkoutFile(ch, workPath, *childArt, strat, progress)
+				err = checkoutFile(ch, workPath, *childArt, strat, prog)
 			}
 			if err != nil {
 				return err

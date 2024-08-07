@@ -288,6 +288,16 @@ func unlockProject() error {
 	return nil
 }
 
+func preparePaths(rootDir string, paths []string) (err error) {
+	for i, path := range paths {
+		paths[i], err = pathAbsThenRel(rootDir, path)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Do a bunch of bookkeeping to prepare for usual execution of Dud operations.
 // The paths argument is updated in-place so each path is relative to the
 // project root directory.
@@ -300,11 +310,8 @@ func prepare(paths []string) (rootDir string, ch cache.LocalCache, idx index.Ind
 		return
 	}
 
-	for i, path := range paths {
-		paths[i], err = pathAbsThenRel(rootDir, path)
-		if err != nil {
-			return
-		}
+	if err = preparePaths(rootDir, paths); err != nil {
+		return
 	}
 
 	if err = os.Chdir(rootDir); err != nil {

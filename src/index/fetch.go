@@ -52,7 +52,7 @@ func (idx Index) Fetch(
 	}
 	logger.Info.Printf("fetching stage %s\n", stagePath)
 	// Call Fetch on all Outputs at once to minimize the number of rclone calls.
-	if err := ch.Fetch(remote, stg.Outputs); err != nil {
+	if err := ch.Fetch(remote, stg.Outputs, logger); err != nil {
 		return err
 	}
 	fetched[stagePath] = true

@@ -50,8 +50,8 @@ func (idx Index) Push(
 			}
 		}
 	}
-	logger.Info.Printf("pushing stage %s\n", stagePath)
-	if err := ch.Push(remote, stg.Outputs); err != nil {
+	logger.Info.Printf("Pushing stage %s", stagePath)
+	if err := ch.Push(remote, stg.Outputs, logger); err != nil {
 		return err
 	}
 	pushed[stagePath] = true

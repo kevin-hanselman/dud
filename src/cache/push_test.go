@@ -22,7 +22,11 @@ func TestPushIntegration(t *testing.T) {
 	logger := agglog.NewNullLogger()
 
 	remoteCopyOrig := remoteCopy
-	remoteCopyPanic := func(src, dst string, fileSet map[string]struct{}) error {
+	remoteCopyPanic := func(
+		src, dst string,
+		fileSet map[string]struct{},
+		logger *agglog.AggLogger,
+	) error {
 		panic("unexpected call to remoteCopy")
 	}
 	remoteCopy = remoteCopyPanic
@@ -53,7 +57,8 @@ func TestPushIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Push(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
+		err = ch.Push(fakeRemote, map[string]*artifact.Artifact{"art": &art}, logger)
+		if err != nil {
 			t.Fatal(err)
 		}
 
@@ -77,7 +82,7 @@ func TestPushIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushErr := ch.Push("/dev/null", map[string]*artifact.Artifact{"art": &art})
+		pushErr := ch.Push("/dev/null", map[string]*artifact.Artifact{"art": &art}, logger)
 		if pushErr == nil {
 			t.Fatal("expected Push to return error")
 		}
@@ -104,7 +109,7 @@ func TestPushIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		pushErr := ch.Push("/dev/null", map[string]*artifact.Artifact{"art": &art})
+		pushErr := ch.Push("/dev/null", map[string]*artifact.Artifact{"art": &art}, logger)
 		if pushErr == nil {
 			t.Fatal("expected Push to return error")
 		}
@@ -134,7 +139,8 @@ func TestPushIntegration(t *testing.T) {
 
 		remoteCopy = mockRemoteCopy
 
-		if err := ch.Push(fakeRemote, map[string]*artifact.Artifact{"art": &art}); err != nil {
+		err = ch.Push(fakeRemote, map[string]*artifact.Artifact{"art": &art}, logger)
+		if err != nil {
 			t.Fatal(err)
 		}
 

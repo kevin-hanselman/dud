@@ -51,9 +51,9 @@ func (idx Index) Checkout(
 			}
 		}
 	}
-	logger.Info.Printf("checking out stage %s\n", stagePath)
+	logger.Info.Printf("Checking out stage %s", stagePath)
 	for _, art := range stg.Outputs {
-		if err := ch.Checkout(rootDir, *art, strat, nil); err != nil {
+		if err := ch.Checkout(rootDir, *art, strat, nil, logger); err != nil {
 			return err
 		}
 	}

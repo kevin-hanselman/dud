@@ -39,7 +39,7 @@ The CLI is intended to be compatible with the *sum family of command-line tools
 			if err != nil {
 				fatal(err)
 			}
-			logger.Info.Printf("%s  -\n", cksum)
+			logger.Info.Printf("%s  -", cksum)
 			return
 		}
 
@@ -56,7 +56,7 @@ The CLI is intended to be compatible with the *sum family of command-line tools
 			if err != nil {
 				fatal(err)
 			}
-			logger.Info.Printf("%s  %s\n", cksum, path)
+			logger.Info.Printf("%s  %s", cksum, path)
 		}
 	},
 }

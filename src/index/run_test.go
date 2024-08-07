@@ -190,7 +190,7 @@ func TestRun(t *testing.T) {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
 
-		wantLog := "running stage foo.yaml (has command and no inputs)\n"
+		wantLog := "Running stage foo.yaml (has command and no inputs)\n"
 		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
 		}
@@ -231,7 +231,7 @@ func TestRun(t *testing.T) {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
 
-		wantLog := "running stage foo.yaml (has command and no inputs)\n"
+		wantLog := "Running stage foo.yaml (has command and no inputs)\n"
 		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
 		}
@@ -344,7 +344,7 @@ func TestRun(t *testing.T) {
 		}
 
 		wantLog := "nothing to do for stage foo.yaml (output out-of-date, but no command)\n" +
-			"running stage bar.yaml (upstream stage out-of-date)\n"
+			"Running stage bar.yaml (upstream stage out-of-date)\n"
 		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
 		}
@@ -401,7 +401,7 @@ func TestRun(t *testing.T) {
 		}
 
 		wantLog := "nothing to do for stage foo.yaml (up-to-date)\n" +
-			"running stage bar.yaml (output out-of-date)\n"
+			"Running stage bar.yaml (output out-of-date)\n"
 		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
 		}
@@ -475,7 +475,7 @@ func TestRun(t *testing.T) {
 		wantLogs := map[string]bool{
 			"nothing to do for stage bish.yaml (output out-of-date, but no command)": true,
 			"nothing to do for stage bash.yaml (up-to-date)":                         true,
-			"running stage bosh.yaml (upstream stage out-of-date)":                   true,
+			"Running stage bosh.yaml (upstream stage out-of-date)":                   true,
 		}
 		if diff := cmp.Diff(wantLogs, gotLogs); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
@@ -599,7 +599,7 @@ func TestRun(t *testing.T) {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
 
-		wantLog := "running stage bosh.yaml (input out-of-date)\n"
+		wantLog := "Running stage bosh.yaml (input out-of-date)\n"
 		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
 		}
@@ -652,7 +652,7 @@ func TestRun(t *testing.T) {
 			t.Fatalf("committed -want +got:\n%s", diff)
 		}
 
-		wantLog := "running stage bar.yaml (output out-of-date)\n"
+		wantLog := "Running stage bar.yaml (output out-of-date)\n"
 		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
 		}
@@ -707,7 +707,7 @@ func TestRun(t *testing.T) {
 		}
 
 		wantLog := "nothing to do for stage foo.yaml (up-to-date)\n" +
-			"running stage bar.yaml (definition modified)\n"
+			"Running stage bar.yaml (definition modified)\n"
 		if diff := cmp.Diff(wantLog, infoLog.String()); diff != "" {
 			t.Fatalf("log -want +got:\n%s", diff)
 		}

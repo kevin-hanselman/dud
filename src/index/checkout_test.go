@@ -21,7 +21,7 @@ func expectOutputsCheckedOut(
 ) {
 	for _, art := range stg.Outputs {
 		// We have to use mock.Anything here because <nil> != (*pb.ProgressBar)(nil).
-		mockCache.On("Checkout", rootDir, *art, strat, mock.Anything).Return(nil).Once()
+		mockCache.On("Checkout", rootDir, *art, strat, mock.Anything, mock.Anything).Return(nil).Once()
 	}
 }
 

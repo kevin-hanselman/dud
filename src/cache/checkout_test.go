@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
 	"github.com/kevin-hanselman/dud/src/strategy"
@@ -210,7 +211,9 @@ func testFileCheckoutIntegration(in testInput, expectedOut testExpectedOutput, t
 		t.Fatal(err)
 	}
 
-	checkoutErr := cache.Checkout(dirs.WorkDir, art, in.CheckoutStrategy, nil)
+	logger := agglog.NewNullLogger()
+
+	checkoutErr := cache.Checkout(dirs.WorkDir, art, in.CheckoutStrategy, nil, logger)
 
 	// Strip any context from the error (e.g. "checkout hello.txt:").
 	checkoutErr = errors.Cause(checkoutErr)

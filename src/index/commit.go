@@ -65,7 +65,7 @@ func (idx Index) Commit(
 			art.Checksum = upstreamArt.Checksum
 		}
 	}
-	logger.Info.Printf("committing stage %s\n", stagePath)
+	logger.Info.Printf("Committing stage %s", stagePath)
 	for _, art := range nonStageInputs {
 		// Always skip the cache for inputs. This is also enforced in
 		// stage.FromFile, but most tests obviously don't use FromFile to

@@ -3,6 +3,7 @@ package cache
 import (
 	"path/filepath"
 
+	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/pkg/errors"
 )
@@ -16,6 +17,7 @@ import (
 func (ch LocalCache) Fetch(
 	remoteSrc string,
 	artifacts map[string]*artifact.Artifact,
+	logger *agglog.AggLogger,
 ) error {
 	fetchFiles := make(map[string]struct{})
 	dirArtifacts := make(map[string]*artifact.Artifact)
@@ -51,7 +53,7 @@ func (ch LocalCache) Fetch(
 	// currently expect remoteCopy not to be called if there's nothing to
 	// fetch.
 	if len(fetchFiles) > 0 {
-		if err := remoteCopy(remoteSrc, ch.dir, fetchFiles); err != nil {
+		if err := remoteCopy(remoteSrc, ch.dir, fetchFiles, logger); err != nil {
 			return errors.Wrap(err, "fetch")
 		}
 	}
@@ -75,5 +77,5 @@ func (ch LocalCache) Fetch(
 		return nil
 	}
 	// Don't wrap any error here because we're recursing.
-	return ch.Fetch(remoteSrc, children)
+	return ch.Fetch(remoteSrc, children, logger)
 }
