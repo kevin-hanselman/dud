@@ -6,7 +6,7 @@ require (
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/cheggaaa/pb/v3 v3.1.5
-	github.com/felixge/fgprof v0.9.3
+	github.com/felixge/fgprof v0.9.5
 	github.com/google/go-cmp v0.6.0
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mitchellh/go-homedir v1.1.0
