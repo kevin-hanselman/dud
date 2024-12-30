@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
 	"go.uber.org/goleak"
@@ -65,7 +65,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		}
 	}
 
-	logger := agglog.NewNullLogger()
+	ui := progress.NewProgressTracker()
 
 	maxSharedWorkers = 1
 	maxDedicatedWorkers = 1
@@ -75,7 +75,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui); err != nil {
 			t.Fatal(err)
 		}
 
@@ -98,7 +98,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui); err != nil {
 			t.Fatal(err)
 		}
 
@@ -106,7 +106,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui); err != nil {
 			t.Fatal(err)
 		}
 
@@ -130,7 +130,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 		defer os.RemoveAll(dirs.CacheDir)
 		defer os.RemoveAll(dirs.WorkDir)
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui); err != nil {
 			t.Fatal(err)
 		}
 
@@ -138,7 +138,7 @@ func TestDirectoryCommitIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui); err != nil {
 			t.Fatal(err)
 		}
 

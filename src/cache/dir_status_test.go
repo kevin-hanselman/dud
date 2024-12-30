@@ -5,10 +5,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 
 	"github.com/google/go-cmp/cmp"
@@ -47,7 +47,7 @@ func TestDirectoryStatusIntegration(t *testing.T) {
 		}
 	}
 
-	logger := agglog.NewNullLogger()
+	ui := progress.NewProgressTracker()
 
 	maxSharedWorkers = 1
 	maxDedicatedWorkers = 1
@@ -158,7 +158,7 @@ func TestDirectoryStatusIntegration(t *testing.T) {
 		// Disable recursion so the sub-dir doesn't get committed. Then enable
 		// recursion so status reports the untracked sub-dir.
 		art.DisableRecursion = true
-		err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger)
+		err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui)
 		if err != nil {
 			t.Fatal(err)
 		}

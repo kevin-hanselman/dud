@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/kevin-hanselman/dud/src/testutil"
 	"github.com/pkg/errors"
@@ -83,7 +83,7 @@ func TestFetchIntegration(t *testing.T) {
 		t.Skip()
 	}
 
-	logger := agglog.NewNullLogger()
+	ui := progress.NewProgressTracker()
 
 	remoteCopyOrig := remoteCopy
 	remoteCopyPanic := func(src, dst string, fileSet map[string]struct{}) error {
@@ -194,7 +194,7 @@ func TestFetchIntegration(t *testing.T) {
 
 		fakeRemote := filepath.Join(dirs.WorkDir, "fake_remote")
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui); err != nil {
 			t.Fatal(err)
 		}
 
@@ -262,7 +262,7 @@ func TestFetchIntegration(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, logger); err != nil {
+		if err := cache.Commit(dirs.WorkDir, &art, strategy.LinkStrategy, ui); err != nil {
 			t.Fatal(err)
 		}
 

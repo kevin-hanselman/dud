@@ -8,11 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cheggaaa/pb/v3"
-	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/checksum"
 	"github.com/kevin-hanselman/dud/src/fsutil"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -24,7 +23,7 @@ func (ch LocalCache) Commit(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-	logger *agglog.AggLogger,
+	ui *progress.ProgressTracker,
 ) (err error) {
 	if err := os.MkdirAll(ch.dir, 0o755); err != nil {
 		return errors.Wrapf(err, "commit %s", art.Path)
@@ -36,9 +35,6 @@ func (ch LocalCache) Commit(
 	if err != nil {
 		return errors.Wrapf(err, "commit %s", art.Path)
 	}
-	progress := newProgress(progressTemplateDefault, 0, art.Path)
-	progress.Start()
-	defer progress.Finish()
 	if art.IsDir {
 		activeSharedWorkers := make(chan struct{}, maxSharedWorkers)
 		err = commitDirArtifact(
@@ -48,14 +44,11 @@ func (ch LocalCache) Commit(
 			art,
 			strat,
 			activeSharedWorkers,
-			progress,
+			ui,
 			canRenameFile,
 		)
 	} else {
-		err = commitFileArtifact(ch, workspaceDir, art, strat, progress, canRenameFile)
-	}
-	if err == nil && progress.Current() <= 0 {
-		progress.SetTemplate(progressTemplateSkipCommit)
+		err = commitFileArtifact(ch, workspaceDir, art, strat, ui, canRenameFile)
 	}
 	return errors.Wrapf(err, "commit %s", art.Path)
 }
@@ -95,7 +88,7 @@ func commitFileArtifact(
 	workspaceDir string,
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
-	progress *pb.ProgressBar,
+	ui *progress.ProgressTracker,
 	canRenameFile bool,
 ) error {
 	// Ignore cachePath because the artifact likely has a stale or empty checksum.
@@ -116,13 +109,14 @@ func commitFileArtifact(
 	if err != nil {
 		return err
 	}
-	progress.AddTotal(fileInfo.Size())
+	ui.AddFileBytes(fileInfo.Size())
+	defer ui.FileDone()
 	srcFile, err := os.Open(workPath)
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close()
-	srcReader := progress.NewProxyReader(srcFile)
+	srcReader := ui.NewProxyReader(srcFile)
 
 	if art.SkipCache {
 		cksum, err := checksum.Checksum(srcReader)
@@ -224,7 +218,7 @@ func commitDirArtifact(
 	art *artifact.Artifact,
 	strat strategy.CheckoutStrategy,
 	activeSharedWorkers chan struct{},
-	progress *pb.ProgressBar,
+	ui *progress.ProgressTracker,
 	canRenameFile bool,
 ) error {
 	status, cachePath, workPath, err := quickStatus(ch, workspaceDir, *art)
@@ -299,7 +293,7 @@ func commitDirArtifact(
 		childArtifacts,
 		manifestReady,
 		activeSharedWorkers,
-		progress,
+		ui,
 		canRenameFile,
 	)
 
@@ -334,7 +328,7 @@ func startCommitWorkers(
 	outputArtifacts chan<- *artifact.Artifact,
 	manifestReady chan struct{},
 	activeSharedWorkers chan struct{},
-	progress *pb.ProgressBar,
+	ui *progress.ProgressTracker,
 	canRenameFile bool,
 ) {
 	activeDedicatedWorkers := make(chan struct{}, maxDedicatedWorkers)
@@ -356,7 +350,7 @@ func startCommitWorkers(
 					inputFiles,
 					outputArtifacts,
 					activeSharedWorkers,
-					progress,
+					ui,
 					canRenameFile,
 				)
 			})
@@ -372,7 +366,7 @@ func startCommitWorkers(
 					inputFiles,
 					outputArtifacts,
 					activeSharedWorkers,
-					progress,
+					ui,
 					canRenameFile,
 				)
 			})
@@ -389,7 +383,7 @@ func commitWorker(
 	inputFiles <-chan os.DirEntry,
 	outputArtifacts chan<- *artifact.Artifact,
 	activeSharedWorkers chan struct{},
-	progress *pb.ProgressBar,
+	ui *progress.ProgressTracker,
 	canRenameFile bool,
 ) error {
 	for entry := range inputFiles {
@@ -415,7 +409,7 @@ func commitWorker(
 				childArt,
 				strat,
 				activeSharedWorkers,
-				progress,
+				ui,
 				canRenameFile,
 			)
 		} else {
@@ -424,7 +418,7 @@ func commitWorker(
 				workPath,
 				childArt,
 				strat,
-				progress,
+				ui,
 				canRenameFile,
 			)
 		}

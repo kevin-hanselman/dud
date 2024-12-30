@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
-	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/mattn/go-isatty"
 )
@@ -29,8 +29,6 @@ const (
 	// Third string will be used when value not available, default is "?"
 	progressTemplateDefault pb.ProgressBarTemplate = `  {{string . "prefix"}}  {{counters . }}` +
 		`  {{percent . "%3.0f%%"}}  {{speed . "%s/s" "?/s"}}  {{rtime . "ETA %s" "%s total"}}`
-
-	progressTemplateSkipCommit pb.ProgressBarTemplate = `  {{string . "prefix"}}  up-to-date; skipping commit`
 
 	progressTemplateCount pb.ProgressBarTemplate = `{{string . "prefix"}} {{counters .}}`
 )
@@ -53,7 +51,7 @@ type Cache interface {
 		workDir string,
 		art *artifact.Artifact,
 		s strategy.CheckoutStrategy,
-		l *agglog.AggLogger,
+		ui *progress.ProgressTracker,
 	) error
 	Checkout(
 		workDir string,

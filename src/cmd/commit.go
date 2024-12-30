@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/spf13/cobra"
 )
@@ -50,10 +52,21 @@ recursively on all stages upstream of the given stage(s).`,
 		written := make(map[string]bool)
 		for _, path := range paths {
 			inProgress := make(map[string]bool)
-			err := idx.Commit(path, ch, rootDir, strat, committed, inProgress, logger)
-			if err != nil {
+
+			tracker := progress.NewProgressTracker()
+			ui := progress.NewProgressUI(tracker, func() error {
+				return idx.Commit(path, ch, rootDir, strat, committed, inProgress, logger, tracker)
+			})
+
+			prog := tea.NewProgram(ui)
+			if _, err := prog.Run(); err != nil {
 				fatal(err)
 			}
+
+			if ui.Error != nil {
+				fatal(ui.Error)
+			}
+
 			for path := range committed {
 				if written[path] {
 					continue

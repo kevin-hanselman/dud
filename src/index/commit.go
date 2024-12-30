@@ -4,6 +4,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/agglog"
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/cache"
+	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
 	"github.com/pkg/errors"
 )
@@ -18,6 +19,7 @@ func (idx Index) Commit(
 	committed map[string]bool,
 	inProgress map[string]bool,
 	logger *agglog.AggLogger,
+	ui *progress.ProgressTracker,
 ) error {
 	if committed[stagePath] {
 		return nil
@@ -59,6 +61,7 @@ func (idx Index) Commit(
 				committed,
 				inProgress,
 				logger,
+				ui,
 			); err != nil {
 				return err
 			}
@@ -72,12 +75,12 @@ func (idx Index) Commit(
 		// create Stages to test against. To be safe, it's best to force
 		// SkipCache to true here.
 		art.SkipCache = true
-		if err := ch.Commit(rootDir, art, strat, logger); err != nil {
+		if err := ch.Commit(rootDir, art, strat, ui); err != nil {
 			return err
 		}
 	}
 	for _, art := range stg.Outputs {
-		if err := ch.Commit(rootDir, art, strat, logger); err != nil {
+		if err := ch.Commit(rootDir, art, strat, ui); err != nil {
 			return err
 		}
 	}
