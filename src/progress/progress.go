@@ -97,16 +97,18 @@ func (ui *ProgressUI) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (ui *ProgressUI) View() string {
 	s := ui.tracker.bytes.State()
 	bytesProgress := fmt.Sprintf(
-		"bytes: %s / %s  %3.0f%%\n",
+		"bytes: %s / %s  %s/s  %3.0f%%\n",
 		humanize.Bytes(uint64(s.CurrentBytes)),
 		humanize.Bytes(uint64(s.Max)),
+		humanize.SI(s.KBsPerSecond*1024, "B"),
 		s.CurrentPercent*100,
 	)
 	s = ui.tracker.files.State()
 	filesProgress := fmt.Sprintf(
-		"files: %s / %s  %3.0f%%\n",
-		humanize.SI(s.CurrentBytes, ""),
-		humanize.SI(float64(s.Max), ""),
+		"files: %s / %s  %s file/s %3.0f%%\n",
+		humanize.Comma(int64(s.CurrentBytes)),
+		humanize.Comma(s.Max),
+		humanize.SI(s.KBsPerSecond*1024, ""),
 		s.CurrentPercent*100,
 	)
 	return bytesProgress + filesProgress
