@@ -13,7 +13,7 @@ import (
 	"github.com/kevin-hanselman/dud/src/artifact"
 	"github.com/kevin-hanselman/dud/src/progress"
 	"github.com/kevin-hanselman/dud/src/strategy"
-	"github.com/mattn/go-isatty"
+	"golang.org/x/term"
 )
 
 const (
@@ -136,7 +136,7 @@ func newProgress(template pb.ProgressBarTemplate, initialValue int, prefix strin
 	// bother updating the progress report and send any incidental output to
 	// /dev/null. Either way we instantiate the progress tracker because we
 	// still need it to tell us how many bytes we've read/written.
-	if isatty.IsTerminal(os.Stderr.Fd()) {
+	if term.IsTerminal(int(os.Stderr.Fd())) {
 		p = template.New(initialValue)
 		p.SetRefreshRate(100 * time.Millisecond)
 		p.SetWriter(os.Stderr)
