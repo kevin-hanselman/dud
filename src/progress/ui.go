@@ -17,6 +17,7 @@ type model struct {
 	refresh    time.Duration
 	tracker    *ProgressTracker
 	finalError error
+	complete   bool
 }
 
 func newProgressUI(tracker *ProgressTracker, f func() error) *model {
@@ -58,27 +59,47 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case commandExitMsg:
 		m.finalError = msg.err
+		m.complete = true
 		return m, tea.Quit
 	}
 	return m, m.tick()
 }
 
 func (m *model) View() string {
-	s := m.tracker.bytes.State()
+	// TODO: DRY this out a bit
+	// TODO: Consider only showing one ETA/elapsed time--maybe an average
+	s := m.tracker.bytes.state()
+	var timeDisplay string
+	if m.complete {
+		timeDisplay = fmt.Sprintf("%s elapsed", time.Since(s.start))
+	} else {
+		timeDisplay = fmt.Sprintf("ETA %s", s.eta())
+	}
+	rate, units := humanize.ComputeSI(s.perSecond())
 	bytesProgress := fmt.Sprintf(
-		"bytes: %s / %s  %s  %3.0f%%\n",
-		humanize.Bytes(uint64(s.CurrentBytes)),
-		humanize.Bytes(uint64(s.Max)),
-		humanize.SI(s.KBsPerSecond*1024, "B/s"),
-		s.CurrentPercent*100,
+		"bytes: %s / %s  %.2f %sB/s  %3.0f%%  %s\n",
+		humanize.Bytes(uint64(s.current)),
+		humanize.Bytes(uint64(s.total)),
+		rate,
+		units,
+		s.percent(),
+		timeDisplay,
 	)
-	s = m.tracker.files.State()
+	s = m.tracker.files.state()
+	if m.complete {
+		timeDisplay = fmt.Sprintf("%s elapsed", time.Since(s.start))
+	} else {
+		timeDisplay = fmt.Sprintf("ETA %s", s.eta())
+	}
+	rate, units = humanize.ComputeSI(s.perSecond())
 	filesProgress := fmt.Sprintf(
-		"files: %s / %s  %s %3.0f%%\n",
-		humanize.Comma(s.CurrentNum),
-		humanize.Comma(s.Max),
-		humanize.SI(s.KBsPerSecond*1024, " files/s"),
-		s.CurrentPercent*100,
+		"files: %s / %s  %.2f%s files/s  %3.0f%%  %s\n",
+		humanize.Comma(s.current),
+		humanize.Comma(s.total),
+		rate,
+		units,
+		s.percent(),
+		timeDisplay,
 	)
 	return bytesProgress + filesProgress
 }
