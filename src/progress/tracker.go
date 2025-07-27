@@ -12,25 +12,25 @@ type state struct {
 	start   time.Time
 }
 
-func (s state) started() bool {
+func (s *state) started() bool {
 	return !s.start.IsZero()
 }
 
-func (s state) percent() float64 {
+func (s *state) percent() float64 {
 	if s.total > 0 {
 		return float64(s.current) / float64(s.total) * 100
 	}
 	return 0
 }
 
-func (s state) perSecond() float64 {
+func (s *state) perSecond() float64 {
 	if s.started() {
 		return float64(s.current) / time.Since(s.start).Seconds()
 	}
 	return 0
 }
 
-func (s state) eta() time.Duration {
+func (s *state) eta() time.Duration {
 	// current        elapsed
 	// ------- = -------------------
 	//  total    elapsed + remaining
@@ -46,47 +46,40 @@ func (s state) eta() time.Duration {
 	return 0
 }
 
-type progress struct {
-	lock sync.Mutex
-	s    state
-}
-
-func (p *progress) add(n int64) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	if !p.s.started() {
-		p.s.start = time.Now()
+func (s *state) add(n int64) {
+	if !s.started() {
+		s.start = time.Now()
 	}
-	p.s.current += n
+	s.current += n
 }
 
-func (p *progress) addTotal(n int64) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	p.s.total += n
+func (s *state) addTotal(n int64) {
+	s.total += n
 }
 
-func (p *progress) Write(b []byte) (int, error) {
+type lockedStateWriter struct {
+	s    *state
+	lock *sync.Mutex
+}
+
+func (w *lockedStateWriter) Write(b []byte) (int, error) {
+	w.lock.Lock()
+	defer w.lock.Unlock()
 	n := len(b)
-	p.add(int64(n))
+	w.s.add(int64(n))
 	return n, nil
 }
 
-func (p *progress) state() state {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	return p.s
-}
-
 type ProgressTracker struct {
-	bytes *progress
-	files *progress
+	bytes *state
+	files *state
+	lock  sync.Mutex
 }
 
 func NewProgressTracker() *ProgressTracker {
 	return &ProgressTracker{
-		bytes: &progress{},
-		files: &progress{},
+		bytes: &state{},
+		files: &state{},
 	}
 }
 
@@ -95,6 +88,8 @@ func NewProgressTracker() *ProgressTracker {
 // indicate a file that's not being read (such as when checking artifact status
 // or gathering cache files to push or fetch).
 func (pt *ProgressTracker) AddFileBytes(numBytes int64) {
+	pt.lock.Lock()
+	defer pt.lock.Unlock()
 	if numBytes > 0 {
 		pt.bytes.addTotal(numBytes)
 	}
@@ -102,9 +97,18 @@ func (pt *ProgressTracker) AddFileBytes(numBytes int64) {
 }
 
 func (pt *ProgressTracker) NewProxyReader(r io.Reader) io.Reader {
-	return io.TeeReader(r, pt.bytes)
+	pr := &lockedStateWriter{pt.bytes, &pt.lock}
+	return io.TeeReader(r, pr)
 }
 
 func (pt *ProgressTracker) FileDone() {
+	pt.lock.Lock()
+	defer pt.lock.Unlock()
 	pt.files.add(1)
+}
+
+func (pt *ProgressTracker) states() (bytes, files *state) {
+	pt.lock.Lock()
+	defer pt.lock.Unlock()
+	return pt.bytes, pt.files
 }

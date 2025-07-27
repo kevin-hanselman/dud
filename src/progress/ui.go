@@ -2,6 +2,8 @@ package progress
 
 import (
 	"fmt"
+	"strings"
+	"text/tabwriter"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,7 +26,7 @@ func newProgressUI(tracker *ProgressTracker, f func() error) *model {
 	cmd := func() tea.Msg { return commandExitMsg{f()} }
 	return &model{
 		command:    cmd,
-		refresh:    100 * time.Millisecond,
+		refresh:    300 * time.Millisecond,
 		tracker:    tracker,
 		finalError: nil,
 	}
@@ -66,40 +68,51 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) View() string {
-	// TODO: DRY this out a bit
-	// TODO: Consider only showing one ETA/elapsed time--maybe an average
-	s := m.tracker.bytes.state()
-	var timeDisplay string
+	var (
+		out                strings.Builder
+		durFmt             string
+		durBytes, durFiles time.Duration
+	)
+	writer := tabwriter.NewWriter(&out, 0, 8, 0, '\t', 0)
+
+	bytes, files := m.tracker.states()
+	s := bytes
 	if m.complete {
-		timeDisplay = fmt.Sprintf("%s elapsed", time.Since(s.start))
+		durFmt = "%s total\n"
+		durBytes = time.Since(s.start)
 	} else {
-		timeDisplay = fmt.Sprintf("ETA %s", s.eta())
+		durFmt = "ETA %s\n"
+		durBytes = s.eta()
 	}
 	rate, units := humanize.ComputeSI(s.perSecond())
-	bytesProgress := fmt.Sprintf(
-		"bytes: %s / %s  %.2f %sB/s  %3.0f%%  %s\n",
+	fmt.Fprintf(
+		writer,
+		"bytes:\t%s / %s\t%.2f %sB/s\t%3.0f%%\n",
 		humanize.Bytes(uint64(s.current)),
 		humanize.Bytes(uint64(s.total)),
 		rate,
 		units,
 		s.percent(),
-		timeDisplay,
 	)
-	s = m.tracker.files.state()
+
+	s = files
 	if m.complete {
-		timeDisplay = fmt.Sprintf("%s elapsed", time.Since(s.start))
+		durFiles = time.Since(s.start)
 	} else {
-		timeDisplay = fmt.Sprintf("ETA %s", s.eta())
+		durFiles = s.eta()
 	}
 	rate, units = humanize.ComputeSI(s.perSecond())
-	filesProgress := fmt.Sprintf(
-		"files: %s / %s  %.2f%s files/s  %3.0f%%  %s\n",
+	fmt.Fprintf(
+		writer,
+		"files:\t%s / %s\t%.2f%s files/s\t%3.0f%%\n",
 		humanize.Comma(s.current),
 		humanize.Comma(s.total),
 		rate,
 		units,
 		s.percent(),
-		timeDisplay,
 	)
-	return bytesProgress + filesProgress
+	dur := max(durFiles, durBytes).Round(time.Millisecond)
+	fmt.Fprintf(writer, durFmt, dur)
+	writer.Flush()
+	return out.String()
 }
